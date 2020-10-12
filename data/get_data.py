@@ -21,7 +21,7 @@ def parse_dataset(dataset):
         file_name = tags.replace("\\", "/").split("/")[-1]
         new_file = f"{dataset}/simplified_{file_name}"
         with open(new_file, "w", encoding="UTF-8") as file_out:
-            with open(tags_train_in, "r", encoding="UTF-8") as file_in:
+            with open(tags, "r", encoding="UTF-8") as file_in:
                 for line in file_in.readlines():
                     if line.startswith("#"):
                         continue
