@@ -32,7 +32,7 @@ def parse_dataset(dataset):
                     else:
                         word = split[1]
                         tag = split[3]
-                        line_out = f"{word} {tag}"
+                        line_out = f"{word}\t{tag}"
 
                     file_out.write(line_out + "\n")
 
