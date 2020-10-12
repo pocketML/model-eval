@@ -1,8 +1,10 @@
 # Project-specific
 data/*
 !data/README.md
+!data/get_data.py
 models/*
 !models/README.md
+!models/get_model.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
