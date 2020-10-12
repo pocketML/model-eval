@@ -1,3 +1,9 @@
+# Project-specific
+data/*
+!data/README.md
+models/*
+!models/README.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
