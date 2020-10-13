@@ -31,9 +31,10 @@ def parse_and_transform(dataset):
                     file_out.write(line_out + "\n")
 
 def transform_datasets():
-    treebanks = glob("data/*")
+    treebanks = glob("data/UD_*")
     for folder in treebanks:
-        parse_and_transform(treebanks)
+        print(f"Transforming {folder}")
+        parse_and_transform(folder)
 
 if __name__ == "__main__":
     transform_datasets()
