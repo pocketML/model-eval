@@ -2,17 +2,7 @@ from os import path, mkdir
 from glob import glob
 import shutil
 
-DATASETS = {
-    "english": ("UD_English", "GUM")
-}
-
-def get_dataset_folder(language, treebank=None):
-    language_name, default_treebank = DATASETS[language]
-    if treebank is not None:
-        default_treebank = treebank
-    return f"data/treebanks/{language_name}-{default_treebank}"
-
-def parse_dataset(dataset):
+def parse_and_transform(dataset):
     tags_train_in = glob(f"{dataset}/*ud-train.conllu")[0]
     tags_test_in = glob(f"{dataset}/*ud-test.conllu")[0]
     tags_dev_in = glob(f"{dataset}/*ud-dev.conllu")[0]
@@ -40,13 +30,10 @@ def parse_dataset(dataset):
 
                     file_out.write(line_out + "\n")
 
-def get_data(language, treebank=None):
-    treebanks_path = "data/treebanks"
-    if not path.exists(treebanks_path):
-        shutil.unpack_archive(f"{treebanks_path}.zip", treebanks_path)
-
-    folder = get_dataset_folder(language, treebank)
-    return parse_dataset(folder)
+def transform_datasets():
+    treebanks = glob("data/*")
+    for folder in treebanks:
+        parse_and_transform(treebanks)
 
 if __name__ == "__main__":
-    get_data("english", "GUM")
+    transform_datasets()
