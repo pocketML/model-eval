@@ -13,9 +13,9 @@ def main():
     print(f"Running model # {args.model_name}")
     print(f"Verbose setting: {args.verbose}")
 
-    transform_data.transform_datasets()
     if not data_archives.archive_exists("data"):
         data_archives.download_and_unpack("data")
+        transform_data.transform_datasets()
     if not data_archives.archive_exists("models"):
         data_archives.download_and_unpack("models")
 
