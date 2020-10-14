@@ -6,12 +6,23 @@ def main():
     print("*****************************************")
     print("***** pocketML model evaluator 4000 *****")
     print("*****************************************\n")
+    
     parser = argparse.ArgumentParser(description="Evaluation of various state of the art POS taggers, on the UD dataset")
-    parser.add_argument("-v", "--verbose", help="increase output verbosity")
+    
+    # required arguments (positionals)
     parser.add_argument("model_name", type=str, help="name of the model to run")
+
+    # optional arguments
+    parser.add_argument("-l", "--lang", type=str, default="en", help="choose dataset language. Default is English.")
+    parser.add_argument("-i", "--iter", type=int, default=10, help="number of training iterations. Default is 10.")
+    parser.add_argument("-v", "--verbose", help="increase output verbosity")
+    
     args = parser.parse_args()
-    print(f"Running model # {args.model_name}")
-    print(f"Verbose setting: {args.verbose}")
+    print("Arguments:")
+    print(f"model: {args.model_name}")
+    print(f"verbos: {args.verbose}")
+    print(f"dataset language: {args.lang}")
+    print(f"iterations: {args.iter}")
 
     if not data_archives.archive_exists("data"):
         data_archives.download_and_unpack("data")
