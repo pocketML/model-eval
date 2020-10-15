@@ -4,7 +4,11 @@ import transform_data
 
 def main():
     print("*****************************************")
-    print("***** pocketML model evaluator 4000 *****")
+    print("*****************************************")
+    print("****                                 ****")
+    print("***   pocketML model evaluator 4000   ***")
+    print("****                                 ****")
+    print("*****************************************")
     print("*****************************************\n")
     
     parser = argparse.ArgumentParser(description="Evaluation of various state of the art POS taggers, on the UD dataset")
