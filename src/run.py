@@ -6,10 +6,12 @@ import transform_data
 MODELS_SYS_CALLS = {
     "bilstm": (
         "python3 [dir]/models/bilstm-aux/src/structbilty.py --dynet-mem 1500 " +
-        "--train data/UD_English-GUM/en_gum-ud-train.conllu " +
-        "--test data/UD_English-GUM/en_gum-ud-test.conllu --iters 10 --model en"
+        "--train data/UD_English-GUM/simplified/en_gum-ud-train.conllu " +
+        "--test data/UD_English-GUM/simplified/en_gum-ud-test.conllu --iters 10 --model en"
     ),
-    "svmtool": "perl [dir]/models/svmtool/bin/SVMTlearn.pl -V 2 models/svmtool/bin/config.svmt"
+    "svmtool": "perl [dir]/models/svmtool/bin/SVMTlearn.pl -V 2 models/svmtool/bin/config.svmt",
+    "svmtool_tag": "perl [dir]/models/svmtool/bin/SVMTagger.pl models/svmtool/pocketML.FLD.8 < data/UD_English-GUM/simplified/en_gum-ud-test.conllu > models/svmtool/eng_gum.out",
+    "svmtool_eval": "perl [dir]/models/svmtool/bin/SVMTeval.pl 0 models/svmtool/pocketML.FLD.8 data/UD_English-GUM/simplified/en_gum-ud-test.conllu models/svmtool/eng_gum.out"
 }
 
 def system_call(cmd):
