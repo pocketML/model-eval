@@ -2,6 +2,7 @@ import os
 import argparse
 import data_archives
 import transform_data
+import tracemalloc
 
 MODELS_SYS_CALLS = {
     "bilstm": (
@@ -11,14 +12,17 @@ MODELS_SYS_CALLS = {
     ),
     "svmtool": "perl [dir]/models/svmtool/bin/SVMTlearn.pl -V 2 models/svmtool/bin/config.svmt",
     "svmtool_tag": "perl [dir]/models/svmtool/bin/SVMTagger.pl models/svmtool/pocketML.FLD.8 < data/UD_English-GUM/simplified/en_gum-ud-test.conllu > models/svmtool/eng_gum.out",
-    "svmtool_eval": "perl [dir]/models/svmtool/bin/SVMTeval.pl 0 models/svmtool/pocketML.FLD.8 data/UD_English-GUM/simplified/en_gum-ud-test.conllu models/svmtool/eng_gum.out"
+    "svmtool_eval": "perl [dir]/models/svmtool/bin/SVMTeval.pl 0 models/svmtool/pocketML.FLD.8 data/UD_English-GUM/simplified/en_gum-ud-test.conllu models/svmtool/eng_gum.out",
+    "pos_adv": "cd [dir]/models/pos_adv && ./multi_lingual_run_blstm-blstm-crf_pos.sh",
 }
 
 def system_call(cmd):
+    tracemalloc.start()
     curr_dir = "/" + os.getcwd().replace("\\", "/")
     cmd_full = cmd.replace("[dir]", curr_dir)
     print(f"Running {cmd_full}")
     os.system(f"bash -c \"{cmd_full}\"")
+    print("Current: %d, Peak %d" % tracemalloc.get_traced_memory())
 
 def main():
     print("*****************************************")
