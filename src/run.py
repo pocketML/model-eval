@@ -6,27 +6,35 @@ import platform
 import argparse
 import data_archives
 import transform_data
-import tagger_monitors
+import taggers
 from inference import monitor_inference
 from training import monitor_training
 
-MODELS_SYS_CALLS = {
+MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predict)
     "bilstm": (
-        "python [dir]/models/bilstm-aux/src/structbilty.py --dynet-mem 1500 " +
-        "--train data/UD_English-GUM/simplified/en_gum-ud-train.conllu " +
-        "--dev data/UD_English-GUM/simplified/en_gum-ud-dev.conllu " +
-        "--test data/UD_English-GUM/simplified/en_gum-ud-test.conllu --iters [iters] --model models/bilstm-aux/en"
+        (
+            "python [dir]/models/bilstm-aux/src/structbilty.py --dynet-mem 1500 " +
+            "--train data/UD_English-GUM/simplified/en_gum-ud-train.conllu " +
+            "--dev data/UD_English-GUM/simplified/en_gum-ud-dev.conllu " +
+            "--test data/UD_English-GUM/simplified/en_gum-ud-test.conllu --iters [iters] --model models/bilstm-aux/en"
+        ),
+        (
+            "python src/structbilty.py --model models/bilstm-aux/en " +
+            "--test data/UD_English-GUM/simplified/en_gum-ud-test.conllu " +
+            "--output models/bilstm-aux/test-en.out"
+        )
     ),
-    "svmtool": "bash -c \"perl [dir]/models/svmtool/bin/SVMTlearn.pl -V 1 models/svmtool/bin/config.svmt\"",
-    "svmtool_tag": "bash -c \"perl [dir]/models/svmtool/bin/SVMTagger.pl models/svmtool/pocketML/pocketML.FLD.8 < data/UD_English-GUM/simplified/en_gum-ud-test.conllu > models/svmtool/eng_gum.out\"",
-    "svmtool_eval": "bash -c \"perl [dir]/models/svmtool/bin/SVMTeval.pl 0 models/svmtool/pocketML/pocketML.FLD.8 data/UD_English-GUM/simplified/en_gum-ud-test.conllu models/svmtool/eng_gum.out\"",
+    "svmtool": (
+        "bash -c \"perl [dir]/models/svmtool/bin/SVMTlearn.pl -V 1 models/svmtool/bin/config.svmt\"",
+        "bash -c \"perl [dir]/models/svmtool/bin/SVMTagger.pl models/svmtool/pocketML/pocketML < data/UD_English-GUM/simplified/en_gum-ud-test.conllu > models/svmtool/eng_gum.out\""
+    ),
     "pos_adv": "cd [dir]/models/pos_adv && ./multi_lingual_run_blstm-blstm-crf_pos.sh",
     "test": "python [dir]/src/test.py"
 }
 
-OUTPUT_MONITORS = {
-    "svmtool": tagger_monitors.SVMTParser,
-    "bilstm": tagger_monitors.BILSTMParser
+TAGGERS = {
+    "svmtool": taggers.SVMT,
+    "bilstm": taggers.BILSTM
 }
 
 def system_call(cmd, iters):
@@ -62,6 +70,8 @@ async def main():
     parser.add_argument("-v", "--verbose", help="increase output verbosity")
     parser.add_argument("-nl", "--no-loadbar", help="run with no loadbar", action="store_true")
     parser.add_argument("-s", "--save-results", help="save accuracy/size complexity measurements", action="store_true")
+    parser.add_argument("-t", "--train", action="store_true")
+    parser.add_argument("-e", "--eval", action="store_true")
 
     args = parser.parse_args()
     print("Arguments:")
@@ -77,20 +87,37 @@ async def main():
         data_archives.download_and_unpack("models")
 
     models_to_run = MODELS_SYS_CALLS.keys() if args.model_name == "all" else [args.model_name]
+    do_training = args.train
+    do_inference = args.eval
+    if not args.train and not args.eval: # Do both training and inference.
+        do_training = True
+        do_inference = True
 
     for model_name in models_to_run:
-        sys_call = MODELS_SYS_CALLS[args.model_name]
-        file = None
+        call_train, call_infer = MODELS_SYS_CALLS[model_name]
+        file_pointer = None
         if args.save_results:
             formatted_date = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
-            file_name = f"results/{args.model_name}_{formatted_date}.out"
-            file = open(file_name, "w")
+            file_name = f"results/{model_name}_{formatted_date}.out"
+            file_pointer = open(file_name, "w")
 
-        process = system_call(sys_call, args.iter)
-        monitor = OUTPUT_MONITORS[args.model_name](process)
-        final_acc = await monitor_training(monitor, args, file)
-        file.write("Final acc: {final_acc}")
-        file.close()
+        final_acc = 0
+        if do_training: # Traing model.
+            process = system_call(call_train, args.iter)
+            tagger = TAGGERS[model_name](process)
+            final_acc = await monitor_training(tagger, args, file_pointer)
+
+        if do_inference: # Run inference task.
+            process = system_call(call_infer, args.iter)
+            tagger = TAGGERS[model_name](process)
+            model_footprint = await monitor_inference(tagger)
+            final_acc = tagger.get_pred_acc()
+            if file_pointer is not None: # Save size of model footprint.
+                file_pointer.write(f"Model footprint: {model_footprint}\n")
+
+        if file_pointer is not None: # Save final test-set/prediction accuracy.
+                file_pointer.write(f"Final acc: {final_acc}\n")
+                file_pointer.close()
 
 if __name__ == "__main__":
     asyncio.run(main())

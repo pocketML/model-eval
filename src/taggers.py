@@ -1,7 +1,4 @@
-import asyncio
-from subprocess import TimeoutExpired
-
-class Parser:
+class Tagger:
     def __init__(self, process_handler):
         self.epoch = 0
         self.process_handler = process_handler
@@ -16,10 +13,13 @@ class Parser:
         text = data.decode("utf-8")
         return text
 
-    async def on_evaluation_complete(self):
+    def inference_complete(self):
+        return self.process_handler.poll() is not None
+
+    def get_pred_acc(self):
         pass
 
-class SVMTParser(Parser):
+class SVMT(Tagger):
     ACC_STR = "TEST ACCURACY:"
 
     async def on_epoch_complete(self):
@@ -30,7 +30,10 @@ class SVMTParser(Parser):
                     self.epoch += 1
                     yield float(acc_str[:pct_index])
 
-class BILSTMParser(Parser):
+    def get_pred_acc(self):
+        pass
+
+class BILSTM(Tagger):
     ACC_STR = "dev accuracy:"
 
     async def on_epoch_complete(self):
@@ -39,3 +42,6 @@ class BILSTMParser(Parser):
                 acc_str = text[index + len(self.ACC_STR) + 1:]
                 self.epoch += 1
                 yield float(acc_str) * 100
+
+    def get_pred_acc(self):
+        pass
