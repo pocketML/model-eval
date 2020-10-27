@@ -10,4 +10,5 @@ async def monitor_inference(monitor):
     while not monitor.inference_complete():
         # Record disk/memory usage of the thing...
         await asyncio.sleep(0.1)
+    print("Prediction/inference completed.")
     return tracemalloc.get_traced_memory()

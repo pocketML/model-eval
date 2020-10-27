@@ -16,25 +16,26 @@ MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predi
             "python [dir]/models/bilstm-aux/src/structbilty.py --dynet-mem 1500 " +
             "--train data/UD_English-GUM/simplified/en_gum-ud-train.conllu " +
             "--dev data/UD_English-GUM/simplified/en_gum-ud-dev.conllu " +
-            "--test data/UD_English-GUM/simplified/en_gum-ud-test.conllu --iters [iters] --model models/bilstm-aux/en"
+            f"--test data/UD_English-GUM/simplified/en_gum-ud-test.conllu --iters [iters] --model {taggers.BILSTM.SAVED_MODEL}"
         ),
         (
-            "python src/structbilty.py --model models/bilstm-aux/en " +
+            f"python [dir]/models/bilstm-aux/src/structbilty.py --model {taggers.BILSTM.SAVED_MODEL} " +
             "--test data/UD_English-GUM/simplified/en_gum-ud-test.conllu " +
-            "--output models/bilstm-aux/test-en.out"
+            f"--output {taggers.BILSTM.PREDICTIONS}"
         )
     ),
     "svmtool": (
         "bash -c \"perl [dir]/models/svmtool/bin/SVMTlearn.pl -V 1 models/svmtool/bin/config.svmt\"",
-        "bash -c \"perl [dir]/models/svmtool/bin/SVMTagger.pl models/svmtool/pocketML/pocketML < data/UD_English-GUM/simplified/en_gum-ud-test.conllu > models/svmtool/eng_gum.out\""
+        (f"bash -c \"perl [dir]/models/svmtool/bin/SVMTagger.pl {taggers.SVMT.SAVED_MODEL}/{taggers.SVMT.latest_model()} < " +
+         f"data/UD_English-GUM/simplified/en_gum-ud-test.conllu > {taggers.SVMT.PREDICTIONS}\"")
     ),
-    "pos_adv": "cd [dir]/models/pos_adv && ./multi_lingual_run_blstm-blstm-crf_pos.sh",
-    "test": "python [dir]/src/test.py"
+    "pos_adv": ("cd [dir]/models/pos_adv && multi_lingual_run_blstm-blstm-crf_pos.sh", None),
 }
 
 TAGGERS = {
     "svmtool": taggers.SVMT,
-    "bilstm": taggers.BILSTM
+    "bilstm": taggers.BILSTM,
+    "pos_adv": taggers.POSADV
 }
 
 def system_call(cmd, iters):
@@ -71,7 +72,7 @@ async def main():
     parser.add_argument("-nl", "--no-loadbar", help="run with no loadbar", action="store_true")
     parser.add_argument("-s", "--save-results", help="save accuracy/size complexity measurements", action="store_true")
     parser.add_argument("-t", "--train", action="store_true")
-    parser.add_argument("-e", "--eval", action="store_true")
+    parser.add_argument("-p", "--predict", action="store_true")
 
     args = parser.parse_args()
     print("Arguments:")
@@ -88,8 +89,8 @@ async def main():
 
     models_to_run = MODELS_SYS_CALLS.keys() if args.model_name == "all" else [args.model_name]
     do_training = args.train
-    do_inference = args.eval
-    if not args.train and not args.eval: # Do both training and inference.
+    do_inference = args.predict
+    if not args.train and not args.predict: # Do both training and inference.
         do_training = True
         do_inference = True
 
@@ -115,8 +116,13 @@ async def main():
             if file_pointer is not None: # Save size of model footprint.
                 file_pointer.write(f"Model footprint: {model_footprint}\n")
 
+        # Normalize accuracy
+        if final_acc > 1:
+            final_acc /= 100
+        normed_acc = f"{final_acc:.4f}"
+        print(f"Test Accuracy: {normed_acc}")
         if file_pointer is not None: # Save final test-set/prediction accuracy.
-                file_pointer.write(f"Final acc: {final_acc}\n")
+                file_pointer.write(f"Final acc: {normed_acc}\n")
                 file_pointer.close()
 
 if __name__ == "__main__":
