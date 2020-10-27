@@ -80,8 +80,12 @@ class Loadbar:
                 self.curr_tick = self.total_steps
 
             self.print_bar(text)
-            if self.curr_ratio == 1:
-                print("\r")
+            if self.curr_step == self.total_steps:
+                self.screen.clear()
+                curses.nocbreak()
+                self.screen.keypad(False)
+                curses.echo()
+                curses.endwin()
         self.last_time = time()
 
     def print_bar(self, flavor_text=""):
@@ -123,8 +127,8 @@ class Loadbar:
         return LoadbarIterator(self)
 
 if __name__ == "__main__":
-    load = Loadbar(10, 10, "Training... ")
-    for i in range(10):
+    load = Loadbar(30, 5, "Training... ")
+    for i in range(5):
         accuracy = i * 10
         load.step(text=f"Test Acc: {accuracy}%")
         sleep(0.5)

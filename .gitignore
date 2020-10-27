@@ -3,6 +3,7 @@ data/*
 !data/README.md
 !data/get_data.py
 models/*
+results/*
 !models/README.md
 !models/get_model.py
 .vscode/

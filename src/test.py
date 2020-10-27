@@ -1,20 +1,10 @@
-import curses
+from time import sleep
+from os import system
 
-print("TEST123")
-print("TEST123")
-print("32131")
-print("sda")
-print("TEST123")
-print("3213124a")
+cmd = (
+    "python models/bilstm-aux/src/structbilty.py --dynet-mem 1500 " +
+    "--train data/UD_English-GUM/simplified/en_gum-ud-train.conllu " +
+    "--test data/UD_English-GUM/simplified/en_gum-ud-test.conllu --iters 10 --model en"
+)
 
-curses.initscr()
-curses.noecho()
-curses.cbreak()
-
-def do_stuff(scr):
-    scr.addstr(0, 5, "Test")
-    scr.addstr(0, 5, "Test")
-    scr.refresh()
-    scr.getkey()
-
-curses.wrapper(do_stuff)
+system(cmd)
