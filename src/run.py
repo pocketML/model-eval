@@ -26,8 +26,7 @@ MODELS_SYS_CALLS = {
 
 OUTPUT_MONITORS = {
     "svmtool": tagger_monitors.SVMTParser,
-    "bilstm": tagger_monitors.BILSTMParser,
-    "test": tagger_monitors.BILSTMParser
+    "bilstm": tagger_monitors.BILSTMParser
 }
 
 def system_call(cmd, iters):
