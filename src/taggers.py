@@ -1,6 +1,7 @@
+from abc import ABC, abstractmethod
 from glob import glob
 
-class Tagger:
+class Tagger(ABC):
     def __init__(self, process_handler):
         self.epoch = 0
         self.process_handler = process_handler
@@ -18,7 +19,13 @@ class Tagger:
     def inference_complete(self):
         return self.process_handler.poll() is not None
 
+    @abstractmethod
     def get_pred_acc(self):
+        pass
+
+    @property
+    @abstractmethod
+    def saved_model():
         pass
 
 class SVMT(Tagger):
@@ -51,13 +58,12 @@ class SVMT(Tagger):
                     correct += 1
         return correct / total
 
-    @staticmethod
-    def latest_model():
+    def saved_model(self):
         files = glob(f"{SVMT.SAVED_MODEL}/pocketML.FLD.*")
         split_files = [x.split(".") for x in files]
         split_files = [int(x[x.index("FLD") + 1]) for x in split_files]
         split_files.sort()
-        return f"pocketML.FLD.{split_files[-1]}"
+        return f"{SVMT.SAVED_MODEL}/pocketML.FLD.{split_files[-1]}"
 
 class BILSTM(Tagger):
     ACC_STR = "dev accuracy:"
@@ -90,6 +96,9 @@ class BILSTM(Tagger):
                 if predicted == actual:
                     correct += 1
         return correct / total
+
+    def saved_model(self):
+        return BILSTM.SAVED_MODEL
 
 class POSADV(Tagger):
     ACC_STR = "dev accuracy:"

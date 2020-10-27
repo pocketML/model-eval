@@ -16,17 +16,17 @@ MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predi
             "python [dir]/models/bilstm-aux/src/structbilty.py --dynet-mem 1500 " +
             "--train data/UD_English-GUM/simplified/en_gum-ud-train.conllu " +
             "--dev data/UD_English-GUM/simplified/en_gum-ud-dev.conllu " +
-            f"--test data/UD_English-GUM/simplified/en_gum-ud-test.conllu --iters [iters] --model {taggers.BILSTM.SAVED_MODEL}"
+            f"--test data/UD_English-GUM/simplified/en_gum-ud-test.conllu --iters [iters] --model [model]"
         ),
         (
-            f"python [dir]/models/bilstm-aux/src/structbilty.py --model {taggers.BILSTM.SAVED_MODEL} " +
+            f"python [dir]/models/bilstm-aux/src/structbilty.py --model [model] " +
             "--test data/UD_English-GUM/simplified/en_gum-ud-test.conllu " +
             f"--output {taggers.BILSTM.PREDICTIONS}"
         )
     ),
     "svmtool": (
         "bash -c \"perl [dir]/models/svmtool/bin/SVMTlearn.pl -V 1 models/svmtool/bin/config.svmt\"",
-        (f"bash -c \"perl [dir]/models/svmtool/bin/SVMTagger.pl {taggers.SVMT.SAVED_MODEL}/{taggers.SVMT.latest_model()} < " +
+        (f"bash -c \"perl [dir]/models/svmtool/bin/SVMTagger.pl [model] < " +
          f"data/UD_English-GUM/simplified/en_gum-ud-test.conllu > {taggers.SVMT.PREDICTIONS}\"")
     ),
     "pos_adv": ("cd [dir]/models/pos_adv && multi_lingual_run_blstm-blstm-crf_pos.sh", None),
@@ -42,7 +42,8 @@ def system_call(cmd, iters):
     curr_dir = os.getcwd()
     if platform.system() == "Windows" and cmd.startswith("bash"):
         print("Running in Linux shell")
-        curr_dir = "/" + curr_dir.replace("\\", "/")
+        split = curr_dir.replace("\\", "/").replace(" ", "\ ").split("/")
+        curr_dir = "/mnt/" + split[0][:-1].lower() + "/" + "/".join(split[1:])
     cmd_full = cmd.replace("[dir]", curr_dir).replace("[iters]", str(iters))
     if platform.system() == "Windows" and not cmd.startswith("bash"):
         cmd_full = cmd_full.replace("/", "\\")
@@ -104,11 +105,13 @@ async def main():
 
         final_acc = 0
         if do_training: # Traing model.
+            call_train = call_train.replace("[model]", str(TAGGERS[model_name].saved_model))
             process = system_call(call_train, args.iter)
             tagger = TAGGERS[model_name](process)
             final_acc = await monitor_training(tagger, args, file_pointer)
 
         if do_inference: # Run inference task.
+            call_infer = call_infer.replace("[model]", str(TAGGERS[model_name].saved_model))
             process = system_call(call_infer, args.iter)
             tagger = TAGGERS[model_name](process)
             model_footprint = await monitor_inference(tagger)
