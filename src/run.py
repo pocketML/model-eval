@@ -78,32 +78,7 @@ def system_call(cmd, cwd):
     process = subprocess.Popen(cmd_full, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     return process
 
-async def main():
-    print("*****************************************")
-    print("*****************************************")
-    print("****                                 ****")
-    print("***   pocketML model evaluator 4000   ***")
-    print("****                                 ****")
-    print("*****************************************")
-    print("*****************************************\n")
-
-    parser = argparse.ArgumentParser(description="Evaluation of various state of the art POS taggers, on the UD dataset")
-    
-    # required arguments (positionals)
-    choices = list(MODELS_SYS_CALLS.keys()) + ["all"]
-    parser.add_argument("model_name", type=str, choices=choices, help="name of the model to run")
-
-    # optional arguments
-    parser.add_argument("-l", "--lang", type=str, default="en", help="choose dataset language. Default is English.")
-    parser.add_argument("-i", "--iter", type=int, default=10, help="number of training iterations. Default is 10.")
-    parser.add_argument("-v", "--verbose", help="increase output verbosity")
-    parser.add_argument("-nl", "--no-loadbar", help="run with no loadbar", action="store_true")
-    parser.add_argument("-tb", "--treebank", type=str, help="UD treebank to use as dataset", default=None, required=False)
-    parser.add_argument("-s", "--save-results", help="save accuracy/size complexity measurements", action="store_true")
-    parser.add_argument("-t", "--train", action="store_true")
-    parser.add_argument("-p", "--predict", action="store_true")
-
-    args = parser.parse_args()
+async def main(args):
     print("Arguments:")
     print(f"model: {args.model_name}")
     print(f"verbos: {args.verbose}")
@@ -164,4 +139,30 @@ async def main():
                 file_pointer.close()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    print("*****************************************")
+    print("*****************************************")
+    print("****                                 ****")
+    print("***   pocketML model evaluator 4000   ***")
+    print("****                                 ****")
+    print("*****************************************")
+    print("*****************************************\n")
+
+    parser = argparse.ArgumentParser(description="Evaluation of various state of the art POS taggers, on the UD dataset")
+    
+    # required arguments (positionals)
+    choices = list(MODELS_SYS_CALLS.keys()) + ["all"]
+    parser.add_argument("model_name", type=str, choices=choices, help="name of the model to run")
+
+    # optional arguments
+    parser.add_argument("-l", "--lang", type=str, default="en", help="choose dataset language. Default is English.")
+    parser.add_argument("-i", "--iter", type=int, default=10, help="number of training iterations. Default is 10.")
+    parser.add_argument("-v", "--verbose", help="increase output verbosity")
+    parser.add_argument("-tb", "--treebank", type=str, help="UD treebank to use as dataset (fx. 'gum')", default=None, required=False)
+    parser.add_argument("-lb", "--loadbar", help="whether to run with loadbar", action="store_true")
+    parser.add_argument("-s", "--save-results", help="whether to save accuracy & size complexity measurements", action="store_true")
+    parser.add_argument("-t", "--train", help="whether to train the given model", action="store_true")
+    parser.add_argument("-p", "--predict", help="whether to predict/evaluate accuracy using the given model", action="store_true")
+
+    args = parser.parse_args()
+
+    asyncio.run(main(args))

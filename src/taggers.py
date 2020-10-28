@@ -98,7 +98,6 @@ class SVMT(Tagger):
 
 class BILSTM(Tagger):
     ACC_STR = "dev accuracy:"
-    MODEL_BASE_PATH = "models/bilstm-aux/pocketML"
 
     async def on_epoch_complete(self, process_handler):
         while (text := self.read_stdout(process_handler)) is not None:
@@ -110,7 +109,7 @@ class BILSTM(Tagger):
     def get_pred_acc(self):
         correct = 0
         total = 0
-        with open(self.predict_path(), "r", encoding="utf-8") as fp:
+        with open(self.predict_path() + ".task0", "r", encoding="utf-8") as fp:
             lines = fp.readlines()
             index = 0
             while index < len(lines):
@@ -134,7 +133,7 @@ class BILSTM(Tagger):
         return f"{self.model_base_path()}/pocketML"
 
     def predict_path(self):
-        return f"{self.model_base_path()}/preds.out.task0"
+        return f"{self.model_base_path()}/preds.out"
 
 class POSADV(Tagger):
     ACC_STR = "dev accuracy:"
