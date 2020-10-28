@@ -41,7 +41,7 @@ def get_dataset_path(lang, treebank, dataset_type):
         treebank_upper = get_default_treebank(lang).upper()
     else:
         treebank_upper = treebank.upper()
-    dataset_path = f"data/UD_{lang_capitalized}-{treebank_upper}/simplified"
+    dataset_path = f"data/UD_{lang_capitalized}-{treebank_upper}/mini"
     path = glob(f"{dataset_path}/*-{dataset_type}.conllu")
     return path[0].replace("\\", "/")
 

@@ -6,13 +6,22 @@ async def monitor_training(monitor, process, args, file_pointer=None):
         loadbar = Loadbar(30, args.iter, f"Training ({args.model_name})")
         loadbar.print_bar()
     async for test_acc in monitor.on_epoch_complete(process):
+        acc_str = ""
+        if test_acc is not None:
+            acc_str = "Acc: {test_acc}"
+
         if args.loadbar:
-            loadbar.step(text=f"Acc: {test_acc:.2f}%")
+            loadbar.step(text=acc_str)
         else:
-            print(f"Test accuracy: {test_acc}")
-        final_acc = test_acc
-        if file_pointer is not None:
-            file_pointer.write(f"acc_iter_{monitor.epoch}: {final_acc}\n")
+            acc_str = test_acc if test_acc is not None else f"Epoch: {monitor.epoch}"
+            print(acc_str)
+
+        if test_acc is not None:
+            final_acc = test_acc
+            if file_pointer is not None:
+                file_pointer.write(f"acc_iter_{monitor.epoch}: {final_acc}\n")
+
         if monitor.epoch == args.iter:
             process.kill()
+
     return final_acc

@@ -52,26 +52,29 @@ MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predi
             f"--output_prediction --patience 30 --exp_dir [model_base_path]"
         ),
         None
+    ),
+    "stanford": (
+        (
+            "java -cp models/stanford-tagger/stanford-postagger.jar " +
+            "edu.stanford.nlp.tagger.maxent.MaxentTagger -props [model_base_path]/pocketML.props"
+        ),
+        (
+            "java -mx2g -cp models/stanford-tagger/stanford-postagger.jar " +
+            "edu.stanford.nlp.tagger.maxent.MaxentTagger -model [model_path] " +
+            "--outputFormat tsv " +
+            "--testFile format=TSV,wordColumn=0,tagColumn=1,[dataset_test] [stdout] [pred_path]"
+        )
     )
 }
 
 NLTK_MODELS = { # Entries are model_name -> (model_class, args)
-    "tnt": (nltk.TnT, []),
-    "stanford": (
-        nltk.StanfordPOSTagger,
-        [
-            "D:/model-eval/models/stanford-tagger/models/english-bidirectional-distsim.tagger",
-            "D:/model-eval/models/stanford-tagger/stanford-postagger.jar"
-        ]
-    )
+    "tnt": (nltk.TnT, [])
 }
 
-# tnt = nltk.TnT()
 # hmm = nltk.HiddenMarkovModelTagger()
 # senna = nltk.Senna()
 # brill = nltk.BrillTagger()
 # crf = nltk.CRFTagger()
-# stanford = nltk.StanfordPOSTagger()
 
 TAGGERS = {
     "svmtool": taggers.SVMT,
@@ -80,7 +83,7 @@ TAGGERS = {
     "stanford": taggers.Stanford
 }
 
-def insert_arg_values(cmd, tagger, args, model_name):
+def insert_arg_values(cmd, tagger, args):
     replaced = cmd.replace("[iters]", str(args.iter))
     model_base_path = tagger.model_base_path()
     replaced = replaced.replace("[model_base_path]", model_base_path)
@@ -102,38 +105,51 @@ def system_call(cmd, cwd):
         split = cwd.replace(" ", "\ ").split("/")
         cwd = "/mnt/" + split[0][:-1].lower() + "/" + "/".join(split[1:])
 
+    stderr_reroute = subprocess.STDOUT
+    if "[stderr]" in cmd:
+        index = cmd.index("[stderr]")
+        file_path = cmd[index + len("[stderr]") + 1:]
+        stderr_reroute = open(file_path, "w")
+        cmd = cmd[:index]
+
+    stdout_reroute = subprocess.PIPE
+    if "[stdout]" in cmd:
+        index = cmd.index("[stdout]")
+        file_path = cmd[index + len("[stdout]") + 1:]
+        stdout_reroute = open(file_path, "w")
+        cmd = cmd[:index]
+
     cmd_full = cmd.replace("[dir]", cwd)
     #if platform.system() == "Windows" and not cmd.startswith("bash"):
     #    cmd_full = cmd_full.replace("/", "\\")
     print(f"Running {cmd_full}")
-    process = subprocess.Popen(cmd_full, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    process = subprocess.Popen(cmd_full, stdout=stdout_reroute, stderr=stderr_reroute)
     return process
 
-async def run_with_sys_call(args, model_name, file_pointer):
+async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
     call_train, call_infer = MODELS_SYS_CALLS[model_name]
-    tagger = TAGGERS[model_name](args.lang, args.treebank)
 
     cwd = os.getcwd().replace("\\", "/")
-    if not os.path.exists(f"{cwd}/{tagger.model_base_path()}"):
-        os.mkdir(f"{cwd}/{tagger.model_base_path()}")
+    if not os.path.exists(f"{cwd}/{tagger_helper.model_base_path()}"):
+        os.mkdir(f"{cwd}/{tagger_helper.model_base_path()}")
 
     final_acc = 0
     if args.train: # Train model.
-        call_train = insert_arg_values(call_train, tagger, args, model_name)
+        call_train = insert_arg_values(call_train, tagger_helper, args)
         process = system_call(call_train, cwd)
-        final_acc = await monitor_training(tagger, process, args, file_pointer)
+        final_acc = await monitor_training(tagger_helper, process, args, file_pointer)
 
     model_footprint = None
     if args.predict: # Run inference task.
-        if call_infer is None:
-            call_infer = insert_arg_values(call_infer, tagger, args, model_name)
+        if call_infer is not None:
+            call_infer = insert_arg_values(call_infer, tagger_helper, args)
             process = system_call(call_infer, cwd)
             task = InferenceTask(process, InferenceTask.TASK_SYSCALL)
             model_footprint = await monitor_inference(task)
-        final_acc = tagger.get_pred_acc()
+        final_acc = tagger_helper.get_pred_acc()
     return final_acc, model_footprint
 
-async def run_with_nltk(args, model_name, file_pointer):
+async def run_with_nltk(args, model_name, tagger_helper):
     model_class, model_args = NLTK_MODELS[model_name]
     model = model_class(*model_args)
 
@@ -181,10 +197,14 @@ async def main(args):
             file_name = f"results/{model_name}_{formatted_date}.out"
             file_pointer = open(file_name, "w")
 
+        tagger = TAGGERS.get(model_name, None)
+        if tagger is not None: # Instantiate helper class, if it exists relevant.
+            tagger = tagger(args)
+
         if model_name in MODELS_SYS_CALLS:
-            final_acc, model_footprint = await run_with_sys_call(args, model_name, file_pointer)
+            final_acc, model_footprint = await run_with_sys_call(args, model_name, tagger, file_pointer)
         elif model_name in NLTK_MODELS:
-            final_acc, model_footprint = await run_with_nltk(args, model_name, file_pointer)
+            final_acc, model_footprint = await run_with_nltk(args, model_name, tagger)
 
         if model_footprint is not None:
             print(f"Model footprint: {model_footprint}")
