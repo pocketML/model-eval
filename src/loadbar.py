@@ -82,9 +82,9 @@ class Loadbar:
             self.print_bar(text)
             if self.curr_step == self.total_steps:
                 self.screen.clear()
-                curses.nocbreak()
                 self.screen.keypad(False)
                 curses.echo()
+                curses.nocbreak()
                 curses.endwin()
         self.last_time = time()
 
