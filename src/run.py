@@ -1,17 +1,26 @@
 import asyncio
 from operator import mod
 import os
+import shutil
 import subprocess
 from datetime import datetime
 import platform
 import argparse
 import nltk
-from nltk import data
+import nltk_util
 import data_archives
 import transform_data
 import taggers
 from inference import monitor_inference, InferenceTask
 from training import monitor_training
+
+if "JAVAHOME" not in os.environ:
+    java_exe_path = shutil.which("java")
+    if java_exe_path is None:
+        print("WARNING: 'JAVAHOME' environment variable not set!")
+    else:
+        java_path = "/".join(java_exe_path.replace("\\", "/").split("/")[:-1])
+        os.environ["JAVAHOME"] = java_path
 
 MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predict)
     "bilstm": (
@@ -43,13 +52,18 @@ MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predi
             f"--output_prediction --patience 30 --exp_dir [model_base_path]"
         ),
         None
-    ),
-    "stanford": "123"
+    )
 }
 
-NLTK_MODELS = {
-    "tnt": nltk.TnT,
-    "hmm": nltk.HiddenMarkovModelTagger
+NLTK_MODELS = { # Entries are model_name -> (model_class, args)
+    "tnt": (nltk.TnT, []),
+    "stanford": (
+        nltk.StanfordPOSTagger,
+        [
+            "D:/model-eval/models/stanford-tagger/models/english-bidirectional-distsim.tagger",
+            "D:/model-eval/models/stanford-tagger/stanford-postagger.jar"
+        ]
+    )
 }
 
 # tnt = nltk.TnT()
@@ -62,7 +76,8 @@ NLTK_MODELS = {
 TAGGERS = {
     "svmtool": taggers.SVMT,
     "bilstm": taggers.BILSTM,
-    "pos_adv": taggers.POSADV
+    "pos_adv": taggers.POSADV,
+    "stanford": taggers.Stanford
 }
 
 def insert_arg_values(cmd, tagger, args, model_name):
@@ -118,35 +133,20 @@ async def run_with_sys_call(args, model_name, file_pointer):
         final_acc = tagger.get_pred_acc()
     return final_acc, model_footprint
 
-def format_nltk_data(args, dataset_type):
-    data_path = data_archives.get_dataset_path(args.lang, args.treebank, dataset_type)
-    train_data = open(data_path, "r", encoding="utf-8").readlines()
-    sentences = []
-    curr_senteces = []
-    for line in train_data:
-        if line.strip() == "":
-            sentences.append(curr_senteces)
-            curr_senteces = []
-        else:
-            curr_senteces.append(line.split(None))
-    return sentences
-
 async def run_with_nltk(args, model_name, file_pointer):
-    model = NLTK_MODELS[model_name]()
-    model = nltk.TnT()
+    model_class, model_args = NLTK_MODELS[model_name]
+    model = model_class(*model_args)
 
     final_acc = 0
     if args.train: # Train model.
         print(f"Training NLTK model: '{model_name}'")
-        train_data = format_nltk_data(args, "train")
+        train_data = nltk_util.format_nltk_data(args, "train")
         model.train(train_data)
 
     model_footprint = None
     if args.predict: # Run inference task.
-        test_data = format_nltk_data(args, "test")
-        async def run_eval(test_data):
-            return model.evaluate(test_data)
-        asyncio_task = asyncio.create_task(run_eval(test_data))
+        test_data = nltk_util.format_nltk_data(args, "test")
+        asyncio_task = asyncio.create_task(nltk_util.evaluate(model, test_data))
         task = InferenceTask(asyncio_task, InferenceTask.TASK_ASYNCIO)
         model_footprint = await monitor_inference(task)
         final_acc = asyncio_task.result()

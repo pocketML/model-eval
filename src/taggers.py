@@ -170,3 +170,43 @@ class POSADV(Tagger):
 
     def predict_path(self):
         return f"{self.model_base_path()}/preds.out.task0"
+
+class Stanford(Tagger):
+    ACC_STR = "test123"
+
+    async def on_epoch_complete(self, process_handler):
+        while (text := self.read_stdout(process_handler)) is not None:
+            print(text)
+            if (index := text.find(self.ACC_STR)) != -1:
+                test_str = text[index + len(self.ACC_STR) + 1:]
+                if (acc_index := test_str.find("acc:")) != -1:
+                    acc_str = test_str[acc_index + len("acc:") + 1:]
+                    pct_index = acc_str.find("%")
+                    self.epoch += 1
+                    yield float(acc_str[:pct_index])
+
+    def get_pred_acc(self):
+        correct = 0
+        total = 0
+        with open(self.predict_path(), "r", encoding="utf-8") as fp:
+            lines = fp.readlines()
+            for line in lines:
+                line = line.strip()
+                if line == "":
+                    continue
+                total += 1
+                split = line.split(None)
+                predicted = split[1]
+                actual = split[2]
+                if predicted == actual:
+                    correct += 1
+        return correct / total
+
+    def model_base_path(self):
+        return f"models/stanford-tagger/models/"
+
+    def model_path(self):
+        return f"{self.model_base_path()}/english-bidirectional-distsim.tagger"
+
+    def predict_path(self):
+        return f"{self.model_base_path()}/preds.out.task0"
