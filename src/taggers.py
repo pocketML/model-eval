@@ -11,10 +11,7 @@ class Tagger(ABC):
     def read_stdout(self, process_handler):
         if process_handler.poll() is not None:
             return None
-        try:
-            data = process_handler.stdout.readline()
-        except KeyboardInterrupt:
-            return None
+        data = process_handler.stdout.readline()
         text = data.decode("utf-8")
         return text
 
@@ -104,7 +101,7 @@ class BILSTM(Tagger):
             if (index := text.find(self.ACC_STR)) != -1:
                 acc_str = text[index + len(self.ACC_STR) + 1:]
                 self.epoch += 1
-                yield float(acc_str) * 100
+                yield float(acc_str)
 
     def get_pred_acc(self):
         correct = 0
@@ -136,15 +133,17 @@ class BILSTM(Tagger):
         return f"{self.model_base_path()}/preds.out"
 
 class POSADV(Tagger):
-    ACC_STR = "dev accuracy:"
+    ACC_STR = "test loss:"
 
     async def on_epoch_complete(self, process_handler):
         while (text := self.read_stdout(process_handler)) is not None:
-            print(text)
             if (index := text.find(self.ACC_STR)) != -1:
-                acc_str = text[index + len(self.ACC_STR) + 1:]
-                self.epoch += 1
-                yield float(acc_str) * 100
+                test_str = text[index + len(self.ACC_STR) + 1:]
+                if (acc_index := test_str.find("acc:")) != -1:
+                    acc_str = test_str[acc_index + len("acc:") + 1:]
+                    pct_index = acc_str.find("%")
+                    self.epoch += 1
+                    yield float(acc_str[:pct_index])
 
     def get_pred_acc(self):
         correct = 0

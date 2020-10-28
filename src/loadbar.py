@@ -81,11 +81,7 @@ class Loadbar:
 
             self.print_bar(text)
             if self.curr_step == self.total_steps:
-                self.screen.clear()
-                self.screen.keypad(False)
-                curses.echo()
-                curses.nocbreak()
-                curses.endwin()
+                self.reset_console()
         self.last_time = time()
 
     def print_bar(self, flavor_text=""):
@@ -122,6 +118,13 @@ class Loadbar:
         prog_x = max(int((loadbar_width / 2) - (len(str_3) / 2)), 0)
         screen.addstr(3, start_x + prog_x, str_3)
         screen.refresh()
+
+    def reset_console(self):
+        self.screen.clear()
+        self.screen.keypad(False)
+        curses.echo()
+        curses.nocbreak()
+        curses.endwin()
 
     def __iter__(self):
         return LoadbarIterator(self)

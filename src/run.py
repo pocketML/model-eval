@@ -1,13 +1,16 @@
 import asyncio
+from operator import mod
 import os
 import subprocess
 from datetime import datetime
 import platform
 import argparse
+import nltk
+from nltk import data
 import data_archives
 import transform_data
 import taggers
-from inference import monitor_inference
+from inference import monitor_inference, InferenceTask
 from training import monitor_training
 
 MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predict)
@@ -40,8 +43,21 @@ MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predi
             f"--output_prediction --patience 30 --exp_dir [model_base_path]"
         ),
         None
-    )
+    ),
+    "stanford": "123"
 }
+
+NLTK_MODELS = {
+    "tnt": nltk.TnT,
+    "hmm": nltk.HiddenMarkovModelTagger
+}
+
+# tnt = nltk.TnT()
+# hmm = nltk.HiddenMarkovModelTagger()
+# senna = nltk.Senna()
+# brill = nltk.BrillTagger()
+# crf = nltk.CRFTagger()
+# stanford = nltk.StanfordPOSTagger()
 
 TAGGERS = {
     "svmtool": taggers.SVMT,
@@ -78,6 +94,64 @@ def system_call(cmd, cwd):
     process = subprocess.Popen(cmd_full, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     return process
 
+async def run_with_sys_call(args, model_name, file_pointer):
+    call_train, call_infer = MODELS_SYS_CALLS[model_name]
+    tagger = TAGGERS[model_name](args.lang, args.treebank)
+
+    cwd = os.getcwd().replace("\\", "/")
+    if not os.path.exists(f"{cwd}/{tagger.model_base_path()}"):
+        os.mkdir(f"{cwd}/{tagger.model_base_path()}")
+
+    final_acc = 0
+    if args.train: # Train model.
+        call_train = insert_arg_values(call_train, tagger, args, model_name)
+        process = system_call(call_train, cwd)
+        final_acc = await monitor_training(tagger, process, args, file_pointer)
+
+    model_footprint = None
+    if args.predict: # Run inference task.
+        if call_infer is None:
+            call_infer = insert_arg_values(call_infer, tagger, args, model_name)
+            process = system_call(call_infer, cwd)
+            task = InferenceTask(process, InferenceTask.TASK_SYSCALL)
+            model_footprint = await monitor_inference(task)
+        final_acc = tagger.get_pred_acc()
+    return final_acc, model_footprint
+
+def format_nltk_data(args, dataset_type):
+    data_path = data_archives.get_dataset_path(args.lang, args.treebank, dataset_type)
+    train_data = open(data_path, "r", encoding="utf-8").readlines()
+    sentences = []
+    curr_senteces = []
+    for line in train_data:
+        if line.strip() == "":
+            sentences.append(curr_senteces)
+            curr_senteces = []
+        else:
+            curr_senteces.append(line.split(None))
+    return sentences
+
+async def run_with_nltk(args, model_name, file_pointer):
+    model = NLTK_MODELS[model_name]()
+    model = nltk.TnT()
+
+    final_acc = 0
+    if args.train: # Train model.
+        print(f"Training NLTK model: '{model_name}'")
+        train_data = format_nltk_data(args, "train")
+        model.train(train_data)
+
+    model_footprint = None
+    if args.predict: # Run inference task.
+        test_data = format_nltk_data(args, "test")
+        async def run_eval(test_data):
+            return model.evaluate(test_data)
+        asyncio_task = asyncio.create_task(run_eval(test_data))
+        task = InferenceTask(asyncio_task, InferenceTask.TASK_ASYNCIO)
+        model_footprint = await monitor_inference(task)
+        final_acc = asyncio_task.result()
+    return final_acc, model_footprint
+
 async def main(args):
     print("Arguments:")
     print(f"model: {args.model_name}")
@@ -91,41 +165,29 @@ async def main(args):
     if not data_archives.archive_exists("models"):
         data_archives.download_and_unpack("models")
 
-    models_to_run = MODELS_SYS_CALLS.keys() if args.model_name == "all" else [args.model_name]
-    do_training = args.train
-    do_inference = args.predict
+    models_to_run = (list(MODELS_SYS_CALLS.keys()) + list(NLTK_MODELS.keys())
+                     if args.model_name == "all" else [args.model_name])
     if not args.train and not args.predict: # Do both training and inference.
-        do_training = True
-        do_inference = True
+        args.train = True
+        args.predict = True
 
     if args.treebank is None: # Get default treebank for given langauge, if none is specified.
         args.treebank = data_archives.get_default_treebank(args.lang)
 
     for model_name in models_to_run:
-        call_train, call_infer = MODELS_SYS_CALLS[model_name]
         file_pointer = None
         if args.save_results:
             formatted_date = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
             file_name = f"results/{model_name}_{formatted_date}.out"
             file_pointer = open(file_name, "w")
 
-        tagger = TAGGERS[model_name](args.lang, args.treebank)
+        if model_name in MODELS_SYS_CALLS:
+            final_acc, model_footprint = await run_with_sys_call(args, model_name, file_pointer)
+        elif model_name in NLTK_MODELS:
+            final_acc, model_footprint = await run_with_nltk(args, model_name, file_pointer)
 
-        cwd = os.getcwd().replace("\\", "/")
-        if not os.path.exists(f"{cwd}/{tagger.model_base_path()}"):
-            os.mkdir(f"{cwd}/{tagger.model_base_path()}")
-
-        final_acc = 0
-        if do_training: # Traing model.
-            call_train = insert_arg_values(call_train, tagger, args, model_name)
-            process = system_call(call_train, cwd)
-            final_acc = await monitor_training(tagger, process, args, file_pointer)
-
-        if do_inference: # Run inference task.
-            call_infer = insert_arg_values(call_infer, tagger, args, model_name)
-            process = system_call(call_infer, cwd)
-            model_footprint = await monitor_inference(tagger, process)
-            final_acc = tagger.get_pred_acc()
+        if model_footprint is not None:
+            print(f"Model footprint: {model_footprint}")
             if file_pointer is not None: # Save size of model footprint.
                 file_pointer.write(f"Model footprint: {model_footprint}\n")
 
@@ -150,7 +212,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluation of various state of the art POS taggers, on the UD dataset")
     
     # required arguments (positionals)
-    choices = list(MODELS_SYS_CALLS.keys()) + ["all"]
+    choices = list(MODELS_SYS_CALLS.keys()) + list(NLTK_MODELS.keys()) + ["all"]
     parser.add_argument("model_name", type=str, choices=choices, help="name of the model to run")
 
     # optional arguments
