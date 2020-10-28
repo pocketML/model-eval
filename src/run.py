@@ -193,6 +193,8 @@ async def main(args):
     for model_name in models_to_run:
         file_pointer = None
         if args.save_results:
+            if not os.path.exists("results"):
+                os.mkdir("results")
             formatted_date = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
             file_name = f"results/{model_name}_{formatted_date}.out"
             file_pointer = open(file_name, "w")
