@@ -61,7 +61,7 @@ MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predi
         (
             "java -mx2g -cp models/stanford-tagger/stanford-postagger.jar " +
             "edu.stanford.nlp.tagger.maxent.MaxentTagger -model [model_path] " +
-            "--outputFormat tsv " +
+            "--encoding UTF-8 " +
             "--testFile format=TSV,wordColumn=0,tagColumn=1,[dataset_test] [stdout] [pred_path]"
         )
     )
@@ -109,14 +109,14 @@ def system_call(cmd, cwd):
     if "[stderr]" in cmd:
         index = cmd.index("[stderr]")
         file_path = cmd[index + len("[stderr]") + 1:]
-        stderr_reroute = open(file_path, "w")
+        stderr_reroute = open(file_path, "w", encoding="utf-8")
         cmd = cmd[:index]
 
     stdout_reroute = subprocess.PIPE
     if "[stdout]" in cmd:
         index = cmd.index("[stdout]")
         file_path = cmd[index + len("[stdout]") + 1:]
-        stdout_reroute = open(file_path, "w")
+        stdout_reroute = open(file_path, "w", encoding="utf-8", errors="utf-8")
         cmd = cmd[:index]
 
     cmd_full = cmd.replace("[dir]", cwd)

@@ -195,7 +195,7 @@ class Stanford(Tagger):
             )
             fp.write(f"arch = {architecture}\n")
             fp.write(f"model = {self.model_path()}\n")
-            fp.write("encoding = utf-8\n")
+            fp.write("encoding = UTF-8\n")
             fp.write(f"iterations = {args.iter}\n")
             fp.write(f"lang = {data_archives.LANGUAGES[args.lang]}\n")
             fp.write("tagSeparator = \\t\n")
@@ -209,7 +209,7 @@ class Stanford(Tagger):
                 yield None
 
     def get_pred_acc(self):
-        with open(self.predict_path(), "r", encoding="utf-8") as fp:
+        with open(self.predict_path(), "r", encoding="ansi") as fp:
             lines = fp.readlines()
             acc_str = lines[-2].split(None)[4]
             acc = float(acc_str[1:-3].replace(",", "."))
