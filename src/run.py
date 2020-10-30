@@ -1,5 +1,5 @@
 import asyncio
-from operator import mod
+from operator import mul
 import os
 import shutil
 import subprocess
@@ -11,7 +11,8 @@ import nltk_util
 import data_archives
 import transform_data
 import taggers
-from inference import monitor_inference, InferenceTask
+import multiprocessing
+import inference
 from training import monitor_training
 
 if "JAVAHOME" not in os.environ:
@@ -144,8 +145,8 @@ async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
         if call_infer is not None:
             call_infer = insert_arg_values(call_infer, tagger_helper, args)
             process = system_call(call_infer, cwd)
-            task = InferenceTask(process, InferenceTask.TASK_SYSCALL)
-            model_footprint = await monitor_inference(task)
+            task = inference.InferenceTask(process, inference.InferenceTask.TASK_SYSCALL)
+            model_footprint = await inference.monitor_inference(task)
         final_acc = tagger_helper.get_pred_acc()
     return final_acc, model_footprint
 
@@ -165,10 +166,13 @@ async def run_with_nltk(args, model_name):
         if nltk_util.saved_model_exists(model_name):
             model = nltk_util.load_model(model_name)
         test_data = nltk_util.format_nltk_data(args, "test")
-        asyncio_task = asyncio.create_task(nltk_util.evaluate(model, test_data))
-        task = InferenceTask(asyncio_task, InferenceTask.TASK_ASYNCIO)
-        model_footprint = await monitor_inference(task)
-        final_acc = asyncio_task.result()
+        inference.start_trace()
+        pipe_1, pipe_2 = multiprocessing.Pipe()
+        process = multiprocessing.Process(target=nltk_util.evaluate, args=(model, test_data, pipe_2))
+        task = inference.InferenceTask(process, inference.InferenceTask.TASK_PROCESS)
+        process.start()
+        model_footprint = await inference.monitor_inference(task)
+        final_acc = pipe_1.recv()
     return final_acc, model_footprint
 
 async def main(args):

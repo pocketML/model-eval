@@ -29,7 +29,7 @@ def format_nltk_data(args, dataset_type):
             curr_senteces.append(tuple(line.split(None)))
     return sentences
 
-async def evaluate(model, test_data):
+def evaluate(model, test_data, pipe):
     correct = 0
     total = 0
     prev_pct = 0
@@ -43,5 +43,5 @@ async def evaluate(model, test_data):
         pct = int((index / len(test_data)) * 100)
         if pct > prev_pct:
             prev_pct = pct
-            print(f"{pct}%", end="\r")
-    return correct / total
+            print(f"{pct}%", end="\r", flush=True)
+    pipe.send(correct / total)
