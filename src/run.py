@@ -1,17 +1,16 @@
 import asyncio
-from operator import mul
 import os
+import multiprocessing
 import shutil
 import subprocess
 from datetime import datetime
 import platform
 import argparse
-import nltk
 import nltk_util
 import data_archives
 import transform_data
 import taggers
-import multiprocessing
+import plotting
 from inference import monitor_inference
 from training import monitor_training
 
@@ -217,11 +216,6 @@ async def main(args):
         elif model_name in NLTK_MODELS:
             final_acc, model_footprint = await run_with_nltk(args, model_name)
 
-        if model_footprint is not None:
-            print(f"Model footprint: {model_footprint}KB")
-            if file_pointer is not None: # Save size of model footprint.
-                file_pointer.write(f"Model footprint: {model_footprint}\n")
-
         # Normalize accuracy
         if final_acc > 1:
             final_acc /= 100
@@ -230,6 +224,14 @@ async def main(args):
         if file_pointer is not None: # Save final test-set/prediction accuracy.
                 file_pointer.write(f"Final acc: {normed_acc}\n")
                 file_pointer.close()
+
+        if model_footprint is not None:
+            print(f"Model footprint: {model_footprint}KB")
+            if file_pointer is not None: # Save size of model footprint.
+                file_pointer.write(f"Model footprint: {model_footprint}\n")
+
+    if args.plot:
+        plotting.plot_results()
 
 if __name__ == "__main__":
     print("*****************************************")
@@ -254,7 +256,8 @@ if __name__ == "__main__":
     parser.add_argument("-lb", "--loadbar", help="whether to run with loadbar", action="store_true")
     parser.add_argument("-s", "--save-results", help="whether to save accuracy & size complexity measurements", action="store_true")
     parser.add_argument("-t", "--train", help="whether to train the given model", action="store_true")
-    parser.add_argument("-p", "--predict", help="whether to predict/evaluate accuracy using the given model", action="store_true")
+    parser.add_argument("-e", "--eval", help="whether to predict & evaluate accuracy using the given model", action="store_true")
+    parser.add_argument("-p", "--plot", help="whether to plot results from previous/current runs", action="store_true")
 
     args = parser.parse_args()
 
