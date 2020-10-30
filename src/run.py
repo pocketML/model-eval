@@ -68,7 +68,7 @@ MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predi
 }
 
 NLTK_MODELS = { # Entries are model_name -> (model_class, args)
-    "tnt": (nltk.TnT, [])
+    "tnt": (nltk.TnT, [None, False, 1000, True])
 }
 
 # hmm = nltk.HiddenMarkovModelTagger()
@@ -149,7 +149,7 @@ async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
         final_acc = tagger_helper.get_pred_acc()
     return final_acc, model_footprint
 
-async def run_with_nltk(args, model_name, tagger_helper):
+async def run_with_nltk(args, model_name):
     model_class, model_args = NLTK_MODELS[model_name]
     model = model_class(*model_args)
 
@@ -158,9 +158,12 @@ async def run_with_nltk(args, model_name, tagger_helper):
         print(f"Training NLTK model: '{model_name}'")
         train_data = nltk_util.format_nltk_data(args, "train")
         model.train(train_data)
+        nltk_util.save_model(model, model_name)
 
     model_footprint = None
     if args.predict: # Run inference task.
+        if nltk_util.saved_model_exists(model_name):
+            model = nltk_util.load_model(model_name)
         test_data = nltk_util.format_nltk_data(args, "test")
         asyncio_task = asyncio.create_task(nltk_util.evaluate(model, test_data))
         task = InferenceTask(asyncio_task, InferenceTask.TASK_ASYNCIO)
@@ -206,10 +209,10 @@ async def main(args):
         if model_name in MODELS_SYS_CALLS:
             final_acc, model_footprint = await run_with_sys_call(args, model_name, tagger, file_pointer)
         elif model_name in NLTK_MODELS:
-            final_acc, model_footprint = await run_with_nltk(args, model_name, tagger)
+            final_acc, model_footprint = await run_with_nltk(args, model_name)
 
         if model_footprint is not None:
-            print(f"Model footprint: {model_footprint}")
+            print(f"Model footprint: {model_footprint}KB")
             if file_pointer is not None: # Save size of model footprint.
                 file_pointer.write(f"Model footprint: {model_footprint}\n")
 

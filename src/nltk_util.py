@@ -1,5 +1,20 @@
-import nltk
+from nltk.tag import untag
+import os
+import dill as pickle
 import data_archives
+
+MODEL_PATH = "models/nltk_pickled"
+
+def saved_model_exists(model_name):
+    return os.path.exists(f"{MODEL_PATH}/{model_name}.pk")
+
+def save_model(model, model_name):
+    with open(f"{MODEL_PATH}/{model_name}.pk", "wb") as fp:
+        pickle.dump(model, fp)
+
+def load_model(model_name):
+    with open(f"{MODEL_PATH}/{model_name}.pk", "rb") as fp:
+        return pickle.load(fp)
 
 def format_nltk_data(args, dataset_type):
     data_path = data_archives.get_dataset_path(args.lang, args.treebank, dataset_type)
@@ -11,16 +26,22 @@ def format_nltk_data(args, dataset_type):
             sentences.append(curr_senteces)
             curr_senteces = []
         else:
-            curr_senteces.append(line.split(None))
+            curr_senteces.append(tuple(line.split(None)))
     return sentences
 
 async def evaluate(model, test_data):
     correct = 0
     total = 0
-    for sentence in test_data:
-        preds = model.tag_sents(sentence)
-        for pred_tup in preds:
-            if pred_tup[0][1] == pred_tup[1][0]:
+    prev_pct = 0
+    for index, sentence in enumerate(test_data):
+        only_words = untag(sentence)
+        preds = model.tag(only_words)
+        for test_tup, pred_tup in zip(sentence, preds):
+            if test_tup[1] == pred_tup[1]:
                 correct += 1
             total += 1
+        pct = int((index / len(test_data)) * 100)
+        if pct > prev_pct:
+            prev_pct = pct
+            print(f"{pct}%", end="\r")
     return correct / total

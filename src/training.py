@@ -5,6 +5,7 @@ async def monitor_training(monitor, process, args, file_pointer=None):
     if args.loadbar:
         loadbar = Loadbar(30, args.iter, f"Training ({args.model_name})")
         loadbar.print_bar()
+
     async for test_acc in monitor.on_epoch_complete(process):
         acc_str = ""
         if test_acc is not None:
@@ -23,5 +24,6 @@ async def monitor_training(monitor, process, args, file_pointer=None):
 
         if monitor.epoch == args.iter:
             process.kill()
+            break
 
     return final_acc
