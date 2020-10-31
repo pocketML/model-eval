@@ -6,7 +6,8 @@ import subprocess
 from datetime import datetime
 import platform
 import argparse
-import nltk, nltk_util
+import nltk
+import nltk_util
 import data_archives
 import transform_data
 import taggers
@@ -140,7 +141,7 @@ async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
         final_acc = await monitor_training(tagger_helper, process, args, file_pointer)
 
     model_footprint = None
-    if args.predict: # Run inference task.
+    if args.eval: # Run inference task.
         if call_infer is not None:
             call_infer = insert_arg_values(call_infer, tagger_helper, args)
             process = system_call(call_infer, cwd)
@@ -160,7 +161,7 @@ async def run_with_nltk(args, model_name):
         nltk_util.save_model(model, model_name)
 
     model_footprint = None
-    if args.predict: # Run inference task.
+    if args.eval: # Run inference task.
         if nltk_util.saved_model_exists(model_name):
             model = nltk_util.load_model(model_name)
         test_data = nltk_util.format_nltk_data(args, "test")
@@ -191,9 +192,9 @@ async def main(args):
 
     models_to_run = (list(MODELS_SYS_CALLS.keys()) + list(NLTK_MODELS.keys())
                      if args.model_name == "all" else [args.model_name])
-    if not args.train and not args.predict: # Do both training and inference.
+    if not args.train and not args.eval: # Do both training and inference.
         args.train = True
-        args.predict = True
+        args.eval = True
 
     if args.treebank is None: # Get default treebank for given langauge, if none is specified.
         args.treebank = data_archives.get_default_treebank(args.lang)
