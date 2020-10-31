@@ -1,15 +1,17 @@
 For the base evaluation platform:
 ** python 3.8.5
 ** conda install requests
+** conda install matplotlib
 
 Requirements for the various models:
 
 * BiLSTM-aux
-** pip install cython // not sure if this is actually needed
+** pip install cython // not sure if this is actually needed (pretty sure it isn't)
 ** pip install dyNET38
 
 * svmtool
-** ??
+** Perl (strawberry)
+** Run on Linux with gcc/g++ or use Windows and install these on WSL
 
 * pos_adv - BiLSTM-CRF with adversarial training
 ** pip install --upgrade https://github.com/Theano/Theano/archive/master.zip
@@ -18,3 +20,7 @@ Requirements for the various models:
 
 * stanford tagger
 ** java 8+
+
+* TnT
+** conda install nltk
+** conda install dill
