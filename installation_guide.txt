@@ -1,6 +1,8 @@
 For the base evaluation platform:
 ** python 3.8.5
 ** conda install requests
+** conda install nltk
+** conda install matplotlib
 
 Requirements for the various models:
 

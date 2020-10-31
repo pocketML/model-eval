@@ -6,7 +6,7 @@ import subprocess
 from datetime import datetime
 import platform
 import argparse
-import nltk_util
+import nltk, nltk_util
 import data_archives
 import transform_data
 import taggers
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     parser.add_argument("-lb", "--loadbar", help="whether to run with loadbar", action="store_true")
     parser.add_argument("-s", "--save-results", help="whether to save accuracy & size complexity measurements", action="store_true")
     parser.add_argument("-t", "--train", help="whether to train the given model", action="store_true")
-    parser.add_argument("-e", "--eval", help="whether to predict & evaluate accuracy using the given model", action="store_true")
+    parser.add_argument("-e", "--predict", help="whether to predict & evaluate accuracy using the given model", action="store_true")
     parser.add_argument("-p", "--plot", help="whether to plot results from previous/current runs", action="store_true")
 
     args = parser.parse_args()
