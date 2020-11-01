@@ -10,10 +10,10 @@ def zero_pad(num):
 def format_time(seconds):
     hours = 0
     minutes = 0
-    if seconds > 60:
+    if seconds >= 60:
         minutes = int(seconds / 60)
         seconds = int(seconds % 60)
-    if minutes > 60:
+    if minutes >= 60:
         hours = int(minutes / 60)
         minutes = int(minutes % 60)
     mins_hours_str = f"{zero_pad(minutes)}:{zero_pad(seconds)}"

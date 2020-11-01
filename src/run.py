@@ -76,8 +76,7 @@ NLTK_MODELS = { # Entries are model_name -> (model_class, args)
         (nltk.BrillTaggerTrainer, [
             nltk_util.load_model("tnt"),
             [
-                Template(Pos([-1])), Template(Pos([1])), Template(Pos([-2])),
-                Template(Pos([2])), Template(Word([0])), Template(Word([1, -1]))
+                Template(Pos([-1])), Template(Pos([1]))
             ]
         ]
     )
@@ -233,11 +232,13 @@ async def main(args):
             final_acc /= 100
         normed_acc = f"{final_acc:.4f}"
         print(f"Test Accuracy: {normed_acc}")
+        if model_footprint is not None:
+            print(f"Model footprint: {model_footprint}KB")
+
         if file_pointer is not None: # Save final test-set/prediction accuracy.
             file_pointer.write(f"Final acc: {normed_acc}\n")
 
             if model_footprint is not None: # Save size of model footprint.
-                print(f"Model footprint: {model_footprint}KB")
                 file_pointer.write(f"Model footprint: {model_footprint}\n")
 
             file_pointer.close()
