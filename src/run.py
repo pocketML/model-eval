@@ -7,13 +7,15 @@ from datetime import datetime
 import platform
 import argparse
 import nltk
+from nltk.tbl.template import Template
+from nltk.tag.brill import Word, Pos
 import nltk_util
 import data_archives
 import transform_data
 import taggers
 import plotting
 from inference import monitor_inference
-from training import monitor_training
+from training import monitor_training, train_nltk_model
 
 if "JAVAHOME" not in os.environ:
     java_exe_path = shutil.which("java")
@@ -69,7 +71,16 @@ MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predi
 }
 
 NLTK_MODELS = { # Entries are model_name -> (model_class, args)
-    "tnt": (nltk.TnT, [None, False, 1000, True])
+    "tnt": (nltk.TnT, []),
+    "brill": 
+        (nltk.BrillTaggerTrainer, [
+            nltk_util.load_model("tnt"),
+            [
+                Template(Pos([-1])), Template(Pos([1])), Template(Pos([-2])),
+                Template(Pos([2])), Template(Word([0])), Template(Word([1, -1]))
+            ]
+        ]
+    )
 }
 
 # hmm = nltk.HiddenMarkovModelTagger()
@@ -156,15 +167,15 @@ async def run_with_nltk(args, model_name):
     final_acc = 0
     if args.train: # Train model.
         print(f"Training NLTK model: '{model_name}'")
-        train_data = nltk_util.format_nltk_data(args, "train")
-        model.train(train_data)
-        nltk_util.save_model(model, model_name)
+        train_data = nltk_util.format_nltk_data(args.lang, args.treebank, "train")
+        trained_model = train_nltk_model(model, train_data, args)
+        nltk_util.save_model(trained_model, model_name)
 
     model_footprint = None
     if args.eval: # Run inference task.
         if nltk_util.saved_model_exists(model_name):
             model = nltk_util.load_model(model_name)
-        test_data = nltk_util.format_nltk_data(args, "test")
+        test_data = nltk_util.format_nltk_data(args.lang, args.treebank, "test")
 
         # We run NLTK model inference in a seperate process,
         # so we can measure it's memory usage similarly to a system call.
@@ -223,13 +234,13 @@ async def main(args):
         normed_acc = f"{final_acc:.4f}"
         print(f"Test Accuracy: {normed_acc}")
         if file_pointer is not None: # Save final test-set/prediction accuracy.
-                file_pointer.write(f"Final acc: {normed_acc}\n")
-                file_pointer.close()
+            file_pointer.write(f"Final acc: {normed_acc}\n")
 
-        if model_footprint is not None:
-            print(f"Model footprint: {model_footprint}KB")
-            if file_pointer is not None: # Save size of model footprint.
+            if model_footprint is not None: # Save size of model footprint.
+                print(f"Model footprint: {model_footprint}KB")
                 file_pointer.write(f"Model footprint: {model_footprint}\n")
+
+            file_pointer.close()
 
     if args.plot:
         plotting.plot_results()
@@ -257,7 +268,7 @@ if __name__ == "__main__":
     parser.add_argument("-lb", "--loadbar", help="whether to run with loadbar", action="store_true")
     parser.add_argument("-s", "--save-results", help="whether to save accuracy & size complexity measurements", action="store_true")
     parser.add_argument("-t", "--train", help="whether to train the given model", action="store_true")
-    parser.add_argument("-e", "--predict", help="whether to predict & evaluate accuracy using the given model", action="store_true")
+    parser.add_argument("-e", "--eval", help="whether to predict & evaluate accuracy using the given model", action="store_true")
     parser.add_argument("-p", "--plot", help="whether to plot results from previous/current runs", action="store_true")
 
     args = parser.parse_args()

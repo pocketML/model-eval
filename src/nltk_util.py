@@ -16,8 +16,8 @@ def load_model(model_name):
     with open(f"{MODEL_PATH}/{model_name}.pk", "rb") as fp:
         return pickle.load(fp)
 
-def format_nltk_data(args, dataset_type):
-    data_path = data_archives.get_dataset_path(args.lang, args.treebank, dataset_type)
+def format_nltk_data(language, treebank, dataset_type):
+    data_path = data_archives.get_dataset_path(language, treebank, dataset_type)
     train_data = open(data_path, "r", encoding="utf-8").readlines()
     sentences = []
     curr_senteces = []
