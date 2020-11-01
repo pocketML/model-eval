@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from glob import glob
+import platform
 
 from nltk import tree
 import data_archives
@@ -89,6 +90,7 @@ class SVMT(Tagger):
         if len(files) == 0:
             return self.model_base_path()
         split_files = [x.split(".") for x in files]
+        
         split_files = [int(x[x.index("FLD") + 1]) for x in split_files]
         split_files.sort()
         return f"{self.model_base_path()}/pocketML.FLD.{split_files[-1]}"
@@ -117,11 +119,15 @@ class BILSTM(Tagger):
                 index += 1
                 if line == "":
                     continue
-                actual = lines[index].strip()
-                index += 1
                 total += 1
                 split = line.split(None)
                 predicted = split[1]
+                if platform.system() == 'Windows':
+                  index += 1
+                  actual = lines[index].strip()
+                else:
+                  actual = split[2]
+
                 if predicted == actual:
                     correct += 1
         return correct / total
