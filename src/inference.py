@@ -23,7 +23,7 @@ def get_memory_snapshot(pid):
             print(f"Error: {text}")
             return None
     else:
-        return int(text[:-1]) # Usage in kilobytes.
+        return int(text.strip()[:-1]) # Usage in kilobytes.
 
 def process_is_alive(process):
     if isinstance(process, subprocess.Popen):

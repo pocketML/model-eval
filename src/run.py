@@ -72,15 +72,15 @@ MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predi
 
 NLTK_MODELS = { # Entries are model_name -> (model_class, args)
     "tnt": (nltk.TnT, []),
-    "brill": 
-        (nltk.BrillTaggerTrainer, [
-            nltk_util.load_model("tnt"),
-            [
-                Template(Pos([-1])), Template(Pos([1])), Template(Pos([-2])),
-                Template(Pos([2])), Template(Word([0])), Template(Word([1, -1]))
-            ]
-        ]
-    )
+    #"brill": 
+    #    (nltk.BrillTaggerTrainer, [
+    #        nltk_util.load_model("tnt"),
+    #        [
+    #            Template(Pos([-1])), Template(Pos([1])), Template(Pos([-2])),
+    #            Template(Pos([2])), Template(Word([0])), Template(Word([1, -1]))
+    #        ]
+    #    ]
+    #)
 }
 
 # hmm = nltk.HiddenMarkovModelTagger()
@@ -135,7 +135,8 @@ def system_call(cmd, cwd):
     #if platform.system() == "Windows" and not cmd.startswith("bash"):
     #    cmd_full = cmd_full.replace("/", "\\")
     print(f"Running {cmd_full}")
-    process = subprocess.Popen(cmd_full, stdout=stdout_reroute, stderr=stderr_reroute)
+    
+    process = subprocess.Popen(cmd_full.split(" "), stdout=stdout_reroute, stderr=stderr_reroute)
     return process
 
 async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
@@ -229,6 +230,8 @@ async def main(args):
             final_acc, model_footprint = await run_with_nltk(args, model_name)
 
         # Normalize accuracy
+        print(f'Final accuracy: {final_acc}')
+        print(f'Model footprint: {model_footprint}')
         if final_acc > 1:
             final_acc /= 100
         normed_acc = f"{final_acc:.4f}"
