@@ -136,7 +136,7 @@ def system_call(cmd, cwd):
     #    cmd_full = cmd_full.replace("/", "\\")
     print(f"Running {cmd_full}")
     
-    process = subprocess.Popen(cmd_full.split(" "), stdout=stdout_reroute, stderr=stderr_reroute)
+    process = subprocess.Popen(cmd_full.split(" ")[2].strip("\"").split(" "), stdout=stdout_reroute, stderr=stderr_reroute)
     return process
 
 async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
