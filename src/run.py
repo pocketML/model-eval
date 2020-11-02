@@ -135,6 +135,9 @@ def system_call(cmd, cwd):
     #if platform.system() == "Windows" and not cmd.startswith("bash"):
     #    cmd_full = cmd_full.replace("/", "\\")
     print(f"Running {cmd_full}")
+
+    if platform.system() != "Windows":
+        cmd_full = cmd_full.split(" ")[2].strip("\"").split(" ")
     
     process = subprocess.Popen(cmd_full, stdout=stdout_reroute, stderr=stderr_reroute)
     return process

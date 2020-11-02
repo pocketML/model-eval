@@ -45,7 +45,6 @@ def evaluate(model, test_data, pipe):
                 correct += 1
                 curr_sent_correct += 1
             total += 1
-            print(f"{test_tup} vs {pred_tup}")
         if curr_sent_correct == len(sentence):
             correct_sent += 1
         total_sent += 1
