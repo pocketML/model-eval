@@ -22,9 +22,35 @@ class Tagger(ABC):
     def inference_complete(self, process_handler):
         return process_handler.poll() is not None
 
-    @abstractmethod
-    def get_pred_acc(self):
-        pass
+    def get_pred_acc(self, ext=""):
+        total = 0
+        correct = 0
+        curr_sent_correct = 0
+        curr_sent_count = 0
+        correct_sent = 0
+        total_sent = 0
+
+        with open(self.predict_path() + ext, "r", encoding="utf-8") as fp:
+            lines = fp.readlines()
+            for line in lines:
+                line = line.strip()
+                if line == "":
+                    total_sent += 1
+                    if curr_sent_count == curr_sent_correct:
+                        correct_sent += 1
+                    curr_sent_correct = 0
+                    curr_sent_count = 0
+                    continue
+                total += 1
+                curr_sent_count += 1
+                split = line.split(None)
+                predicted = split[1]
+                actual = split[2]
+                if predicted == actual:
+                    correct += 1
+                    curr_sent_correct += 1
+
+        return correct / total, correct_sent / total_sent
 
     @abstractmethod
     def model_base_path(self):
@@ -65,23 +91,6 @@ class SVMT(Tagger):
                     self.epoch += 1
                     yield float(acc_str[:pct_index])
 
-    def get_pred_acc(self):
-        correct = 0
-        total = 0
-        with open(self.predict_path(), "r", encoding="utf-8") as fp:
-            lines = fp.readlines()
-            for line in lines:
-                line = line.strip()
-                if line == "":
-                    continue
-                total += 1
-                split = line.split(None)
-                predicted = split[1]
-                actual = split[2]
-                if predicted == actual:
-                    correct += 1
-        return correct / total
-
     def model_base_path(self):
         return f"models/svmtool/pocketML/{self.lang}_{self.treebank}"
 
@@ -109,28 +118,7 @@ class BILSTM(Tagger):
                 yield float(acc_str)
 
     def get_pred_acc(self):
-        correct = 0
-        total = 0
-        with open(self.predict_path() + ".task0", "r", encoding="utf-8") as fp:
-            lines = fp.readlines()
-            index = 0
-            while index < len(lines):
-                line = lines[index].strip()
-                index += 1
-                if line == "":
-                    continue
-                total += 1
-                split = line.split(None)
-                predicted = split[1]
-                if platform.system() == 'Windows':
-                  index += 1
-                  actual = lines[index].strip()
-                else:
-                  actual = split[2]
-
-                if predicted == actual:
-                    correct += 1
-        return correct / total
+        return super().get_pred_acc(".task0")
 
     def model_base_path(self):
         return f"models/bilstm-aux/pocketML/{self.lang}_{self.treebank}"
@@ -153,23 +141,6 @@ class POSADV(Tagger):
                     pct_index = acc_str.find("%")
                     self.epoch += 1
                     yield float(acc_str[:pct_index])
-
-    def get_pred_acc(self):
-        correct = 0
-        total = 0
-        with open(self.predict_path(), "r", encoding="utf-8") as fp:
-            lines = fp.readlines()
-            for line in lines:
-                line = line.strip()
-                if line == "":
-                    continue
-                total += 1
-                split = line.split(None)
-                predicted = split[1]
-                actual = split[2]
-                if predicted == actual:
-                    correct += 1
-        return correct / total
 
     def model_base_path(self):
         return f"models/pos_adv/pocketML/pos_{self.lang}_{self.treebank}"
@@ -217,9 +188,11 @@ class Stanford(Tagger):
     def get_pred_acc(self):
         with open(self.predict_path(), "r", encoding="ansi") as fp:
             lines = fp.readlines()
-            acc_str = lines[-2].split(None)[4]
-            acc = float(acc_str[1:-3].replace(",", "."))
-            return acc
+            sent_acc_str = lines[-3].split(None)[4]
+            sent_acc = float(sent_acc_str[1:-3].replace(",", "."))
+            token_acc_str = lines[-2].split(None)[4]
+            token_acc = float(token_acc_str[1:-3].replace(",", "."))
+            return token_acc, sent_acc
 
     def model_base_path(self):
         return f"models/stanford-tagger/{self.lang}_{self.treebank}"

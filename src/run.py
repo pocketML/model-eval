@@ -136,7 +136,7 @@ def system_call(cmd, cwd):
     #    cmd_full = cmd_full.replace("/", "\\")
     print(f"Running {cmd_full}")
     
-    process = subprocess.Popen(cmd_full.split(" ")[2].strip("\"").split(" "), stdout=stdout_reroute, stderr=stderr_reroute)
+    process = subprocess.Popen(cmd_full, stdout=stdout_reroute, stderr=stderr_reroute)
     return process
 
 async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
@@ -225,21 +225,27 @@ async def main(args):
             tagger = tagger(args)
 
         if model_name in MODELS_SYS_CALLS:
-            final_acc, model_footprint = await run_with_sys_call(args, model_name, tagger, file_pointer)
+            acc_tuple, model_footprint = await run_with_sys_call(args, model_name, tagger, file_pointer)
         elif model_name in NLTK_MODELS:
-            final_acc, model_footprint = await run_with_nltk(args, model_name)
+            acc_tuple, model_footprint = await run_with_nltk(args, model_name)
 
+        token_acc, sent_acc = acc_tuple
         # Normalize accuracy
-        if final_acc > 1:
-            final_acc /= 100
-        normed_acc = f"{final_acc:.4f}"
-        print(f"Test Accuracy: {normed_acc}")
+        if token_acc > 1:
+            token_acc /= 100
+        if sent_acc > 1:
+            sent_acc /= 100
+        token_acc = f"{token_acc:.4f}"
+        sent_acc = f"{sent_acc:.4f}"
+        print(f"Token Accuracy: {token_acc}")
+        print(f"Sentence Accuracy: {sent_acc}")
 
         if model_footprint is not None:
             print(f"Model footprint: {model_footprint}KB")
 
         if file_pointer is not None: # Save final test-set/prediction accuracy.
-            file_pointer.write(f"Final acc: {normed_acc}\n")
+            file_pointer.write(f"Final token acc: {token_acc}\n")
+            file_pointer.write(f"Final sentence acc: {sent_acc}\n")
 
             if model_footprint is not None: # Save size of model footprint.
                 file_pointer.write(f"Model footprint: {model_footprint}\n")
