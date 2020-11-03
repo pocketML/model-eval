@@ -1,7 +1,6 @@
 import asyncio
 import os
 import multiprocessing
-import shutil
 import subprocess
 from datetime import datetime
 import platform
@@ -77,7 +76,7 @@ def system_call(cmd, cwd):
     process = subprocess.Popen(cmd_full, stdout=stdout_reroute, stderr=stderr_reroute)
     return process
 
-async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
+async def run_with_sys_call(args, tagger_helper, file_pointer):
     call_train = tagger_helper.train_string()
     call_infer = tagger_helper.predict_string()
 
@@ -164,11 +163,10 @@ async def main(args):
         tagger = TAGGERS[model_name](args, model_name)
 
         if tagger.is_syscall:
-            acc_tuple, model_footprint = await run_with_sys_call(args, model_name, tagger, file_pointer)
+            acc_tuple, model_footprint = await run_with_sys_call(args, tagger, file_pointer)
         else:
             acc_tuple, model_footprint = await run_with_nltk(args, tagger, model_name)
 
-        print(f'acc_tuple: {acc_tuple}')
         token_acc, sent_acc = acc_tuple
         # Normalize accuracy
         if token_acc > 1:

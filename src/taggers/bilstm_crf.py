@@ -37,7 +37,7 @@ class BILSTMCRF(SysCallTagger):
             "--test [dataset_test] "
             "--embedding_dict [dir]/models/bilstm-crf/dataset/word_vec/polyglot-[lang].pkl "
             "--output_prediction --patience 30 --exp_dir [model_base_path]"
-            )
+        )
 
     def predict_string(self):
         None
