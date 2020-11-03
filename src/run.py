@@ -144,9 +144,9 @@ async def main(args):
     #             data_archives.download_and_unpack("models", model_name)
 
     for language in set(data_archives.LANGUAGES.values()):
-        data_archives.transform_datasets()
         if not data_archives.archive_exists("data", language):
             data_archives.download_and_unpack("data", language)
+            data_archives.transform_datasets()
 
     if not args.train and not args.eval: # Do both training and inference.
         args.train = True
