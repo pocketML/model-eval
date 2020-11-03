@@ -26,7 +26,7 @@ async def monitor_training(monitor, process, args, file_pointer=None):
             process.kill()
             break
 
-    return final_acc
+    return final_acc, 0
 
 def train_nltk_model(tagger, train_data, args):
     if args.loadbar:
