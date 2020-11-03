@@ -69,5 +69,5 @@ class SysCallTagger(Tagger):
         pass
 
     @abstractmethod
-    def eval_string(self):
+    def predict_string(self):
         pass

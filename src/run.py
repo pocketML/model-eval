@@ -79,13 +79,13 @@ def system_call(cmd, cwd):
 
 async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
     call_train = tagger_helper.train_string()
-    call_infer = tagger_helper.eval_string()
+    call_infer = tagger_helper.predict_string()
 
     cwd = os.getcwd().replace("\\", "/")
     if not os.path.exists(f"{cwd}/{tagger_helper.model_base_path()}"):
         os.mkdir(f"{cwd}/{tagger_helper.model_base_path()}")
 
-    final_acc = 0, 0
+    final_acc = (0, 0)
     if args.train: # Train model.
         call_train = insert_arg_values(call_train, tagger_helper, args)
         process = system_call(call_train, cwd)
@@ -168,6 +168,7 @@ async def main(args):
         else:
             acc_tuple, model_footprint = await run_with_nltk(args, tagger, model_name)
 
+        print(f'acc_tuple: {acc_tuple}')
         token_acc, sent_acc = acc_tuple
         # Normalize accuracy
         if token_acc > 1:

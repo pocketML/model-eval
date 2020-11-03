@@ -39,5 +39,5 @@ class BILSTMCRF(SysCallTagger):
             "--output_prediction --patience 30 --exp_dir [model_base_path]"
             )
 
-    def eval_string(self):
+    def predict_string(self):
         None

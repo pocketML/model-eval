@@ -46,7 +46,7 @@ class Stanford(SysCallTagger):
                 self.epoch += 1
                 yield None
 
-    def evaluate(self):
+    def evaluate(self, _):
         with open(self.predict_path(), "r", encoding="ansi") as fp:
             lines = fp.readlines()
             sent_acc_str = lines[-3].split(None)[4]
@@ -70,7 +70,7 @@ class Stanford(SysCallTagger):
             "edu.stanford.nlp.tagger.maxent.MaxentTagger -props [model_base_path]/pocketML.props"
             )
 
-    def eval_string(self):
+    def predict_string(self):
         return ( 
             "java -mx2g -cp models/stanford-tagger/stanford-postagger.jar "
             "edu.stanford.nlp.tagger.maxent.MaxentTagger -model [model_path] "

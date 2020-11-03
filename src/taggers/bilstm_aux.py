@@ -10,7 +10,7 @@ class BILSTMAUX(SysCallTagger):
                 self.epoch += 1
                 yield float(acc_str)
 
-    def get_pred_acc(self):
+    def evaluate(self):
         return super().evaluate(".task0")
 
     def model_base_path(self):
@@ -30,7 +30,7 @@ class BILSTMAUX(SysCallTagger):
             "--test [dataset_test] --iters [iters] --model [model_path]"
             )
     
-    def eval_string(self):
+    def predict_string(self):
         return (
             "python [dir]/models/bilstm-aux/src/structbilty.py --model [model_path] "
             "--test [dataset_test] "
