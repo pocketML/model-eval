@@ -1,5 +1,5 @@
-from taggers.tagger_wrapper_syscall import SysCallTagger
 from glob import glob
+from taggers.tagger_wrapper_syscall import SysCallTagger
 
 class BILSTMCRF(SysCallTagger):
     ACC_STR = "test loss:"
@@ -36,7 +36,7 @@ class BILSTMCRF(SysCallTagger):
             "--dev [dataset_dev] "
             "--test [dataset_test] "
             "--embedding_dict [dir]/models/bilstm-crf/dataset/word_vec/polyglot-[lang].pkl "
-            f"--output_prediction --patience 30 --exp_dir [model_base_path]"
+            "--output_prediction --patience 30 --exp_dir [model_base_path]"
             )
 
     def eval_string(self):

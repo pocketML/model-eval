@@ -61,7 +61,6 @@ def system_call(cmd, cwd):
 
     stdout_reroute = subprocess.PIPE
     if "[stdout]" in cmd:
-        print("we in here")
         index = cmd.index("[stdout]")
         file_path = cmd[index + len("[stdout]") + 1:]
         stdout_reroute = open(file_path, "w", encoding="utf-8", errors="utf-8")
@@ -73,7 +72,7 @@ def system_call(cmd, cwd):
     print(f"Running {cmd_full}")
 
     if platform.system() != "Windows":
-        cmd_full = cmd_full.split(" ")[2].strip("\"").split(" ")
+        cmd_full = cmd_full.split(" ")
     
     process = subprocess.Popen(cmd_full, stdout=stdout_reroute, stderr=stderr_reroute)
     return process
@@ -86,7 +85,7 @@ async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
     if not os.path.exists(f"{cwd}/{tagger_helper.model_base_path()}"):
         os.mkdir(f"{cwd}/{tagger_helper.model_base_path()}")
 
-    final_acc = 0
+    final_acc = 0, 0
     if args.train: # Train model.
         call_train = insert_arg_values(call_train, tagger_helper, args)
         process = system_call(call_train, cwd)
@@ -134,7 +133,7 @@ async def run_with_nltk(args, tagger, model_name):
 async def main(args):
     print("Arguments:")
     print(f"model: {args.model_name}")
-    print(f"verbos: {args.verbose}")
+    print(f"verbose: {args.verbose}")
     print(f"dataset language: {args.lang}")
     print(f"iterations: {args.iter}")
 

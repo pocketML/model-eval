@@ -27,12 +27,12 @@ class BILSTMAUX(SysCallTagger):
             "python [dir]/models/bilstm-aux/src/structbilty.py --dynet-mem 1500 "
             "--train [dataset_train] "
             "--dev [dataset_dev] "
-            f"--test [dataset_test] --iters [iters] --model [model_path]"
+            "--test [dataset_test] --iters [iters] --model [model_path]"
             )
     
     def eval_string(self):
         return (
-            f"python [dir]/models/bilstm-aux/src/structbilty.py --model [model_path] "
+            "python [dir]/models/bilstm-aux/src/structbilty.py --model [model_path] "
             "--test [dataset_test] "
-            f"--output [pred_path]"
-        )
+            "--output [pred_path]"
+            )

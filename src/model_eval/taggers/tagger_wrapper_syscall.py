@@ -15,7 +15,7 @@ class SysCallTagger(Tagger):
     def read_stdout(self, process_handler):
         if process_handler.poll() is not None:
             return None
-        data = process_handler.stdout.read()
+        data = process_handler.stdout.readline()
         text = data.decode("utf-8")
         return text
 
