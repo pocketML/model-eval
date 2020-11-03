@@ -6,9 +6,6 @@ import subprocess
 from datetime import datetime
 import platform
 import argparse
-import nltk
-from nltk.tbl.template import Template
-from nltk.tag.brill import Word, Pos
 import nltk_util
 import data_archives
 import transform_data
@@ -70,29 +67,19 @@ MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predi
     )
 }
 
-NLTK_MODELS = { # Entries are model_name -> (model_class, args)
-    "tnt": (nltk.TnT, []),
-    #"brill": 
-    #    (nltk.BrillTaggerTrainer, [
-    #        nltk_util.load_model("tnt"),
-    #        [
-    #            Template(Pos([-1])), Template(Pos([1])), Template(Pos([-2])),
-    #            Template(Pos([2])), Template(Word([0])), Template(Word([1, -1]))
-    #        ]
-    #    ]
-    #)
-}
-
 # hmm = nltk.HiddenMarkovModelTagger()
 # senna = nltk.Senna()
 # brill = nltk.BrillTagger()
 # crf = nltk.CRFTagger()
 
 TAGGERS = {
-    "svmtool": taggers.SVMT,
     "bilstm": taggers.BILSTM,
+    "svmtool": taggers.SVMT,
     "pos_adv": taggers.POSADV,
-    "stanford": taggers.Stanford
+    "stanford": taggers.Stanford,
+    "tnt": taggers.TnT,
+    "brill": taggers.Brill,
+    "crf": taggers.CRF,
 }
 
 def insert_arg_values(cmd, tagger, args):
@@ -161,35 +148,37 @@ async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
             call_infer = insert_arg_values(call_infer, tagger_helper, args)
             process = system_call(call_infer, cwd)
             model_footprint = await monitor_inference(process)
-        final_acc = tagger_helper.get_pred_acc()
+        final_acc = tagger_helper.evaluate()
     return final_acc, model_footprint
 
-async def run_with_nltk(args, model_name):
-    model_class, model_args = NLTK_MODELS[model_name]
-    model = model_class(*model_args)
-
-    final_acc = 0
+async def run_with_nltk(args, tagger, model_name):
+    final_acc = (0, 0)
     if args.train: # Train model.
         print(f"Training NLTK model: '{model_name}'")
         train_data = nltk_util.format_nltk_data(args.lang, args.treebank, "train")
-        trained_model = train_nltk_model(model, train_data, args)
-        nltk_util.save_model(trained_model, model_name)
+        train_nltk_model(tagger, train_data, args)
+        tagger.save_model()
 
     model_footprint = None
     if args.eval: # Run inference task.
-        if nltk_util.saved_model_exists(model_name):
-            model = nltk_util.load_model(model_name)
+        if not args.train and tagger.saved_model_exists():
+            # If we haven't just trained a model, load one for prediction.
+            tagger.load_model()
+        elif not args.train:
+            print("Error: No trained model to predict on!")
+            exit(1)
+
         test_data = nltk_util.format_nltk_data(args.lang, args.treebank, "test")
 
         # We run NLTK model inference in a seperate process,
         # so we can measure it's memory usage similarly to a system call.
         pipe_1, pipe_2 = multiprocessing.Pipe()
-        process = multiprocessing.Process(target=nltk_util.evaluate, args=(model, test_data, pipe_2))
+        process = multiprocessing.Process(target=tagger.evaluate, args=(test_data, pipe_2))
         process.start()
 
         # Wait for inference to complete.
         model_footprint = await monitor_inference(process)
-        final_acc = pipe_1.recv()
+        final_acc = pipe_1.recv() # Receive accuracy from seperate process.
     return final_acc, model_footprint
 
 async def main(args):
@@ -205,7 +194,7 @@ async def main(args):
     if not data_archives.archive_exists("models"):
         data_archives.download_and_unpack("models")
 
-    models_to_run = (list(MODELS_SYS_CALLS.keys()) + list(NLTK_MODELS.keys())
+    models_to_run = (TAGGERS.keys()
                      if args.model_name == "all" else [args.model_name])
     if not args.train and not args.eval: # Do both training and inference.
         args.train = True
@@ -223,14 +212,12 @@ async def main(args):
             file_name = f"results/{model_name}_{formatted_date}.out"
             file_pointer = open(file_name, "w")
 
-        tagger = TAGGERS.get(model_name, None)
-        if tagger is not None: # Instantiate helper class, if it exists relevant.
-            tagger = tagger(args)
+        tagger = TAGGERS[model_name](args, model_name)
 
         if model_name in MODELS_SYS_CALLS:
             acc_tuple, model_footprint = await run_with_sys_call(args, model_name, tagger, file_pointer)
-        elif model_name in NLTK_MODELS:
-            acc_tuple, model_footprint = await run_with_nltk(args, model_name)
+        else:
+            acc_tuple, model_footprint = await run_with_nltk(args, tagger, model_name)
 
         token_acc, sent_acc = acc_tuple
         # Normalize accuracy
@@ -270,7 +257,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluation of various state of the art POS taggers, on the UD dataset")
     
     # required arguments (positionals)
-    choices = list(MODELS_SYS_CALLS.keys()) + list(NLTK_MODELS.keys()) + ["all"]
+    choices = list(TAGGERS.keys()) + ["all"]
     parser.add_argument("model_name", type=str, choices=choices, help="name of the model to run")
 
     # optional arguments
