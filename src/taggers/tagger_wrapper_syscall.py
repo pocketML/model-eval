@@ -7,6 +7,8 @@ class Tagger(ABC):
         self.is_syscall = is_syscall
 
 class SysCallTagger(Tagger):
+    IS_NLTK = False
+
     def __init__(self, args, model_name):
         super().__init__(args, model_name, True)
         self.epoch = 0

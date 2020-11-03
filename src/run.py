@@ -7,7 +7,6 @@ import platform
 import argparse
 import nltk_util
 import data_archives
-import transform_data
 import plotting
 from inference import monitor_inference
 from training import monitor_training, train_nltk_model
@@ -136,14 +135,19 @@ async def main(args):
     print(f"dataset language: {args.lang}")
     print(f"iterations: {args.iter}")
 
-    if not data_archives.archive_exists("data"):
-        data_archives.download_and_unpack("data")
-        transform_data.transform_datasets()
-    if not data_archives.archive_exists("models"):
-        data_archives.download_and_unpack("models")
-
     models_to_run = (TAGGERS.keys()
                      if args.model_name == "all" else [args.model_name])
+
+    # for model_name in models_to_run:
+    #     if not TAGGERS[model_name].IS_NLTK:
+    #         if not data_archives.archive_exists("models", model_name):
+    #             data_archives.download_and_unpack("models", model_name)
+
+    for language in set(data_archives.LANGUAGES.values()):
+        data_archives.transform_datasets()
+        if not data_archives.archive_exists("data", language):
+            data_archives.download_and_unpack("data", language)
+
     if not args.train and not args.eval: # Do both training and inference.
         args.train = True
         args.eval = True
