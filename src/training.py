@@ -41,7 +41,7 @@ def train_nltk_model(tagger, train_data, args):
         if args.loadbar:
             loadbar.step()
         else:
-            print(int((i // args.iter) * 100), end="\r")
+            print(f"{int((i / args.iter) * 100)}%", end="\r")
 
     if trained_model is not None:
             tagger.nltk_model = trained_model

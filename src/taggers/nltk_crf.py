@@ -9,7 +9,8 @@ class CRF(NLTKTagger):
             "c1": 1.0,
             "c2": 1e-3,
             "max_iterations": args.iter,
-            "feature.possible_transitions": True
+            "feature.possible_transitions": True,
+            "num_memories": 10
         }
         self.nltk_model = nltk.CRFTagger(features, False, train_opts)
         super().__init__(args, model_name, load_model)
