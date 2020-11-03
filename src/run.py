@@ -40,7 +40,7 @@ MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predi
         )
     ),
     "svmtool": (
-        "bash -c \"perl [dir]/models/svmtool/bin/SVMTlearn.pl -V 1 models/svmtool/bin/config.svmt\"",
+        "bash -c \"perl [dir]/models/svmtool/bin/SVMTlearn.pl -V 1 [dir]/models/svmtool/bin/config.svmt\"",
         (f"bash -c \"perl [dir]/models/svmtool/bin/SVMTagger.pl [model_path] < " +
          f"[dataset_test] > [pred_path]\"")
     ),
@@ -126,6 +126,7 @@ def system_call(cmd, cwd):
 
     stdout_reroute = subprocess.PIPE
     if "[stdout]" in cmd:
+        print("we in here")
         index = cmd.index("[stdout]")
         file_path = cmd[index + len("[stdout]") + 1:]
         stdout_reroute = open(file_path, "w", encoding="utf-8", errors="utf-8")
@@ -136,7 +137,14 @@ def system_call(cmd, cwd):
     #    cmd_full = cmd_full.replace("/", "\\")
     print(f"Running {cmd_full}")
     
-    process = subprocess.Popen(cmd_full.split(" ")[2].strip("\"").split(" "), stdout=stdout_reroute, stderr=stderr_reroute)
+    #process = subprocess.Popen(cmd_full.split(" "), stdout=stdout_reroute, stderr=stderr_reroute)
+    process = subprocess.Popen(cmd_full.split(" ")[2].strip("\"").split(" "),
+      #stdin=open(os.devnull),
+      bufsize=0,
+      stdout=stdout_reroute,
+      stderr=stderr_reroute,
+      close_fds=True,
+      shell=True)
     return process
 
 async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):

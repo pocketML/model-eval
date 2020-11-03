@@ -15,8 +15,10 @@ class Tagger(ABC):
     def read_stdout(self, process_handler):
         if process_handler.poll() is not None:
             return None
-        data = process_handler.stdout.readline()
+        data = process_handler.stdout.read()
+        print("received some data")
         text = data.decode("utf-8")
+        print(text)
         return text
 
     def inference_complete(self, process_handler):
