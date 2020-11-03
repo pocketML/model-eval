@@ -6,82 +6,14 @@ import subprocess
 from datetime import datetime
 import platform
 import argparse
-import nltk
-from nltk.tbl.template import Template
-from nltk.tag.brill import Word, Pos
 import nltk_util
 import data_archives
 import transform_data
-import taggers
 import plotting
 from inference import monitor_inference
 from training import monitor_training, train_nltk_model
-
-if "JAVAHOME" not in os.environ:
-    java_exe_path = shutil.which("java")
-    if java_exe_path is None:
-        print("WARNING: 'JAVAHOME' environment variable not set!")
-    else:
-        java_path = "/".join(java_exe_path.replace("\\", "/").split("/")[:-1])
-        os.environ["JAVAHOME"] = java_path
-
-MODELS_SYS_CALLS = { # Entries are model_name -> (sys_call_train, sys_call_predict)
-    "bilstm": (
-        (
-            "python [dir]/models/bilstm-aux/src/structbilty.py --dynet-mem 1500 " +
-            "--train [dataset_train] " +
-            "--dev [dataset_dev] " +
-            f"--test [dataset_test] --iters [iters] --model [model_path]"
-        ),
-        (
-            f"python [dir]/models/bilstm-aux/src/structbilty.py --model [model_path] " +
-            "--test [dataset_test] " +
-            f"--output [pred_path]"
-        )
-    ),
-    "svmtool": (
-        "bash -c \"perl [dir]/models/svmtool/bin/SVMTlearn.pl -V 1 [dir]/models/svmtool/bin/config.svmt\"",
-        (f"bash -c \"perl [dir]/models/svmtool/bin/SVMTagger.pl [model_path] < " +
-         f"[dataset_test] > [pred_path]\"")
-    ),
-    "pos_adv": (
-        (
-            "python [dir]/models/pos_adv/bilstm_bilstm_crf.py --fine_tune --embedding polyglot --oov embedding --update momentum --adv 0.05 " +
-            "--batch_size 10 --num_units 150 --num_filters 50 --learning_rate 0.01 --decay_rate 0.05 --grad_clipping 5 --regular none --dropout " +
-            "--train [dataset_train] " +
-            "--dev [dataset_dev] " +
-            "--test [dataset_test] " +
-            "--embedding_dict [dir]/models/pos_adv/dataset/word_vec/polyglot-[lang].pkl " +
-            f"--output_prediction --patience 30 --exp_dir [model_base_path]"
-        ),
-        None
-    ),
-    "stanford": (
-        (
-            "java -cp models/stanford-tagger/stanford-postagger.jar " +
-            "edu.stanford.nlp.tagger.maxent.MaxentTagger -props [model_base_path]/pocketML.props"
-        ),
-        (
-            "java -mx2g -cp models/stanford-tagger/stanford-postagger.jar " +
-            "edu.stanford.nlp.tagger.maxent.MaxentTagger -model [model_path] " +
-            "--encoding UTF-8 " +
-            "--testFile format=TSV,wordColumn=0,tagColumn=1,[dataset_test] [stdout] [pred_path]"
-        )
-    )
-}
-
-NLTK_MODELS = { # Entries are model_name -> (model_class, args)
-    "tnt": (nltk.TnT, []),
-    #"brill": 
-    #    (nltk.BrillTaggerTrainer, [
-    #        nltk_util.load_model("tnt"),
-    #        [
-    #            Template(Pos([-1])), Template(Pos([1])), Template(Pos([-2])),
-    #            Template(Pos([2])), Template(Word([0])), Template(Word([1, -1]))
-    #        ]
-    #    ]
-    #)
-}
+from taggers import bilstm_aux, bilstm_crf, svmtool, stanford
+from taggers import nltk_tnt, nltk_crf, nltk_brill
 
 # hmm = nltk.HiddenMarkovModelTagger()
 # senna = nltk.Senna()
@@ -89,10 +21,13 @@ NLTK_MODELS = { # Entries are model_name -> (model_class, args)
 # crf = nltk.CRFTagger()
 
 TAGGERS = {
-    "svmtool": taggers.SVMT,
-    "bilstm": taggers.BILSTM,
-    "pos_adv": taggers.POSADV,
-    "stanford": taggers.Stanford
+    "bilstm_aux": bilstm_aux.BILSTMAUX,
+    "bilstm_crf": bilstm_crf.BILSTMCRF,
+    "svmtool": svmtool.SVMT,
+    "stanford": stanford.Stanford,
+    "tnt": nltk_tnt.TnT,
+    "brill": nltk_brill.Brill,
+    "crf": nltk_crf.CRF,
 }
 
 def insert_arg_values(cmd, tagger, args):
@@ -136,19 +71,16 @@ def system_call(cmd, cwd):
     #if platform.system() == "Windows" and not cmd.startswith("bash"):
     #    cmd_full = cmd_full.replace("/", "\\")
     print(f"Running {cmd_full}")
+
+    if platform.system() != "Windows":
+        cmd_full = cmd_full.split(" ")[2].strip("\"").split(" ")
     
-    #process = subprocess.Popen(cmd_full.split(" "), stdout=stdout_reroute, stderr=stderr_reroute)
-    process = subprocess.Popen(cmd_full.split(" ")[2].strip("\"").split(" "),
-      #stdin=open(os.devnull),
-      bufsize=0,
-      stdout=stdout_reroute,
-      stderr=stderr_reroute,
-      close_fds=True,
-      shell=True)
+    process = subprocess.Popen(cmd_full, stdout=stdout_reroute, stderr=stderr_reroute)
     return process
 
 async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
-    call_train, call_infer = MODELS_SYS_CALLS[model_name]
+    call_train = tagger_helper.train_string()
+    call_infer = tagger_helper.eval_string()
 
     cwd = os.getcwd().replace("\\", "/")
     if not os.path.exists(f"{cwd}/{tagger_helper.model_base_path()}"):
@@ -166,35 +98,37 @@ async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
             call_infer = insert_arg_values(call_infer, tagger_helper, args)
             process = system_call(call_infer, cwd)
             model_footprint = await monitor_inference(process)
-        final_acc = tagger_helper.get_pred_acc()
+        final_acc = tagger_helper.evaluate()
     return final_acc, model_footprint
 
-async def run_with_nltk(args, model_name):
-    model_class, model_args = NLTK_MODELS[model_name]
-    model = model_class(*model_args)
-
-    final_acc = 0
+async def run_with_nltk(args, tagger, model_name):
+    final_acc = (0, 0)
     if args.train: # Train model.
         print(f"Training NLTK model: '{model_name}'")
         train_data = nltk_util.format_nltk_data(args.lang, args.treebank, "train")
-        trained_model = train_nltk_model(model, train_data, args)
-        nltk_util.save_model(trained_model, model_name)
+        train_nltk_model(tagger, train_data, args)
+        tagger.save_model()
 
     model_footprint = None
     if args.eval: # Run inference task.
-        if nltk_util.saved_model_exists(model_name):
-            model = nltk_util.load_model(model_name)
+        if not args.train and tagger.saved_model_exists():
+            # If we haven't just trained a model, load one for prediction.
+            tagger.load_model()
+        elif not args.train:
+            print("Error: No trained model to predict on!")
+            exit(1)
+
         test_data = nltk_util.format_nltk_data(args.lang, args.treebank, "test")
 
         # We run NLTK model inference in a seperate process,
         # so we can measure it's memory usage similarly to a system call.
         pipe_1, pipe_2 = multiprocessing.Pipe()
-        process = multiprocessing.Process(target=nltk_util.evaluate, args=(model, test_data, pipe_2))
+        process = multiprocessing.Process(target=tagger.evaluate, args=(test_data, pipe_2))
         process.start()
 
         # Wait for inference to complete.
         model_footprint = await monitor_inference(process)
-        final_acc = pipe_1.recv()
+        final_acc = pipe_1.recv() # Receive accuracy from seperate process.
     return final_acc, model_footprint
 
 async def main(args):
@@ -210,7 +144,7 @@ async def main(args):
     if not data_archives.archive_exists("models"):
         data_archives.download_and_unpack("models")
 
-    models_to_run = (list(MODELS_SYS_CALLS.keys()) + list(NLTK_MODELS.keys())
+    models_to_run = (TAGGERS.keys()
                      if args.model_name == "all" else [args.model_name])
     if not args.train and not args.eval: # Do both training and inference.
         args.train = True
@@ -228,27 +162,32 @@ async def main(args):
             file_name = f"results/{model_name}_{formatted_date}.out"
             file_pointer = open(file_name, "w")
 
-        tagger = TAGGERS.get(model_name, None)
-        if tagger is not None: # Instantiate helper class, if it exists relevant.
-            tagger = tagger(args)
+        tagger = TAGGERS[model_name](args, model_name)
 
-        if model_name in MODELS_SYS_CALLS:
-            final_acc, model_footprint = await run_with_sys_call(args, model_name, tagger, file_pointer)
-        elif model_name in NLTK_MODELS:
-            final_acc, model_footprint = await run_with_nltk(args, model_name)
+        if tagger.is_syscall:
+            acc_tuple, model_footprint = await run_with_sys_call(args, model_name, tagger, file_pointer)
+        else:
+            acc_tuple, model_footprint = await run_with_nltk(args, tagger, model_name)
 
+        token_acc, sent_acc = acc_tuple
         # Normalize accuracy
-        print(f'Final accuracy: {final_acc}')
-        print(f'Model footprint: {model_footprint}')
-        if final_acc > 1:
-            final_acc /= 100
-        normed_acc = f"{final_acc:.4f}"
-        print(f"Test Accuracy: {normed_acc}")
+        if token_acc > 1:
+            token_acc /= 100
+        if sent_acc > 1:
+            sent_acc /= 100
+        token_acc = f"{token_acc:.4f}"
+        sent_acc = f"{sent_acc:.4f}"
+        print(f"Token Accuracy: {token_acc}")
+        print(f"Sentence Accuracy: {sent_acc}")
+
+        if model_footprint is not None:
+            print(f"Model footprint: {model_footprint}KB")
+
         if file_pointer is not None: # Save final test-set/prediction accuracy.
-            file_pointer.write(f"Final acc: {normed_acc}\n")
+            file_pointer.write(f"Final token acc: {token_acc}\n")
+            file_pointer.write(f"Final sentence acc: {sent_acc}\n")
 
             if model_footprint is not None: # Save size of model footprint.
-                print(f"Model footprint: {model_footprint}KB")
                 file_pointer.write(f"Model footprint: {model_footprint}\n")
 
             file_pointer.close()
@@ -268,7 +207,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluation of various state of the art POS taggers, on the UD dataset")
     
     # required arguments (positionals)
-    choices = list(MODELS_SYS_CALLS.keys()) + list(NLTK_MODELS.keys()) + ["all"]
+    choices = list(TAGGERS.keys()) + ["all"]
     parser.add_argument("model_name", type=str, choices=choices, help="name of the model to run")
 
     # optional arguments

@@ -28,20 +28,20 @@ async def monitor_training(monitor, process, args, file_pointer=None):
 
     return final_acc
 
-def train_nltk_model(model, train_data, args):
-    trained_model = model
+def train_nltk_model(tagger, train_data, args):
     if args.loadbar:
         loadbar = Loadbar(30, args.iter, f"Training ({args.model_name})")
         loadbar.print_bar()
 
+    trained_model = None
     for i in range(args.iter):
         start = (len(train_data) // args.iter) * i
         end = (len(train_data) // args.iter) * (i + 1)
-        new_model = model.train(train_data[start:end])
-        if new_model is not None:
-            trained_model = new_model
+        trained_model = tagger.train(train_data[start:end])
         if args.loadbar:
             loadbar.step()
         else:
             print(int((i // args.iter) * 100), end="\r")
-    return trained_model
+
+    if trained_model is not None:
+            tagger.nltk_model = trained_model

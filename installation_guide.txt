@@ -25,3 +25,7 @@ Requirements for the various models:
 * TnT
 ** conda install nltk
 ** conda install dill
+
+* CRF
+** Same requirements as TnT and...
+** conda install python-crfsuite
