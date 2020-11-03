@@ -220,7 +220,7 @@ class NLTKTagger(Tagger):
     def __init__(self, args, model_name, load_model=False):
         super().__init__(args, model_name)
         if load_model and self.saved_model_exists():
-            self.nltk_model = self.load_model()
+            self.load_model()
 
     def evaluate(self, test_data, pipe):
         total = 0
@@ -260,7 +260,7 @@ class NLTKTagger(Tagger):
 
     def load_model(self):
         with open(f"{NLTKTagger.MODEL_PATH}/{self.model_name}.pk", "rb") as fp:
-            return pickle.load(fp)
+            self.nltk_model = pickle.load(fp)
 
 class TnT(NLTKTagger):
     def __init__(self, args, model_name, load_model=False):
@@ -281,22 +281,27 @@ class Brill(NLTKTagger):
 
 class CRF(NLTKTagger):
     def __init__(self, args, model_name, load_model=False):
+        features = self.word_features
+        train_opts = {
+            "c1": 1.0,
+            "c2": 1e-3,
+            "max_iterations": args.iter,
+            "feature.possible_transitions": True
+        }
+        self.nltk_model = nltk.CRFTagger(features, False, train_opts)
         super().__init__(args, model_name, load_model)
-        if not load_model:
-            features = self.word_features
-            train_opts = {
-                "c1": 1.0,
-                "c2": 1e-3,
-                "max_iterations": self.args.iter,
-                "feature.possible_transitions": True
-            }
-            self.nltk_model = nltk.CRFTagger(features, False, train_opts)
 
     def train(self, train_data):
         self.nltk_model.train(train_data, f"{NLTKTagger.MODEL_PATH}/{self.model_name}.crfsuite")
 
     def save_model(self):
         pass
+
+    def saved_model_exists(self):
+        return path.exists(f"{NLTKTagger.MODEL_PATH}/{self.model_name}.crfsuite")
+
+    def load_model(self):
+        self.nltk_model.set_model_file(f"{NLTKTagger.MODEL_PATH}/{self.model_name}.crfsuite")
 
     def word_features(self, sentence, i):
         word = sentence[i]
@@ -330,3 +335,10 @@ class CRF(NLTKTagger):
             features.append('EOS')
 
         return features
+
+    def __getstate__(self):
+        return (self.args, self.model_name)
+
+    def __setstate__(self, state):
+        args, model_name = state
+        self.__init__(args, model_name, True)
