@@ -4,6 +4,8 @@ from shutil import unpack_archive
 import requests
 
 LANGUAGES = {
+    "am": "amharic",
+    "amharic": "amharic",
     "da": "danish",
     "danish": "danish",
     "en": "english",
@@ -55,7 +57,6 @@ def get_dataset_path(lang, treebank, dataset_type):
         treebank_upper = get_default_treebank(lang).upper()
     else:
         treebank_upper = treebank.upper()
-    print(language)
     dataset_path = f"data/{language}/UD_{language.capitalize()}-{treebank_upper}/simplified"
     path = glob(f"{dataset_path}/*-{dataset_type}.conllu")
     return path[0].replace("\\", "/")
@@ -88,12 +89,12 @@ def transform_data(dataset):
 
                     file_out.write(line_out + "\n")
 
-def transform_datasets():
-    treebanks = glob("data/*/UD_*")
+def transform_dataset(language):
+    treebanks = glob(f"data/{language}/UD_*")
     for folder in treebanks:
         print(f"Transforming {folder}")
         transform_data(folder)
 
 if __name__ == "__main__":
     #download_and_unpack("data", "yoruba")
-    transform_datasets()
+    transform_dataset("english")

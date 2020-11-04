@@ -138,15 +138,15 @@ async def main(args):
     models_to_run = (TAGGERS.keys()
                      if args.model_name == "all" else [args.model_name])
 
-    # for model_name in models_to_run:
-    #     if not TAGGERS[model_name].IS_NLTK:
-    #         if not data_archives.archive_exists("models", model_name):
-    #             data_archives.download_and_unpack("models", model_name)
+    for model_name in models_to_run:
+        if not TAGGERS[model_name].IS_NLTK:
+            if not data_archives.archive_exists("models", model_name):
+                data_archives.download_and_unpack("models", model_name)
 
-    for language in set(data_archives.LANGUAGES.values()):
-        if not data_archives.archive_exists("data", language):
-            data_archives.download_and_unpack("data", language)
-            data_archives.transform_datasets()
+    language_full = data_archives.LANGUAGE[args.lang]
+    if not data_archives.archive_exists("data", language_full):
+        data_archives.download_and_unpack("data", language_full)
+        data_archives.transform_dataset(language_full)
 
     if not args.train and not args.eval: # Do both training and inference.
         args.train = True
@@ -209,11 +209,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluation of various state of the art POS taggers, on the UD dataset")
     
     # required arguments (positionals)
-    choices = list(TAGGERS.keys()) + ["all"]
-    parser.add_argument("model_name", type=str, choices=choices, help="name of the model to run")
+    choices_models = list(TAGGERS.keys()) + ["all"]
+    parser.add_argument("model_name", type=str, choices=choices_models, help="name of the model to run")
+
+    choices_langs = set(data_archives.LANGUAGES.values())
 
     # optional arguments
-    parser.add_argument("-l", "--lang", type=str, default="en", help="choose dataset language. Default is English.")
+    parser.add_argument("-l", "--lang", type=str, choices=choices_langs, default="en", help="choose dataset language. Default is English.")
     parser.add_argument("-i", "--iter", type=int, default=10, help="number of training iterations. Default is 10.")
     parser.add_argument("-v", "--verbose", help="increase output verbosity")
     parser.add_argument("-tb", "--treebank", type=str, help="UD treebank to use as dataset (fx. 'gum')", default=None, required=False)
