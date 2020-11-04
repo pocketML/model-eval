@@ -80,8 +80,6 @@ async def run_with_sys_call(args, tagger_helper, file_pointer):
     call_infer = tagger_helper.predict_string()
 
     cwd = os.getcwd().replace("\\", "/")
-    if not os.path.exists(f"{cwd}/{tagger_helper.model_base_path()}"):
-        os.mkdir(f"{cwd}/{tagger_helper.model_base_path()}")
 
     final_acc = (0, 0)
     if args.train: # Train model.
@@ -138,10 +136,10 @@ async def main(args):
     models_to_run = (TAGGERS.keys()
                      if args.model_name == "all" else [args.model_name])
 
-    # for model_name in models_to_run:
-    #     if not TAGGERS[model_name].IS_NLTK:
-    #         if not data_archives.archive_exists("models", model_name):
-    #             data_archives.download_and_unpack("models", model_name)
+    for model_name in models_to_run:
+        if not TAGGERS[model_name].IS_NLTK:
+            if not data_archives.archive_exists("models", model_name):
+                data_archives.download_and_unpack("models", model_name)
 
     language_full = data_archives.LANGUAGES[args.lang]
     if not data_archives.archive_exists("data", language_full):

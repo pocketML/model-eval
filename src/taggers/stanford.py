@@ -56,7 +56,7 @@ class Stanford(SysCallTagger):
             return token_acc, sent_acc
 
     def model_base_path(self):
-        return f"models/stanford-tagger/{self.args.lang}_{self.args.treebank}"
+        return f"models/stanford/pocketML/{self.args.lang}_{self.args.treebank}"
 
     def model_path(self):
         return f"{self.model_base_path()}/pocketML.tagger"
@@ -66,13 +66,13 @@ class Stanford(SysCallTagger):
 
     def train_string(self):
         return (
-            "java -cp models/stanford-tagger/stanford-postagger.jar "
+            "java -cp models/stanford/stanford-postagger.jar "
             "edu.stanford.nlp.tagger.maxent.MaxentTagger -props [model_base_path]/pocketML.props"
         )
 
     def predict_string(self):
         return ( 
-            "java -mx2g -cp models/stanford-tagger/stanford-postagger.jar "
+            "java -mx2g -cp models/stanford/stanford-postagger.jar "
             "edu.stanford.nlp.tagger.maxent.MaxentTagger -model [model_path] "
             "--encoding UTF-8 "
             "--testFile format=TSV,wordColumn=0,tagColumn=1,[dataset_test] [stdout] [pred_path]"

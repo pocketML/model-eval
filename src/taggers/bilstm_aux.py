@@ -14,7 +14,7 @@ class BILSTMAUX(SysCallTagger):
         return super().evaluate(".task0")
 
     def model_base_path(self):
-        return f"models/bilstm-aux/pocketML/{self.args.lang}_{self.args.treebank}"
+        return f"models/bilstm_aux/pocketML/{self.args.lang}_{self.args.treebank}"
 
     def model_path(self):
         return f"{self.model_base_path()}/pocketML"
@@ -24,7 +24,7 @@ class BILSTMAUX(SysCallTagger):
 
     def train_string(self):
         return (
-            "python [dir]/models/bilstm-aux/src/structbilty.py --dynet-mem 1500 "
+            "python [dir]/models/bilstm_aux/src/structbilty.py --dynet-mem 1500 "
             "--train [dataset_train] "
             "--dev [dataset_dev] "
             "--test [dataset_test] --iters [iters] --model [model_path]"
@@ -32,7 +32,7 @@ class BILSTMAUX(SysCallTagger):
 
     def predict_string(self):
         return (
-            "python [dir]/models/bilstm-aux/src/structbilty.py --model [model_path] "
+            "python [dir]/models/bilstm_aux/src/structbilty.py --model [model_path] "
             "--test [dataset_test] "
             "--output [pred_path]"
         )

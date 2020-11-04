@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import os
 
 class Tagger(ABC):
     def __init__(self, args, model_name):
@@ -12,6 +13,18 @@ class SysCallTagger(Tagger):
         super().__init__(args, model_name)
         self.epoch = 0
         self.model_name = model_name
+        self.create_model_folder()
+
+    def create_model_folder(self):
+        cwd = os.getcwd().replace("\\", "/")
+        path = f"{cwd}/{self.model_base_path()}"
+        split = path.split("/")
+        start_index = split.index(self.model_name) + 1
+        for index in range(start_index+1, len(split)+1, 1):
+            partial_path = "/".join(split[:index])
+            if not os.path.exists(partial_path):
+                os.mkdir(partial_path)
+            index -= 1
 
     def read_stdout(self, process_handler):
         if process_handler.poll() is not None:

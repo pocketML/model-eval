@@ -16,7 +16,7 @@ class BILSTMCRF(SysCallTagger):
                     yield float(acc_str[:pct_index])
 
     def model_base_path(self):
-        return f"models/bilstm-crf/pocketML/pos_{self.args.lang}_{self.args.treebank}"
+        return f"models/bilstm_crf/pocketML/pos_{self.args.lang}_{self.args.treebank}"
 
     def model_path(self):
         return f"{self.model_base_path()}/pocketML"
@@ -30,7 +30,7 @@ class BILSTMCRF(SysCallTagger):
 
     def train_string(self):
         return (
-            "python [dir]/models/bilstm-crf/bilstm_bilstm_crf.py --fine_tune --embedding polyglot --oov embedding --update momentum --adv 0.05 "
+            "python [dir]/models/bilstm_crf/bilstm_bilstm_crf.py --fine_tune --embedding polyglot --oov embedding --update momentum --adv 0.05 "
             "--batch_size 10 --num_units 150 --num_filters 50 --learning_rate 0.01 --decay_rate 0.05 --grad_clipping 5 --regular none --dropout "
             "--train [dataset_train] "
             "--dev [dataset_dev] "
