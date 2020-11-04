@@ -156,6 +156,7 @@ async def main(args):
         args.treebank = data_archives.get_default_treebank(args.lang)
 
     for model_name in models_to_run:
+        print(f"Using '{model_name}' model")
         file_pointer = None
         if args.save_results:
             if not os.path.exists("results"):
@@ -166,10 +167,10 @@ async def main(args):
 
         tagger = TAGGERS[model_name](args, model_name)
 
-        if tagger.is_syscall:
-            acc_tuple, model_footprint = await run_with_sys_call(args, tagger, file_pointer)
-        else:
+        if tagger.IS_NLTK:
             acc_tuple, model_footprint = await run_with_nltk(args, tagger, model_name)
+        else:
+            acc_tuple, model_footprint = await run_with_sys_call(args, tagger, file_pointer)
 
         token_acc, sent_acc = acc_tuple
         # Normalize accuracy
