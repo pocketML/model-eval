@@ -8,7 +8,7 @@ class Brill(NLTKTagger):
     def __init__(self, args, model_name, load_model=False):
         super().__init__(args, model_name, load_model)
         if not load_model:
-            base_tagger = TnT("tnt", args, load_model=True)
+            base_tagger = TnT(args, "tnt", load_model=True)
             features = [
                 Template(Pos([-1])), Template(Pos([1])), Template(Pos([-2])),
                 Template(Pos([2])), Template(Word([0])), Template(Word([1, -1]))

@@ -1,9 +1,10 @@
 import nltk
-from os import path
+from os import path, stat
 import dill as pickle
 from taggers.tagger_wrapper_syscall import Tagger
 
 class NLTKTagger(Tagger):
+    IS_NLTK = True
     MODEL_PATH = "models/nltk_pickled"
 
     def __init__(self, args, model_name, load_model=False):

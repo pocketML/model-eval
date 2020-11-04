@@ -11,9 +11,9 @@ class Stanford(SysCallTagger):
             java_exe_path = shutil.which("java")
             if java_exe_path is None:
                 print("WARNING: 'JAVAHOME' environment variable not set!")
-        else:
-            java_path = "/".join(java_exe_path.replace("\\", "/").split("/")[:-1])
-            os.environ["JAVAHOME"] = java_path
+            else:
+                java_path = "/".join(java_exe_path.replace("\\", "/").split("/")[:-1])
+                os.environ["JAVAHOME"] = java_path
 
         with open(f"{self.model_base_path()}/pocketML.props", "w", encoding="utf-8") as fp:
             architecture = (
@@ -35,7 +35,7 @@ class Stanford(SysCallTagger):
             fp.write(f"model = {self.model_path()}\n")
             fp.write("encoding = UTF-8\n")
             fp.write(f"iterations = {self.args.iter}\n")
-            fp.write(f"lang = {data_archives.LANGUAGES[args.args.lang]}\n")
+            fp.write(f"lang = {data_archives.LANGUAGES[self.args.lang]}\n")
             fp.write("tagSeparator = \\t\n")
             train_set = data_archives.get_dataset_path(self.args.lang, self.args.treebank, "train")
             fp.write(f"trainFile = format=TSV,wordColumn=0,tagColumn=1,{train_set}")
@@ -46,7 +46,7 @@ class Stanford(SysCallTagger):
                 self.epoch += 1
                 yield None
 
-    def evaluate(self, _):
+    def evaluate(self):
         with open(self.predict_path(), "r", encoding="ansi") as fp:
             lines = fp.readlines()
             sent_acc_str = lines[-3].split(None)[4]
@@ -68,7 +68,7 @@ class Stanford(SysCallTagger):
         return (
             "java -cp models/stanford-tagger/stanford-postagger.jar "
             "edu.stanford.nlp.tagger.maxent.MaxentTagger -props [model_base_path]/pocketML.props"
-            )
+        )
 
     def predict_string(self):
         return ( 
@@ -76,5 +76,4 @@ class Stanford(SysCallTagger):
             "edu.stanford.nlp.tagger.maxent.MaxentTagger -model [model_path] "
             "--encoding UTF-8 "
             "--testFile format=TSV,wordColumn=0,tagColumn=1,[dataset_test] [stdout] [pred_path]"
-            )
-
+        )

@@ -1,14 +1,15 @@
 from abc import ABC, abstractmethod
 
 class Tagger(ABC):
-    def __init__(self, args, model_name, is_syscall = False):
+    def __init__(self, args, model_name):
         self.args = args
         self.model_name = model_name
-        self.is_syscall = is_syscall
 
 class SysCallTagger(Tagger):
+    IS_NLTK = False
+
     def __init__(self, args, model_name):
-        super().__init__(args, model_name, True)
+        super().__init__(args, model_name)
         self.epoch = 0
         self.model_name = model_name
 

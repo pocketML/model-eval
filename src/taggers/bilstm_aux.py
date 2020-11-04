@@ -28,11 +28,11 @@ class BILSTMAUX(SysCallTagger):
             "--train [dataset_train] "
             "--dev [dataset_dev] "
             "--test [dataset_test] --iters [iters] --model [model_path]"
-            )
-    
+        )
+
     def predict_string(self):
         return (
             "python [dir]/models/bilstm-aux/src/structbilty.py --model [model_path] "
             "--test [dataset_test] "
             "--output [pred_path]"
-            )
+        )

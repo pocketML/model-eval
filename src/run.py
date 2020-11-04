@@ -1,14 +1,12 @@
 import asyncio
 import os
 import multiprocessing
-import shutil
 import subprocess
 from datetime import datetime
 import platform
 import argparse
 import nltk_util
 import data_archives
-import transform_data
 import plotting
 from inference import monitor_inference
 from training import monitor_training, train_nltk_model
@@ -77,7 +75,7 @@ def system_call(cmd, cwd):
     process = subprocess.Popen(cmd_full, stdout=stdout_reroute, stderr=stderr_reroute)
     return process
 
-async def run_with_sys_call(args, model_name, tagger_helper, file_pointer):
+async def run_with_sys_call(args, tagger_helper, file_pointer):
     call_train = tagger_helper.train_string()
     call_infer = tagger_helper.predict_string()
 
@@ -137,14 +135,19 @@ async def main(args):
     print(f"dataset language: {args.lang}")
     print(f"iterations: {args.iter}")
 
-    if not data_archives.archive_exists("data"):
-        data_archives.download_and_unpack("data")
-        transform_data.transform_datasets()
-    if not data_archives.archive_exists("models"):
-        data_archives.download_and_unpack("models")
-
     models_to_run = (TAGGERS.keys()
                      if args.model_name == "all" else [args.model_name])
+
+    # for model_name in models_to_run:
+    #     if not TAGGERS[model_name].IS_NLTK:
+    #         if not data_archives.archive_exists("models", model_name):
+    #             data_archives.download_and_unpack("models", model_name)
+
+    language_full = data_archives.LANGUAGES[args.lang]
+    if not data_archives.archive_exists("data", language_full):
+        data_archives.download_and_unpack("data", language_full)
+        data_archives.transform_dataset(language_full)
+
     if not args.train and not args.eval: # Do both training and inference.
         args.train = True
         args.eval = True
@@ -153,6 +156,7 @@ async def main(args):
         args.treebank = data_archives.get_default_treebank(args.lang)
 
     for model_name in models_to_run:
+        print(f"Using '{model_name}' model")
         file_pointer = None
         if args.save_results:
             if not os.path.exists("results"):
@@ -163,10 +167,10 @@ async def main(args):
 
         tagger = TAGGERS[model_name](args, model_name)
 
-        if tagger.is_syscall:
-            acc_tuple, model_footprint = await run_with_sys_call(args, model_name, tagger, file_pointer)
-        else:
+        if tagger.IS_NLTK:
             acc_tuple, model_footprint = await run_with_nltk(args, tagger, model_name)
+        else:
+            acc_tuple, model_footprint = await run_with_sys_call(args, tagger, file_pointer)
 
         token_acc, sent_acc = acc_tuple
         # Normalize accuracy
@@ -206,11 +210,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluation of various state of the art POS taggers, on the UD dataset")
     
     # required arguments (positionals)
-    choices = list(TAGGERS.keys()) + ["all"]
-    parser.add_argument("model_name", type=str, choices=choices, help="name of the model to run")
+    choices_models = list(TAGGERS.keys()) + ["all"]
+    parser.add_argument("model_name", type=str, choices=choices_models, help="name of the model to run")
+
+    choices_langs = set(data_archives.LANGUAGES.values())
 
     # optional arguments
-    parser.add_argument("-l", "--lang", type=str, default="en", help="choose dataset language. Default is English.")
+    parser.add_argument("-l", "--lang", type=str, choices=choices_langs, default="en", help="choose dataset language. Default is English.")
     parser.add_argument("-i", "--iter", type=int, default=10, help="number of training iterations. Default is 10.")
     parser.add_argument("-v", "--verbose", help="increase output verbosity")
     parser.add_argument("-tb", "--treebank", type=str, help="UD treebank to use as dataset (fx. 'gum')", default=None, required=False)

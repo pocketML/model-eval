@@ -36,7 +36,6 @@ def plot_pareto(data):
     footprints = [mem // 1000 for (_, mem) in data.values()]
     x_pareto = np.linspace(min(accuracies), max(accuracies), 500)
     y_pareto = [max(footprints) - pareto_distribution(x, 5, min(footprints), max(footprints)) for x in x_pareto]
-    print(y_pareto)
     plt.plot(x_pareto, y_pareto)
 
     plt.legend()
