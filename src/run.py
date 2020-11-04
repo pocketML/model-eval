@@ -138,12 +138,12 @@ async def main(args):
     models_to_run = (TAGGERS.keys()
                      if args.model_name == "all" else [args.model_name])
 
-    for model_name in models_to_run:
-        if not TAGGERS[model_name].IS_NLTK:
-            if not data_archives.archive_exists("models", model_name):
-                data_archives.download_and_unpack("models", model_name)
+    # for model_name in models_to_run:
+    #     if not TAGGERS[model_name].IS_NLTK:
+    #         if not data_archives.archive_exists("models", model_name):
+    #             data_archives.download_and_unpack("models", model_name)
 
-    language_full = data_archives.LANGUAGE[args.lang]
+    language_full = data_archives.LANGUAGES[args.lang]
     if not data_archives.archive_exists("data", language_full):
         data_archives.download_and_unpack("data", language_full)
         data_archives.transform_dataset(language_full)
