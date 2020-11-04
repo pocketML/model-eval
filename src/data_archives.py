@@ -61,6 +61,10 @@ def get_dataset_path(lang, treebank, dataset_type):
     path = glob(f"{dataset_path}/*-{dataset_type}.conllu")
     return path[0].replace("\\", "/")
 
+def get_embeddings_path(lang):
+    language = LANGUAGES[lang]
+    return f"data/{language}/embeddings/polyglot-{lang}.pkl"
+
 def transform_data(dataset):
     tags_train_in = glob(f"{dataset}/*ud-train.conllu")[0]
     tags_test_in = glob(f"{dataset}/*ud-test.conllu")[0]

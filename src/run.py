@@ -37,6 +37,8 @@ def insert_arg_values(cmd, tagger, args):
     predict_path = tagger.predict_path()
     replaced = replaced.replace("[pred_path]", predict_path)
     replaced = replaced.replace("[lang]", args.lang)
+    embeddings = data_archives.get_embeddings_path(args.lang)
+    replaced = replaced.replace("[embeddings]", embeddings)
     dataset_train = data_archives.get_dataset_path(args.lang, args.treebank, "train")
     replaced = replaced.replace("[dataset_train]", dataset_train)
     dataset_test = data_archives.get_dataset_path(args.lang, args.treebank, "test")
@@ -71,7 +73,7 @@ def system_call(cmd, cwd):
 
     if platform.system() != "Windows":
         cmd_full = cmd_full.split(" ")
-    
+
     process = subprocess.Popen(cmd_full, stdout=stdout_reroute, stderr=stderr_reroute)
     return process
 
@@ -206,12 +208,12 @@ if __name__ == "__main__":
     print("*****************************************\n")
 
     parser = argparse.ArgumentParser(description="Evaluation of various state of the art POS taggers, on the UD dataset")
-    
+
     # required arguments (positionals)
     choices_models = list(TAGGERS.keys()) + ["all"]
     parser.add_argument("model_name", type=str, choices=choices_models, help="name of the model to run")
 
-    choices_langs = set(data_archives.LANGUAGES.values())
+    choices_langs = data_archives.LANGUAGES.keys() - set(data_archives.LANGUAGES.values())
 
     # optional arguments
     parser.add_argument("-l", "--lang", type=str, choices=choices_langs, default="en", help="choose dataset language. Default is English.")

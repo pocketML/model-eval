@@ -7,7 +7,7 @@ def load_results():
     mapped_data = {}
     for file_name in result_files:
         last_part = file_name.replace("\\", "/").split("/")[-1]
-        model_name = last_part.split("_")[0]
+        model_name = "_".join(last_part.split("_")[:-2])
         if model_name not in mapped_data:
             with open(file_name, "r") as fp:
                 lines = fp.readlines()
@@ -17,7 +17,10 @@ def load_results():
     return mapped_data
 
 def pareto_distribution(x, a, L, H):
-    return (a * L ** a * x ** (-a-1)) / (1 - (L/H) ** a)
+    cummulative = False
+    if cummulative:
+        return (1 - L ** a * x ** -a) / (1 - (L/H) ** a)
+    return (a * L ** a * x ** (-a - 1)) / (1 - (L/H) ** a)
 
 def plot_pareto(data):
     plt.xlabel("Accuracy")
@@ -35,7 +38,7 @@ def plot_pareto(data):
     accuracies = [acc for (acc, _) in data.values()]
     footprints = [mem // 1000 for (_, mem) in data.values()]
     x_pareto = np.linspace(min(accuracies), max(accuracies), 500)
-    y_pareto = [max(footprints) - pareto_distribution(x, 5, min(footprints), max(footprints)) for x in x_pareto]
+    y_pareto = [pareto_distribution(x, 4, min(footprints), max(footprints)) for x in x_pareto]
     plt.plot(x_pareto, y_pareto)
 
     plt.legend()

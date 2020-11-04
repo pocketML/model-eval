@@ -1,4 +1,5 @@
 from glob import glob
+from os import remove
 from taggers.tagger_wrapper_syscall import SysCallTagger
 
 class BILSTMCRF(SysCallTagger):
@@ -19,25 +20,29 @@ class BILSTMCRF(SysCallTagger):
         return f"models/bilstm_crf/pocketML/pos_{self.args.lang}_{self.args.treebank}"
 
     def model_path(self):
-        return f"{self.model_base_path()}/pocketML"
+        folders = glob(f"{self.model_base_path()}/save/epoch*")
+        if len(folders) == 0:
+            return None
+        folders.sort(key=lambda x: int(x.replace("\\", "/").split("/")[-1][5:]))
+        return folders[-1].replace("\\", "/") + "/final.npz"
 
     def predict_path(self):
-        predict_files = glob(f"{self.model_base_path()}/eval/test*")
-        if len(predict_files) == 0:
-            return self.model_base_path()
-        predict_files.sort(key=lambda x: int(x.replace("\\", "/").split("/")[-1]))
-        return predict_files[-1]
+        return f"{self.model_base_path()}/preds.out"
 
     def train_string(self):
+        reload_path = ""
+        model_path = self.model_path()
+        if self.model_path() is not None:
+            reload_path = " --reload " + model_path
         return (
             "python [dir]/models/bilstm_crf/bilstm_bilstm_crf.py --fine_tune --embedding polyglot --oov embedding --update momentum --adv 0.05 "
             "--batch_size 10 --num_units 150 --num_filters 50 --learning_rate 0.01 --decay_rate 0.05 --grad_clipping 5 --regular none --dropout "
             "--train [dataset_train] "
             "--dev [dataset_dev] "
             "--test [dataset_test] "
-            "--embedding_dict [dir]/models/bilstm-crf/dataset/word_vec/polyglot-[lang].pkl "
-            "--output_prediction --patience 30 --exp_dir [model_base_path]"
+            "--embedding_dict [embeddings] "
+            "--patience 30 --exp_dir [model_base_path]" + reload_path
         )
 
     def predict_string(self):
-        None
+        return self.train_string() + " --output_prediction"
