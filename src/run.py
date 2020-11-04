@@ -168,7 +168,6 @@ async def main(args):
         else:
             acc_tuple, model_footprint = await run_with_nltk(args, tagger, model_name)
 
-        print(f'acc_tuple: {acc_tuple}')
         token_acc, sent_acc = acc_tuple
         # Normalize accuracy
         if token_acc > 1:
