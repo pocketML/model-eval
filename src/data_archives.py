@@ -67,7 +67,7 @@ def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
         paths[index] = path_str.replace("\\", "/")
 
     if len(paths) > 1:
-        sort_order = {"train.conllu": 0, "test.conllu": 1, "dev.conllu": 2}        
+        sort_order = {"train.conllu": 0, "test.conllu": 1, "dev.conllu": 2}
         paths.sort(key=lambda x: sort_order[x.split("-")[-1]])
 
     return paths[0] if len(paths) == 1 else paths

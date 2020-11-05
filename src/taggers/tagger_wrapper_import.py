@@ -3,6 +3,7 @@ from os import path
 import dill as pickle
 import data_archives
 from taggers.tagger_wrapper_syscall import Tagger
+from loadbar import Loadbar
 
 class ImportedTagger(Tagger):
     IS_IMPORTED = True
@@ -14,12 +15,16 @@ class ImportedTagger(Tagger):
             self.load_model()
 
     def evaluate(self, test_data, pipe):
+        if self.args.loadbar:
+            loadbar = Loadbar(30, len(test_data), f"Evaluating ({self.model_name})")
+            loadbar.print_bar()
+
         total = 0
         correct = 0
         curr_sent_correct = 0
         correct_sent = 0
         total_sent = 0
-        prev_pct = 0
+        prev_pct = -1
         for index, sentence in enumerate(test_data):
             only_words = nltk.tag.untag(sentence)
             preds = self.predict(only_words)
@@ -34,9 +39,11 @@ class ImportedTagger(Tagger):
             total_sent += 1
 
             pct = int((index / len(test_data)) * 100)
-            if pct > prev_pct:
-                prev_pct = pct
+            if self.args.loadbar:
+                loadbar.step()
+            elif pct > prev_pct:
                 print(f"{pct}%", end="\r", flush=True)
+                prev_pct = pct
         pipe.send((correct / total, correct_sent / total_sent))
 
     def predict(self, words):
