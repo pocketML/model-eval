@@ -22,6 +22,9 @@ Requirements for the various models:
 * stanford tagger
 ** java 8+
 
+* FLARE
+** pip install flare
+
 * TnT
 ** conda install nltk
 ** conda install dill

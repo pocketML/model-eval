@@ -12,11 +12,11 @@ class CRF(NLTKTagger):
             "feature.possible_transitions": True,
             "num_memories": 10
         }
-        self.nltk_model = nltk.CRFTagger(features, False, train_opts)
+        self.model = nltk.CRFTagger(features, False, train_opts)
         super().__init__(args, model_name, load_model)
 
     def train(self, train_data):
-        return self.nltk_model.train(train_data, f"{NLTKTagger.MODEL_PATH}/{self.model_name}.crfsuite")
+        return self.model.train(train_data, f"{NLTKTagger.MODEL_PATH}/{self.model_name}.crfsuite")
 
     def save_model(self):
         pass
@@ -25,7 +25,7 @@ class CRF(NLTKTagger):
         return path.exists(f"{NLTKTagger.MODEL_PATH}/{self.model_name}.crfsuite")
 
     def load_model(self):
-        self.nltk_model.set_model_file(f"{NLTKTagger.MODEL_PATH}/{self.model_name}.crfsuite")
+        self.model.set_model_file(f"{NLTKTagger.MODEL_PATH}/{self.model_name}.crfsuite")
 
     def word_features(self, sentence, i):
         word = sentence[i]

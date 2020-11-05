@@ -21,7 +21,7 @@ class NLTKTagger(Tagger):
         prev_pct = 0
         for index, sentence in enumerate(test_data):
             only_words = nltk.tag.untag(sentence)
-            preds = self.nltk_model.tag(only_words)
+            preds = self.predict(only_words)
             curr_sent_correct = 0
             for test_tup, pred_tup in zip(sentence, preds):
                 if test_tup[1] == pred_tup[1]:
@@ -38,16 +38,19 @@ class NLTKTagger(Tagger):
                 print(f"{pct}%", end="\r", flush=True)
         pipe.send((correct / total, correct_sent / total_sent))
 
+    def predict(self, words):
+        return self.model.tag(words)
+
     def train(self, train_data):
-        return self.nltk_model.train(train_data)
+        return self.model.train(train_data)
 
     def saved_model_exists(self):
         return path.exists(f"{NLTKTagger.MODEL_PATH}/{self.model_name}.pk")
 
     def save_model(self):
         with open(f"{NLTKTagger.MODEL_PATH}/{self.model_name}.pk", "wb") as fp:
-            pickle.dump(self.nltk_model, fp)
+            pickle.dump(self.model, fp)
 
     def load_model(self):
         with open(f"{NLTKTagger.MODEL_PATH}/{self.model_name}.pk", "rb") as fp:
-            self.nltk_model = pickle.load(fp)
+            self.model = pickle.load(fp)

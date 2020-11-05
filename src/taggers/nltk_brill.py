@@ -12,7 +12,7 @@ class Brill(NLTKTagger):
             features = [
                 Template(Pos([-1])), Template(Pos([1])), Template(Word([0]))
             ]
-            self.nltk_model = nltk.BrillTaggerTrainer(base_tagger.nltk_model, features)
+            self.model = nltk.BrillTaggerTrainer(base_tagger.model, features)
 
     def __getstate__(self):
         return (self.args, self.model_name)

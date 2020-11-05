@@ -61,6 +61,18 @@ def get_dataset_path(lang, treebank, dataset_type):
     path = glob(f"{dataset_path}/*-{dataset_type}.conllu")
     return path[0].replace("\\", "/")
 
+def get_tags_in_dataset(lang, treebank, dataset_type):
+    tags = set()
+    dataset = get_dataset_path(lang, treebank, dataset_type)
+    with open(dataset, "r", encoding="utf-8") as fp:
+        for line in fp.readlines():
+            stripped = line.strip()
+            if stripped == "":
+                continue
+            split = stripped.split("\t")
+            tags.add(split[1])
+    return tags
+
 def get_embeddings_path(lang):
     language = LANGUAGES[lang]
     return f"data/{language}/embeddings/polyglot-{lang}.pkl"
@@ -98,7 +110,3 @@ def transform_dataset(language):
     for folder in treebanks:
         print(f"Transforming {folder}")
         transform_data(folder)
-
-if __name__ == "__main__":
-    #download_and_unpack("data", "yoruba")
-    transform_dataset("english")

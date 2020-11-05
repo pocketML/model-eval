@@ -32,4 +32,4 @@ def train_nltk_model(tagger, train_data, args):
     trained_model = tagger.train(train_data)
 
     if trained_model is not None:
-        tagger.nltk_model = trained_model
+        tagger.model = trained_model
