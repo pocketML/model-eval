@@ -11,7 +11,7 @@ import plotting
 from inference import monitor_inference
 from training import monitor_training, train_nltk_model
 from taggers import bilstm_aux, bilstm_crf, svmtool, stanford
-from taggers import nltk_tnt, nltk_crf, nltk_brill
+from taggers import nltk_tnt, nltk_crf, nltk_brill, nltk_hmm
 
 # hmm = nltk.HiddenMarkovModelTagger()
 # senna = nltk.Senna()
@@ -26,6 +26,7 @@ TAGGERS = {
     "tnt": nltk_tnt.TnT,
     "brill": nltk_brill.Brill,
     "crf": nltk_crf.CRF,
+    "hmm": nltk_hmm.HMM
 }
 
 def insert_arg_values(cmd, tagger, args):

@@ -16,7 +16,7 @@ class CRF(NLTKTagger):
         super().__init__(args, model_name, load_model)
 
     def train(self, train_data):
-        self.nltk_model.train(train_data, f"{NLTKTagger.MODEL_PATH}/{self.model_name}.crfsuite")
+        return self.nltk_model.train(train_data, f"{NLTKTagger.MODEL_PATH}/{self.model_name}.crfsuite")
 
     def save_model(self):
         pass
