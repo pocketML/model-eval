@@ -1,10 +1,11 @@
 import nltk
-from os import path, stat
+from os import path
 import dill as pickle
+import data_archives
 from taggers.tagger_wrapper_syscall import Tagger
 
-class NLTKTagger(Tagger):
-    IS_NLTK = True
+class ImportedTagger(Tagger):
+    IS_IMPORTED = True
     MODEL_PATH = "models/nltk_pickled"
 
     def __init__(self, args, model_name, load_model=False):
@@ -45,12 +46,27 @@ class NLTKTagger(Tagger):
         return self.model.train(train_data)
 
     def saved_model_exists(self):
-        return path.exists(f"{NLTKTagger.MODEL_PATH}/{self.model_name}.pk")
+        return path.exists(f"{ImportedTagger.MODEL_PATH}/{self.model_name}.pk")
 
     def save_model(self):
-        with open(f"{NLTKTagger.MODEL_PATH}/{self.model_name}.pk", "wb") as fp:
+        with open(f"{ImportedTagger.MODEL_PATH}/{self.model_name}.pk", "wb") as fp:
             pickle.dump(self.model, fp)
 
     def load_model(self):
-        with open(f"{NLTKTagger.MODEL_PATH}/{self.model_name}.pk", "rb") as fp:
+        with open(f"{ImportedTagger.MODEL_PATH}/{self.model_name}.pk", "rb") as fp:
             self.model = pickle.load(fp)
+
+    def format_data(self, dataset_type):
+        data_path = data_archives.get_dataset_path(self.args.lang,
+                                                   self.args.treebank,
+                                                   dataset_type)
+        train_data = open(data_path, "r", encoding="utf-8").readlines()
+        sentences = []
+        curr_senteces = []
+        for line in train_data:
+            if line.strip() == "":
+                sentences.append(curr_senteces)
+                curr_senteces = []
+            else:
+                curr_senteces.append(tuple(line.split(None)))
+        return sentences

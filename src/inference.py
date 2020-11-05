@@ -1,6 +1,7 @@
 import subprocess
 import platform
 import asyncio
+from sys import argv
 
 def get_memory_snapshot(pid):
     if platform.system() == "Windows":

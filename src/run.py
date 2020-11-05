@@ -5,12 +5,11 @@ import subprocess
 from datetime import datetime
 import platform
 import argparse
-import nltk_util
 import data_archives
 import plotting
 from inference import monitor_inference
-from training import monitor_training, train_nltk_model
-from taggers import bilstm_aux, bilstm_crf, svmtool, stanford
+from training import monitor_training, train_imported_model
+from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, flair_pos
 from taggers import nltk_tnt, nltk_crf, nltk_brill, nltk_hmm
 
 # hmm = nltk.HiddenMarkovModelTagger()
@@ -23,6 +22,7 @@ TAGGERS = {
     "bilstm_crf": bilstm_crf.BILSTMCRF,
     "svmtool": svmtool.SVMT,
     "stanford": stanford.Stanford,
+    "flair": flair_pos.FLAIR,
     "tnt": nltk_tnt.TnT,
     "brill": nltk_brill.Brill,
     "crf": nltk_crf.CRF,
@@ -99,12 +99,12 @@ async def run_with_sys_call(args, tagger_helper, file_pointer):
         final_acc = tagger_helper.evaluate()
     return final_acc, model_footprint
 
-async def run_with_nltk(args, tagger, model_name):
+async def run_with_imported_model(args, tagger, model_name):
     final_acc = (0, 0)
     if args.train: # Train model.
         print(f"Training NLTK model: '{model_name}'")
-        train_data = nltk_util.format_nltk_data(args.lang, args.treebank, "train")
-        train_nltk_model(tagger, train_data, args)
+        train_data = tagger.format_data("train")
+        train_imported_model(tagger, train_data, args)
         tagger.save_model()
 
     model_footprint = None
@@ -116,7 +116,7 @@ async def run_with_nltk(args, tagger, model_name):
             print("Error: No trained model to predict on!")
             exit(1)
 
-        test_data = nltk_util.format_nltk_data(args.lang, args.treebank, "test")
+        test_data = tagger.format_data("test")
 
         # We run NLTK model inference in a seperate process,
         # so we can measure it's memory usage similarly to a system call.
@@ -136,11 +136,17 @@ async def main(args):
     print(f"dataset language: {args.lang}")
     print(f"iterations: {args.iter}")
 
+    if len(args.tag) > 0 and args.model_name != "all":
+        tagger = TAGGERS[args.model_name](args, args.model_name, True)
+        tagged_sent = tagger.predict(args.tag)
+        print(tagged_sent)
+        return
+
     models_to_run = (TAGGERS.keys()
                      if args.model_name == "all" else [args.model_name])
 
     for model_name in models_to_run:
-        if not TAGGERS[model_name].IS_NLTK:
+        if not TAGGERS[model_name].IS_IMPORTED:
             if not data_archives.archive_exists("models", model_name):
                 data_archives.download_and_unpack("models", model_name)
 
@@ -168,8 +174,8 @@ async def main(args):
 
         tagger = TAGGERS[model_name](args, model_name)
 
-        if tagger.IS_NLTK:
-            acc_tuple, model_footprint = await run_with_nltk(args, tagger, model_name)
+        if tagger.IS_IMPORTED:
+            acc_tuple, model_footprint = await run_with_imported_model(args, tagger, model_name)
         else:
             acc_tuple, model_footprint = await run_with_sys_call(args, tagger, file_pointer)
 
@@ -217,6 +223,7 @@ if __name__ == "__main__":
     choices_langs = data_archives.LANGUAGES.keys() - set(data_archives.LANGUAGES.values())
 
     # optional arguments
+    parser.add_argument("-tg", "--tag", nargs="+", default=[])
     parser.add_argument("-l", "--lang", type=str, choices=choices_langs, default="en", help="choose dataset language. Default is English.")
     parser.add_argument("-i", "--iter", type=int, default=10, help="number of training iterations. Default is 10.")
     parser.add_argument("-v", "--verbose", help="increase output verbosity")

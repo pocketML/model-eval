@@ -7,7 +7,7 @@ class Tagger(ABC):
         self.model_name = model_name
 
 class SysCallTagger(Tagger):
-    IS_NLTK = False
+    IS_IMPORTED = False
 
     def __init__(self, args, model_name):
         super().__init__(args, model_name)

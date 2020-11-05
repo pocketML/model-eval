@@ -28,7 +28,7 @@ async def monitor_training(monitor, process, args, file_pointer=None):
 
     return final_acc, 0
 
-def train_nltk_model(tagger, train_data, args):
+def train_imported_model(tagger, train_data, args):
     trained_model = tagger.train(train_data)
 
     if trained_model is not None:

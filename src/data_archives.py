@@ -51,15 +51,26 @@ def get_default_treebank(lang):
     folder_name = glob(f"data/{language}/UD_{language.capitalize()}-*")[0].replace("\\", "/").split("/")[-1]
     return folder_name.split("-")[-1].lower()
 
-def get_dataset_path(lang, treebank, dataset_type):
+def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
     language = LANGUAGES[lang]
     if treebank is None:
         treebank_upper = get_default_treebank(lang).upper()
     else:
         treebank_upper = treebank.upper()
-    dataset_path = f"data/{language}/UD_{language.capitalize()}-{treebank_upper}/simplified"
-    path = glob(f"{dataset_path}/*-{dataset_type}.conllu")
-    return path[0].replace("\\", "/")
+    dataset_path = f"data/{language}/UD_{language.capitalize()}-{treebank_upper}"
+    if simplified:
+        dataset_path += "/simplified"
+    glob_str = f"-{dataset_type}" if dataset_type is not None else ""
+    paths = glob(f"{dataset_path}/*{glob_str}.conllu")
+
+    for index, path_str in enumerate(paths):
+        paths[index] = path_str.replace("\\", "/")
+
+    if len(paths) > 1:
+        sort_order = {"train.conllu": 0, "test.conllu": 1, "dev.conllu": 2}        
+        paths.sort(key=lambda x: sort_order[x.split("-")[-1]])
+
+    return paths[0] if len(paths) == 1 else paths
 
 def get_tags_in_dataset(lang, treebank, dataset_type):
     tags = set()
