@@ -67,3 +67,6 @@ class SysCallTagger(Tagger):
     @abstractmethod
     def predict_string(self):
         pass
+
+    def reload_string(self):
+        return None

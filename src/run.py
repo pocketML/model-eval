@@ -37,6 +37,10 @@ def insert_arg_values(cmd, tagger, args):
     replaced = replaced.replace("[model_path]", model_path)
     predict_path = tagger.predict_path()
     replaced = replaced.replace("[pred_path]", predict_path)
+    reload_str = tagger.reload_str()
+    if reload_str is None or not args.reload:
+        reload_str = ""
+    replaced = replaced.replace("[reload]", reload_str)
     replaced = replaced.replace("[lang]", args.lang)
     embeddings = data_archives.get_embeddings_path(args.lang)
     replaced = replaced.replace("[embeddings]", embeddings)
@@ -129,12 +133,6 @@ async def main(args):
     print(f"dataset language: {args.lang}")
     print(f"iterations: {args.iter}")
 
-    if len(args.tag) > 0 and args.model_name != "all":
-        tagger = TAGGERS[args.model_name](args, args.model_name, True)
-        tagged_sent = tagger.predict(args.tag)
-        print(tagged_sent)
-        return
-
     models_to_run = (TAGGERS.keys()
                      if args.model_name == "all" else [args.model_name])
 
@@ -155,6 +153,12 @@ async def main(args):
     if args.treebank is None: # Get default treebank for given langauge, if none is specified.
         args.treebank = data_archives.get_default_treebank(args.lang)
 
+    if len(args.tag) > 0 and args.model_name != "all":
+        tagger = TAGGERS[args.model_name](args, args.model_name, True)
+        tagged_sent = tagger.predict(args.tag)
+        print(tagged_sent)
+        return
+
     for model_name in models_to_run:
         print(f"Using '{model_name}' model")
         file_pointer = None
@@ -165,8 +169,9 @@ async def main(args):
             file_name = f"results/{model_name}_{formatted_date}.out"
             file_pointer = open(file_name, "w")
 
-        only_eval = args.eval and not args.train # Load model immediately if we are only evaluating.
-        tagger = TAGGERS[model_name](args, model_name, only_eval)
+        # Load model immediately if we are only evaluating, or if we are continuing training.
+        load_model = (args.eval and not args.train) or (args.reload and args.train)
+        tagger = TAGGERS[model_name](args, model_name, load_model)
 
         if tagger.IS_IMPORTED:
             acc_tuple, model_footprint = await run_with_imported_model(args, tagger, model_name)
@@ -222,6 +227,7 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--iter", type=int, default=10, help="number of training iterations. Default is 10.")
     parser.add_argument("-v", "--verbose", help="increase output verbosity")
     parser.add_argument("-tb", "--treebank", type=str, help="UD treebank to use as dataset (fx. 'gum')", default=None, required=False)
+    parser.add_argument("-r", "--reload", help="whether to load a saved model for further training", action="store_true")
     parser.add_argument("-lb", "--loadbar", help="whether to run with loadbar", action="store_true")
     parser.add_argument("-s", "--save-results", help="whether to save accuracy & size complexity measurements", action="store_true")
     parser.add_argument("-t", "--train", help="whether to train the given model", action="store_true")
