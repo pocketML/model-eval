@@ -2,12 +2,11 @@ import nltk
 from os import path
 import dill as pickle
 import data_archives
-from taggers.tagger_wrapper_syscall import Tagger
+from taggers.tagger_wrapper import Tagger
 from loadbar import Loadbar
 
 class ImportedTagger(Tagger):
     IS_IMPORTED = True
-    MODEL_PATH = "models/nltk_pickled"
 
     def __init__(self, args, model_name, load_model=False):
         super().__init__(args, model_name)
@@ -52,15 +51,21 @@ class ImportedTagger(Tagger):
     def train(self, train_data):
         return self.model.train(train_data)
 
+    def model_base_path(self):
+        return f"models/{self.model_name}/{self.args.lang}_{self.args.treebank}"
+
+    def model_path(self):
+        return f"{self.model_base_path()}/model.pkl"
+
     def saved_model_exists(self):
-        return path.exists(f"{ImportedTagger.MODEL_PATH}/{self.model_name}.pk")
+        return path.exists(self.model_path())
 
     def save_model(self):
-        with open(f"{ImportedTagger.MODEL_PATH}/{self.model_name}.pk", "wb") as fp:
+        with open(self.model_path(), "wb") as fp:
             pickle.dump(self.model, fp)
 
     def load_model(self):
-        with open(f"{ImportedTagger.MODEL_PATH}/{self.model_name}.pk", "rb") as fp:
+        with open(self.model_path(), "rb") as fp:
             self.model = pickle.load(fp)
 
     def format_data(self, dataset_type):

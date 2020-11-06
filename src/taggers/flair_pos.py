@@ -2,8 +2,7 @@ from functools import lru_cache
 from six.moves import cPickle as pickle
 import re
 from flair.models import SequenceTagger
-from flair.embeddings import WordEmbeddings, TokenEmbeddings
-from flair.data import Dictionary
+from flair.embeddings import TokenEmbeddings
 from flair.datasets import UniversalDependenciesCorpus
 from flair.trainers import ModelTrainer
 from flair import device
@@ -23,7 +22,6 @@ class PolyglotEmbeddings(TokenEmbeddings):
         data_tuple = pickle.loads(content, encoding="latin1")
         for word, vec in zip(data_tuple[0], data_tuple[1]):
             self.precomputed_word_embeddings[word] = vec
-        print(len(self.precomputed_word_embeddings))
         self._embedding_length = len(data_tuple[1][0])
 
         super().__init__()
@@ -86,22 +84,16 @@ class FLAIR(ImportedTagger):
         super().__init__(args, model_name, load_model)
         if not load_model:
             embedding_path = data_archives.get_embeddings_path(args.lang)
-            print(embedding_path)
             embeddings = PolyglotEmbeddings(embedding_path)
-            dictionary = Dictionary()
-            dictionary.add_item("O")
-            tags = data_archives.get_tags_in_dataset(args.lang, args.treebank, "train")
-            for tag in tags:
-                dictionary.add_item(tag)
-            dictionary.add_item("<START>")
-            dictionary.add_item("<STOP>")
+            (data_folder, train_file, test_file, dev_file) = self.format_data("train")
+            corpus = UniversalDependenciesCorpus(data_folder, train_file, test_file, dev_file)
+            dictionary = corpus.make_tag_dictionary("pos")
 
             self.model = SequenceTagger(hidden_size=256, embeddings=embeddings,
                                         tag_dictionary=dictionary, tag_type="pos",
                                         use_crf=True)
 
     def train(self, train_data):
-        print(train_data)
         (data_folder, train_file, test_file, dev_file) = train_data
         corpus = UniversalDependenciesCorpus(data_folder, train_file, test_file, dev_file)
         trainer = ModelTrainer(self.model, corpus)

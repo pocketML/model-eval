@@ -1,6 +1,5 @@
 from taggers.tagger_wrapper_import import ImportedTagger
 import nltk
-from os import path
 
 class CRF(ImportedTagger):
     def __init__(self, args, model_name, load_model=False):
@@ -16,16 +15,16 @@ class CRF(ImportedTagger):
         super().__init__(args, model_name, load_model)
 
     def train(self, train_data):
-        return self.model.train(train_data, f"{ImportedTagger.MODEL_PATH}/{self.model_name}.crfsuite")
+        return self.model.train(train_data, self.model_path())
 
     def save_model(self):
-        pass
+        pass # Model is saved during training by CRFSuite.
 
-    def saved_model_exists(self):
-        return path.exists(f"{ImportedTagger.MODEL_PATH}/{self.model_name}.crfsuite")
+    def model_path(self):
+        return f"{self.model_base_path()}/model.crfsuite"
 
     def load_model(self):
-        self.model.set_model_file(f"{ImportedTagger.MODEL_PATH}/{self.model_name}.crfsuite")
+        self.model.set_model_file(self.model_path())
 
     def word_features(self, sentence, i):
         word = sentence[i]
