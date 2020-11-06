@@ -1,8 +1,6 @@
 from functools import lru_cache
 from six.moves import cPickle as pickle
-import sys
 import re
-from threading import Thread
 from flair.data import Sentence
 from flair.models import SequenceTagger
 from flair.embeddings import TokenEmbeddings
@@ -98,6 +96,7 @@ class Flair(ImportedTagger):
 
     def train(self, train_data):
         trainer = ModelTrainer(self.model, self.corpus)
+
         trainer.train(f"models/flair/{self.args.lang}_{self.args.treebank}",
                       learning_rate=0.1, mini_batch_size=32,
                       max_epochs=self.args.iter, embeddings_storage_mode="gpu")

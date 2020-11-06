@@ -10,14 +10,15 @@ class ImportedTagger(Tagger):
 
     def __init__(self, args, model_name, load_model=False):
         super().__init__(args, model_name)
-        if load_model and self.saved_model_exists():
-            self.load_model()
-        else:
-            print(f"Error: No trained model for '{self.model_name}' exists!")
-
+        if load_model:
+            if self.saved_model_exists():
+                self.load_model()
+            else:
+                print(f"Error: No trained model for '{self.model_name}' exists!")
+    
     def evaluate(self, test_data, pipe):
         if self.args.loadbar:
-            loadbar = Loadbar(30, len(test_data), f"Evaluating ({self.model_name})")
+            loadbar = Loadbar(30, len(test_data), f"Evaluating '{self.model_name}'")
             loadbar.print_bar()
 
         total = 0
