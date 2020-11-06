@@ -20,10 +20,10 @@ class PolyglotEmbeddings(TokenEmbeddings):
         self.field = None
         self.precomputed_word_embeddings = {}
         content = open(embeddings_path, "rb").read()
-        data_tuple = pickle.loads(content, encoding="latin1")
-        for word, vec in zip(data_tuple[0], data_tuple[1]):
+        words, vecs = pickle.loads(content, encoding="latin1")
+        for word, vec in zip( words, vecs):
             self.precomputed_word_embeddings[word] = vec
-        self._embedding_length = len(data_tuple[1][0])
+        self._embedding_length = len(vecs[0])
 
         super().__init__()
 

@@ -5,8 +5,8 @@ from glob import glob
 class SVMT(SysCallTagger):
     ACC_STR = "TEST ACCURACY:"
 
-    def __init__(self, args, model_name):
-        super().__init__(args, model_name)
+    def __init__(self, args, model_name, load_model=False):
+        super().__init__(args, model_name, load_model)
         cfg_path = "models/svmtool/bin/config.svmt"
         with open(cfg_path, "r", encoding="utf-8", newline=None) as fp:
             lines = fp.readlines()

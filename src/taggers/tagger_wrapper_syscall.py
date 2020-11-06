@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from taggers.tagger_wrapper import Tagger
+import data_archives
 
 class SysCallTagger(Tagger):
     IS_IMPORTED = False
@@ -50,6 +51,9 @@ class SysCallTagger(Tagger):
 
     def reload_string(self):
         return None
+
+    def embeddings_path(self):
+        return data_archives.get_embeddings_path(self.args.lang)
 
     @abstractmethod
     def model_base_path(self):

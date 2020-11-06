@@ -4,8 +4,8 @@ import shutil
 import data_archives
 
 class Stanford(SysCallTagger):
-    def __init__(self, args, model_name):
-        super().__init__(args, model_name)
+    def __init__(self, args, model_name, load_model=False):
+        super().__init__(args, model_name, load_model)
 
         if "JAVAHOME" not in os.environ:
             java_exe_path = shutil.which("java")
