@@ -42,7 +42,7 @@ def insert_arg_values(cmd, tagger, args):
         reload_str = ""
     replaced = replaced.replace("[reload]", reload_str)
     replaced = replaced.replace("[lang]", args.lang)
-    embeddings = tagger.embeddings_path()
+    embeddings = data_archives.get_embeddings_path(args.lang)
     replaced = replaced.replace("[embeddings]", embeddings)
     dataset_train = data_archives.get_dataset_path(args.lang, args.treebank, "train")
     replaced = replaced.replace("[dataset_train]", dataset_train)
