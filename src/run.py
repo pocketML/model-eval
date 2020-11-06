@@ -22,7 +22,7 @@ TAGGERS = {
     "bilstm_crf": bilstm_crf.BILSTMCRF,
     "svmtool": svmtool.SVMT,
     "stanford": stanford.Stanford,
-    "flair": flair_pos.FLAIR,
+    "flair": flair_pos.Flair,
     "tnt": nltk_tnt.TnT,
     "brill": nltk_brill.Brill,
     "crf": nltk_crf.CRF,
@@ -102,20 +102,13 @@ async def run_with_sys_call(args, tagger_helper, file_pointer):
 async def run_with_imported_model(args, tagger, model_name):
     final_acc = (0, 0)
     if args.train: # Train model.
-        print(f"Training NLTK model: '{model_name}'")
+        print(f"Training imported model: '{model_name}'")
         train_data = tagger.format_data("train")
         train_imported_model(tagger, train_data, args)
         tagger.save_model()
 
     model_footprint = None
     if args.eval: # Run inference task.
-        if not args.train and tagger.saved_model_exists():
-            # If we haven't just trained a model, load one for prediction.
-            tagger.load_model()
-        elif not args.train:
-            print("Error: No trained model to predict on!")
-            exit(1)
-
         test_data = tagger.format_data("test")
 
         # We run NLTK model inference in a seperate process,
@@ -172,7 +165,8 @@ async def main(args):
             file_name = f"results/{model_name}_{formatted_date}.out"
             file_pointer = open(file_name, "w")
 
-        tagger = TAGGERS[model_name](args, model_name)
+        only_eval = args.eval and not args.train # Load model immediately if we are only evaluating.
+        tagger = TAGGERS[model_name](args, model_name, only_eval)
 
         if tagger.IS_IMPORTED:
             acc_tuple, model_footprint = await run_with_imported_model(args, tagger, model_name)

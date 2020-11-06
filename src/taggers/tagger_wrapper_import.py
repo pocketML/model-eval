@@ -12,6 +12,8 @@ class ImportedTagger(Tagger):
         super().__init__(args, model_name)
         if load_model and self.saved_model_exists():
             self.load_model()
+        else:
+            print(f"Error: No trained model for '{self.model_name}' exists!")
 
     def evaluate(self, test_data, pipe):
         if self.args.loadbar:
@@ -27,6 +29,7 @@ class ImportedTagger(Tagger):
         for index, sentence in enumerate(test_data):
             only_words = nltk.tag.untag(sentence)
             preds = self.predict(only_words)
+            print(preds)
             curr_sent_correct = 0
             for test_tup, pred_tup in zip(sentence, preds):
                 if test_tup[1] == pred_tup[1]:
@@ -45,8 +48,8 @@ class ImportedTagger(Tagger):
                 prev_pct = pct
         pipe.send((correct / total, correct_sent / total_sent))
 
-    def predict(self, words):
-        return self.model.tag(words)
+    def predict(self, sentence):
+        return self.model.tag(sentence)
 
     def train(self, train_data):
         return self.model.train(train_data)
