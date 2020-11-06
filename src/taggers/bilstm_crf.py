@@ -1,5 +1,4 @@
 from glob import glob
-from os import remove
 from taggers.tagger_wrapper_syscall import SysCallTagger
 
 class BILSTMCRF(SysCallTagger):

@@ -4,7 +4,7 @@ from taggers.tagger_wrapper import Tagger
 class SysCallTagger(Tagger):
     IS_IMPORTED = False
 
-    def __init__(self, args, model_name):
+    def __init__(self, args, model_name, load_model=False):
         super().__init__(args, model_name)
         self.epoch = 0
 
@@ -48,6 +48,9 @@ class SysCallTagger(Tagger):
 
         return correct / total, correct_sent / total_sent
 
+    def reload_string(self):
+        return None
+
     @abstractmethod
     def model_base_path(self):
         pass
@@ -67,6 +70,3 @@ class SysCallTagger(Tagger):
     @abstractmethod
     def predict_string(self):
         pass
-
-    def reload_string(self):
-        return None

@@ -37,7 +37,7 @@ def insert_arg_values(cmd, tagger, args):
     replaced = replaced.replace("[model_path]", model_path)
     predict_path = tagger.predict_path()
     replaced = replaced.replace("[pred_path]", predict_path)
-    reload_str = tagger.reload_str()
+    reload_str = tagger.reload_string()
     if reload_str is None or not args.reload:
         reload_str = ""
     replaced = replaced.replace("[reload]", reload_str)
