@@ -83,12 +83,14 @@ class PolyglotEmbeddings(TokenEmbeddings):
 class Flair(ImportedTagger):
     def __init__(self, args, model_name, load_model=False):
         super().__init__(args, model_name, load_model)
+        self.tag_remapping = data_archives.tagset_mapping(args.lang, args.treebank, "train")
         if not load_model:
             embedding_path = data_archives.get_embeddings_path(args.lang)
             embeddings = PolyglotEmbeddings(embedding_path)
             (data_folder, train_file, test_file, dev_file) = self.format_data("train")
             self.corpus = UniversalDependenciesCorpus(data_folder, train_file, test_file, dev_file)
             dictionary = self.corpus.make_tag_dictionary("pos")
+
 
             self.model = SequenceTagger(hidden_size=256, embeddings=embeddings,
                                         tag_dictionary=dictionary, tag_type="pos",
@@ -118,4 +120,9 @@ class Flair(ImportedTagger):
         flair_sentence = Sentence()
         for word in sentence:
             flair_sentence.add_token(word)
-        return self.model.predict(flair_sentence)
+        self.model.predict(flair_sentence)
+        predictions = []
+        for span in flair_sentence.get_spans():
+            simple_tag = self.tag_remapping[span.tag]
+            predictions.append((span.text, simple_tag))
+        return predictions

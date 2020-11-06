@@ -72,17 +72,22 @@ def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
 
     return paths[0] if len(paths) == 1 else paths
 
-def get_tags_in_dataset(lang, treebank, dataset_type):
-    tags = set()
-    dataset = get_dataset_path(lang, treebank, dataset_type)
-    with open(dataset, "r", encoding="utf-8") as fp:
+def tagset_mapping(lang, treebank, dataset_type, from_complex=True):
+    tag_mapping = {}
+    dataset_full = get_dataset_path(lang, treebank, dataset_type, False)
+    with open(dataset_full, "r", encoding="utf-8") as fp:
         for line in fp.readlines():
             stripped = line.strip()
-            if stripped == "":
+            if stripped == "" or stripped.startswith("#"):
                 continue
             split = stripped.split("\t")
-            tags.add(split[1])
-    return tags
+            simple_tag = split[3]
+            full_tag = split[4]
+            if from_complex:
+                tag_mapping[full_tag] = simple_tag
+            else:
+                tag_mapping[simple_tag] = full_tag
+    return tag_mapping
 
 def get_embeddings_path(lang):
     language = LANGUAGES[lang]

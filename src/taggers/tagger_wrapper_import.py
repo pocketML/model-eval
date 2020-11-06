@@ -30,7 +30,6 @@ class ImportedTagger(Tagger):
         for index, sentence in enumerate(test_data):
             only_words = nltk.tag.untag(sentence)
             preds = self.predict(only_words)
-            print(preds)
             curr_sent_correct = 0
             for test_tup, pred_tup in zip(sentence, preds):
                 if test_tup[1] == pred_tup[1]:
