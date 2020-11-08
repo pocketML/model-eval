@@ -9,7 +9,7 @@ async def monitor_training(monitor, process, args, file_pointer=None):
     async for test_acc in monitor.on_epoch_complete(process):
         acc_str = ""
         if test_acc is not None:
-            acc_str = "Acc: {test_acc}"
+            acc_str = f"Acc: {test_acc}"
 
         if args.loadbar:
             loadbar.step(text=acc_str)
