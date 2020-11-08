@@ -45,13 +45,16 @@ class SVMT(SysCallTagger):
     def predict_path(self):
         return f"{self.model_base_path()}/preds.out"
 
+    def script_path(self):
+        return "models/svmtool/bin/SVMTlearn.pl"
+
     def train_string(self):
         return (
-            "bash -c \"perl [dir]/models/svmtool/bin/SVMTlearn.pl -V 1 [dir]/models/svmtool/bin/config.svmt\""
+            "bash -c \"perl [script_path] -V 1 [dir]/models/svmtool/bin/config.svmt\""
         )
 
     def predict_string(self):
         return (
-            f"bash -c \"perl [dir]/models/svmtool/bin/SVMTagger.pl [model_path] < "
+            f"bash -c \"perl [script_path] [model_path] < "
             f"[dataset_test] > [pred_path]\""
         )

@@ -52,7 +52,7 @@ def insert_arg_values(cmd, tagger, args):
     replaced = replaced.replace("[dataset_dev]", dataset_dev)
     return replaced
 
-def system_call(cmd, cwd):
+def system_call(cmd, cwd, script_location):
     if platform.system() == "Windows" and cmd.startswith("bash"):
         split = cwd.replace(" ", "\ ").split("/")
         cwd = "/mnt/" + split[0][:-1].lower() + "/" + "/".join(split[1:])
@@ -71,7 +71,7 @@ def system_call(cmd, cwd):
         stdout_reroute = open(file_path, "w", encoding="utf-8", errors="utf-8")
         cmd = cmd[:index]
 
-    cmd_full = cmd.replace("[dir]", cwd)
+    cmd_full = cmd.replace("[script_path]", f"\"{cwd}/{script_location}\"")
     #if platform.system() == "Windows" and not cmd.startswith("bash"):
     #    cmd_full = cmd_full.replace("/", "\\")
     print(f"Running {cmd_full}")
@@ -91,14 +91,14 @@ async def run_with_sys_call(args, tagger_helper, file_pointer):
     final_acc = (0, 0)
     if args.train: # Train model.
         call_train = insert_arg_values(call_train, tagger_helper, args)
-        process = system_call(call_train, cwd)
+        process = system_call(call_train, cwd, tagger_helper.script_path())
         final_acc = await monitor_training(tagger_helper, process, args, file_pointer)
 
     model_footprint = None
     if args.eval: # Run inference task.
         if call_infer is not None:
             call_infer = insert_arg_values(call_infer, tagger_helper, args)
-            process = system_call(call_infer, cwd)
+            process = system_call(call_infer, cwd, tagger_helper.script_path())
             model_footprint = await monitor_inference(process)
         final_acc = tagger_helper.evaluate()
     return final_acc, model_footprint

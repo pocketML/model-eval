@@ -28,9 +28,12 @@ class BILSTMCRF(SysCallTagger):
     def predict_path(self):
         return f"{self.model_base_path()}/preds.out"
 
+    def script_path(self):
+        return "models/bilstm_crf/bilstm_bilstm_crf.py"
+
     def train_string(self):
         return (
-            "python [dir]/models/bilstm_crf/bilstm_bilstm_crf.py --fine_tune --embedding polyglot --oov embedding --update momentum --adv 0.05 "
+            "python [script_path] --fine_tune --embedding polyglot --oov embedding --update momentum --adv 0.05 "
             "--batch_size 10 --num_units 150 --num_filters 50 --learning_rate 0.01 --decay_rate 0.05 --grad_clipping 5 --regular none --dropout "
             "--train [dataset_train] "
             "--dev [dataset_dev] "
