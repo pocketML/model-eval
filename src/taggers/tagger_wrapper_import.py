@@ -19,7 +19,7 @@ class ImportedTagger(Tagger):
     
     def evaluate(self, test_data, pipe):
         if self.args.loadbar:
-            loadbar = Loadbar(30, len(test_data), f"Evaluating '{self.model_name}'")
+            loadbar = Loadbar(50, len(test_data), f"Evaluating '{self.model_name}'")
             loadbar.print_bar()
 
         total = 0

@@ -1,6 +1,26 @@
 from time import time, sleep
 import curses
 
+ASCII_LOGO_TRANSPARENT = [
+    "                           _|                 _|      _|      _| _|      ",
+    "_|_|_|     _|_|     _|_|_| _|  _|    _|_|   _|_|_|_|  _|_|  _|_| _|      ",
+    "_|    _| _|    _| _|       _|_|    _|_|_|_|   _|      _|  _|  _| _|      ",
+    "_|    _| _|    _| _|       _|  _|  _|         _|      _|      _| _|      ",
+    "_|_|_|     _|_|     _|_|_| _|    _|  _|_|_|     _|_|  _|      _| _|_|_|_|",
+    "_|                                                                       ",
+    "_|                                                                       "
+]
+
+ASCII_LOGO_FILLED = [
+    "                           █|                 █|      █|      █| █|      ",
+    "█████|     ███|     █████| █|  █|    ███|   ███████|  ███|  ███| █|      ",
+    "█|    █| █|    █| █|       ███|    ███|███|   █|      █|  █|  █| █|      ",
+    "█|    █| █|    █| █|       █|  █|  █|         █|      █|      █| █|      ",
+    "█████|     ███|     █████| █|    █|  █████|     ███|  █|      █| ███████|",
+    "█|                                                                       ",
+    "█|                                                                       "
+]
+
 # Utility methods for formatting stuff.
 def zero_pad(num):
     if num < 10:
@@ -86,8 +106,8 @@ class Loadbar:
 
     def print_bar(self, flavor_text=""):
         curr_ticks = int(self.curr_ratio * self.total_ticks)
-        prog_str = "#" * curr_ticks
-        remain_str = " " * (self.total_ticks - curr_ticks)
+        prog_str = "■" * curr_ticks
+        remain_str = "□" * (self.total_ticks - curr_ticks)
         pct = int(self.curr_ratio * 100)
         time_now = time()
         time_spent = int(time_now - self.time_start)
@@ -100,23 +120,29 @@ class Loadbar:
             header = header + " - " + flavor_text
         spent_str = format_time(time_spent)
         left_str = format_time(time_left)
+        str_2 = f"{prog_str}{remain_str}"
+        str_3 = f"[{pct}% | {self.curr_step}/{self.total_steps} | {spent_str} < {left_str} | {items_avg:.2f} it/s]"
 
-        loadbar_width = ((self.total_ticks + len(str(self.total_steps)) + 14))
+        loadbar_width = self.total_ticks
+        header_x = max(int((loadbar_width / 2) - (len(header) / 2)), 0)
+
         padding = 6
+        start_x = int((len(ASCII_LOGO_TRANSPARENT[0]) / 2) - (loadbar_width / 2)) + (padding // 2)
 
-        screen = self.screen.subwin(5, loadbar_width + (padding * 2), 0, 0)
+        max_x = max(len(x) for x in ASCII_LOGO_TRANSPARENT)
+        screen_width = max_x + (padding * 2) - 4
+        screen = self.screen.subwin(14, screen_width, 0, 1)
         screen.clear()
         screen.box()
 
-        start_x = padding
-        header_x = max(int((loadbar_width / 2) - (len(header) / 2)), 0)
+        self._draw_ascii_logo(screen)
 
-        screen.addstr(1, start_x + header_x, header)
-        str_2 = f"[{prog_str}{remain_str}] ({pct}% | {self.curr_step}/{self.total_steps})"
-        str_3 = f"[{spent_str} < {left_str} | {items_avg:.2f} it/s]"
-        screen.addstr(2, start_x, str_2)
-        prog_x = max(int((loadbar_width / 2) - (len(str_3) / 2)), 0)
-        screen.addstr(3, start_x + prog_x, str_3)
+        start_y = 9
+        screen.addstr(start_y, start_x + header_x, header)
+
+        screen.addstr(start_y + 1, start_x, str_2)
+        prog_x = max(int((loadbar_width / 2) - (len(str_3) / 2)), -start_x + 1)
+        screen.addstr(start_y + 2, start_x + prog_x, str_3)
         screen.refresh()
 
     def reset_console(self):
@@ -126,12 +152,53 @@ class Loadbar:
         curses.nocbreak()
         curses.endwin()
 
+    def _draw_ascii_logo(self, screen):
+        start_y = 1
+        max_x = max(len(x) for x in ASCII_LOGO_TRANSPARENT)
+        x = 0
+        y = 0
+        squares = 0
+        down = True
+
+        num_squares = sum(x.count("_") for x in ASCII_LOGO_TRANSPARENT)
+
+        while x < max_x and squares / num_squares < self.curr_ratio:
+            if ASCII_LOGO_TRANSPARENT[y][x] == "_":
+                squares += 1
+
+            if down:
+                y += 1
+            else:
+                y -= 1
+
+            if y == 0 or y == len(ASCII_LOGO_FILLED) - 1:
+                x += 1
+                down = not down
+
+            x * len(ASCII_LOGO_FILLED) + y
+
+        start = 0 if down else len(ASCII_LOGO_TRANSPARENT) - 1
+        end = len(ASCII_LOGO_TRANSPARENT) if down else -1
+        step = 1 if down else -1
+
+        for i in range(start, end, step):
+            index_x = x
+            if down and y > i:
+                index_x += 1
+            elif not down and y < i:
+                index_x += 1
+
+            str_filled = ASCII_LOGO_FILLED[i][:index_x]
+            str_unfilled = ASCII_LOGO_TRANSPARENT[i][index_x:]
+
+            screen.addstr(start_y + i, 4, str_filled + str_unfilled)
+
     def __iter__(self):
         return LoadbarIterator(self)
 
 if __name__ == "__main__":
-    load = Loadbar(30, 5, "Training... ")
-    for i in range(5):
-        accuracy = i * 10
+    load = Loadbar(50, 200, "Training... ")
+    for i in range(200):
+        accuracy = int(i * 0.5)
         load.step(text=f"Test Acc: {accuracy}%")
-        sleep(0.5)
+        sleep(0.1)

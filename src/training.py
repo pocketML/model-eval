@@ -3,7 +3,7 @@ from loadbar import Loadbar
 async def monitor_training(monitor, process, args, file_pointer=None):
     final_acc = 0
     if args.loadbar:
-        loadbar = Loadbar(30, args.iter, f"Training ({args.model_name})")
+        loadbar = Loadbar(50, args.iter, f"Training ({args.model_name})")
         loadbar.print_bar()
 
     async for test_acc in monitor.on_epoch_complete(process):
