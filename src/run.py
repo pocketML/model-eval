@@ -156,6 +156,7 @@ async def main(args):
 
     if len(args.tag) > 0 and len(args.model_names) == 1:
         # Predict POS tags given a tagger and print results.
+        args.lang = args.langs[0]
         tagger = TAGGERS[args.model_names[0]](args, args.model_names[0], True)
         tagged_sent = tagger.predict(args.tag)
         print(tagged_sent)
