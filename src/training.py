@@ -1,9 +1,9 @@
 from loadbar import Loadbar
 
-async def monitor_training(monitor, process, args, file_pointer=None):
+async def monitor_training(monitor, process, args, model_name, file_pointer=None):
     final_acc = 0
     if args.loadbar:
-        loadbar = Loadbar(50, args.iter, f"Training ({args.model_name})")
+        loadbar = Loadbar(50, args.iter, f"Training '{model_name}' ('{args.lang}' dataset)")
         loadbar.print_bar()
 
     async for test_acc in monitor.on_epoch_complete(process):
@@ -28,7 +28,7 @@ async def monitor_training(monitor, process, args, file_pointer=None):
 
     return final_acc, 0
 
-def train_imported_model(tagger, train_data, args):
+def train_imported_model(tagger, train_data):
     trained_model = tagger.train(train_data)
 
     if trained_model is not None:

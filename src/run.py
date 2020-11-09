@@ -82,7 +82,7 @@ def system_call(cmd, cwd, script_location):
     process = subprocess.Popen(cmd_full, stdout=stdout_reroute, stderr=stderr_reroute)
     return process
 
-async def run_with_sys_call(args, tagger_helper, file_pointer):
+async def run_with_sys_call(args, tagger_helper, model_name, file_pointer):
     call_train = tagger_helper.train_string()
     call_infer = tagger_helper.predict_string()
 
@@ -92,7 +92,7 @@ async def run_with_sys_call(args, tagger_helper, file_pointer):
     if args.train: # Train model.
         call_train = insert_arg_values(call_train, tagger_helper, args)
         process = system_call(call_train, cwd, tagger_helper.script_path())
-        final_acc = await monitor_training(tagger_helper, process, args, file_pointer)
+        final_acc = await monitor_training(tagger_helper, process, args, model_name, file_pointer)
 
     model_footprint = None
     if args.eval: # Run inference task.
@@ -128,78 +128,87 @@ async def run_with_imported_model(args, tagger, model_name):
 
 async def main(args):
     print("Arguments:")
-    print(f"model: {args.model_name}")
+    print(f"models: {args.model_names}")
     print(f"verbose: {args.verbose}")
-    print(f"dataset language: {args.lang}")
+    print(f"dataset languages: {args.langs}")
     print(f"iterations: {args.iter}")
 
     models_to_run = (TAGGERS.keys()
-                     if args.model_name == "all" else [args.model_name])
+                     if args.model_names == ["all"] else args.model_names)
 
     for model_name in models_to_run:
         if not TAGGERS[model_name].IS_IMPORTED:
             if not data_archives.archive_exists("models", model_name):
                 data_archives.download_and_unpack("models", model_name)
 
-    language_full = data_archives.LANGUAGES[args.lang]
-    if not data_archives.archive_exists("data", language_full):
-        data_archives.download_and_unpack("data", language_full)
-        data_archives.transform_dataset(language_full)
+    languages_to_use = (set(data_archives.LANGUAGES.values())
+                        if args.langs == ["all"] else args.langs)
+
+    for lang in languages_to_use:
+        language_full = data_archives.LANGUAGES[lang]
+        if not data_archives.archive_exists("data", language_full):
+            data_archives.download_and_unpack("data", language_full)
+            data_archives.transform_dataset(language_full)
 
     if not args.train and not args.eval: # Do both training and inference.
         args.train = True
         args.eval = True
 
-    if args.treebank is None: # Get default treebank for given langauge, if none is specified.
-        args.treebank = data_archives.get_default_treebank(args.lang)
-
-    if len(args.tag) > 0 and args.model_name != "all":
-        tagger = TAGGERS[args.model_name](args, args.model_name, True)
+    if len(args.tag) > 0 and len(args.model_names) == 1:
+        # Predict POS tags given a tagger and print results.
+        tagger = TAGGERS[args.model_names[0]](args, args.model_names[0], True)
         tagged_sent = tagger.predict(args.tag)
         print(tagged_sent)
         return
 
     for model_name in models_to_run:
-        print(f"Using '{model_name}' model")
-        file_pointer = None
-        if args.save_results:
-            if not os.path.exists("results"):
-                os.mkdir("results")
-            formatted_date = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
-            file_name = f"results/{model_name}_{formatted_date}.out"
-            file_pointer = open(file_name, "w")
+        for lang in languages_to_use:
+            if args.treebank is None: # Get default treebank for given langauge, if none is specified.
+                args.treebank = data_archives.get_default_treebank(lang)
+            print(
+                f"Using '{model_name}' with '{data_archives.LANGUAGES[lang]}' "
+                f"dataset on '{args.treebank}' treebank."
+            )
+            args.lang = lang
+            file_pointer = None
+            if args.save_results:
+                if not os.path.exists("results"):
+                    os.mkdir("results")
+                formatted_date = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
+                file_name = f"results/{model_name}_{formatted_date}.out"
+                file_pointer = open(file_name, "w")
 
-        # Load model immediately if we are only evaluating, or if we are continuing training.
-        load_model = (args.eval and not args.train) or (args.reload and args.train)
-        tagger = TAGGERS[model_name](args, model_name, load_model)
+            # Load model immediately if we are only evaluating, or if we are continuing training.
+            load_model = (args.eval and not args.train) or (args.reload and args.train)
+            tagger = TAGGERS[model_name](args, model_name, load_model)
 
-        if tagger.IS_IMPORTED:
-            acc_tuple, model_footprint = await run_with_imported_model(args, tagger, model_name)
-        else:
-            acc_tuple, model_footprint = await run_with_sys_call(args, tagger, file_pointer)
+            if tagger.IS_IMPORTED:
+                acc_tuple, model_footprint = await run_with_imported_model(args, tagger, model_name)
+            else:
+                acc_tuple, model_footprint = await run_with_sys_call(args, tagger, model_name, file_pointer)
 
-        token_acc, sent_acc = acc_tuple
-        # Normalize accuracy
-        if token_acc > 1:
-            token_acc /= 100
-        if sent_acc > 1:
-            sent_acc /= 100
-        token_acc = f"{token_acc:.4f}"
-        sent_acc = f"{sent_acc:.4f}"
-        print(f"Token Accuracy: {token_acc}")
-        print(f"Sentence Accuracy: {sent_acc}")
+            token_acc, sent_acc = acc_tuple
+            # Normalize accuracy
+            if token_acc > 1:
+                token_acc /= 100
+            if sent_acc > 1:
+                sent_acc /= 100
+            token_acc = f"{token_acc:.4f}"
+            sent_acc = f"{sent_acc:.4f}"
+            print(f"Token Accuracy: {token_acc}")
+            print(f"Sentence Accuracy: {sent_acc}")
 
-        if model_footprint is not None:
-            print(f"Model footprint: {model_footprint}KB")
+            if model_footprint is not None:
+                print(f"Model footprint: {model_footprint}KB")
 
-        if file_pointer is not None: # Save final test-set/prediction accuracy.
-            file_pointer.write(f"Final token acc: {token_acc}\n")
-            file_pointer.write(f"Final sentence acc: {sent_acc}\n")
+            if file_pointer is not None: # Save final test-set/prediction accuracy.
+                file_pointer.write(f"Final token acc: {token_acc}\n")
+                file_pointer.write(f"Final sentence acc: {sent_acc}\n")
 
-            if model_footprint is not None: # Save size of model footprint.
-                file_pointer.write(f"Model footprint: {model_footprint}\n")
+                if model_footprint is not None: # Save size of model footprint.
+                    file_pointer.write(f"Model footprint: {model_footprint}\n")
 
-            file_pointer.close()
+                file_pointer.close()
 
     if args.plot:
         plotting.plot_results()
@@ -217,13 +226,13 @@ if __name__ == "__main__":
 
     # required arguments (positionals)
     choices_models = list(TAGGERS.keys()) + ["all"]
-    parser.add_argument("model_name", type=str, choices=choices_models, help="name of the model to run")
+    parser.add_argument("model_names", type=str, choices=choices_models, nargs="+", help="name of the model to run")
 
     choices_langs = data_archives.LANGUAGES.keys() - set(data_archives.LANGUAGES.values())
 
     # optional arguments
     parser.add_argument("-tg", "--tag", nargs="+", default=[])
-    parser.add_argument("-l", "--lang", type=str, choices=choices_langs, default="en", help="choose dataset language. Default is English.")
+    parser.add_argument("-l", "--langs", type=str, choices=choices_langs, nargs="+", default=["en"], help="choose dataset language(s). Default is English.")
     parser.add_argument("-i", "--iter", type=int, default=10, help="number of training iterations. Default is 10.")
     parser.add_argument("-v", "--verbose", help="increase output verbosity")
     parser.add_argument("-tb", "--treebank", type=str, help="UD treebank to use as dataset (fx. 'gum')", default=None, required=False)
