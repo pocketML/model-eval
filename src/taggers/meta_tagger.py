@@ -14,7 +14,7 @@ class METATAGGER(SysCallTagger):
         return f'models/meta_tagger/pocketML/{self.args.lang}_{self.args.treebank}'
     
     def model_path(self):
-        return None
+        return ''
 
     def predict_path(self):
         return f'{self.model_base_path()}/preds.out'

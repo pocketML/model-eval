@@ -9,7 +9,7 @@ import data_archives
 import plotting
 from inference import monitor_inference
 from training import monitor_training, train_imported_model
-from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, flair_pos
+from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, meta_tagger, flair_pos
 from taggers import nltk_tnt, nltk_crf, nltk_brill, nltk_hmm
 
 # hmm = nltk.HiddenMarkovModelTagger()
@@ -22,11 +22,12 @@ TAGGERS = {
     "bilstm_crf": bilstm_crf.BILSTMCRF,
     "svmtool": svmtool.SVMT,
     "stanford": stanford.Stanford,
-    "flair": flair_pos.Flair,
     "tnt": nltk_tnt.TnT,
     "brill": nltk_brill.Brill,
     "crf": nltk_crf.CRF,
-    "hmm": nltk_hmm.HMM
+    "hmm": nltk_hmm.HMM,
+    "meta_tagger": meta_tagger.METATAGGER,
+    "flair": flair_pos.Flair,
 }
 
 def insert_arg_values(cmd, tagger, args):
@@ -111,7 +112,7 @@ async def run_with_imported_model(args, tagger, model_name):
     if args.train: # Train model.
         print(f"Training imported model: '{model_name}'")
         train_data = tagger.format_data("train")
-        train_imported_model(tagger, train_data, args)
+        train_imported_model(tagger, train_data)
         tagger.save_model()
 
     model_footprint = None
@@ -246,6 +247,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--train", help="whether to train the given model", action="store_true")
     parser.add_argument("-e", "--eval", help="whether to predict & evaluate accuracy using the given model", action="store_true")
     parser.add_argument("-p", "--plot", help="whether to plot results from previous/current runs", action="store_true")
+    parser.add_argument("-g", "--gpu", type=bool, default=False, help="use GPU where possible")
 
     args = parser.parse_args()
 
