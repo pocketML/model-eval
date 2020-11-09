@@ -10,7 +10,7 @@ import plotting
 from inference import monitor_inference
 from training import monitor_training, train_imported_model
 from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, flair_pos
-from taggers import nltk_tnt, nltk_crf, nltk_brill, nltk_hmm, meta_tagger
+from taggers import nltk_tnt, nltk_crf, nltk_brill, nltk_hmm
 
 # hmm = nltk.HiddenMarkovModelTagger()
 # senna = nltk.Senna()
@@ -26,8 +26,7 @@ TAGGERS = {
     "tnt": nltk_tnt.TnT,
     "brill": nltk_brill.Brill,
     "crf": nltk_crf.CRF,
-    "hmm": nltk_hmm.HMM,
-    "meta_tagger": meta_tagger.METATAGGER,
+    "hmm": nltk_hmm.HMM
 }
 
 def insert_arg_values(cmd, tagger, args):
@@ -72,7 +71,10 @@ def system_call(cmd, cwd, script_location):
         stdout_reroute = open(file_path, "w", encoding="utf-8", errors="utf-8")
         cmd = cmd[:index]
 
-    cmd_full = cmd.replace("[script_path]", f"\"{cwd}/{script_location}\"")
+    script_path = "{cwd}/{script_location}"
+    if platform.system() == "Windows":
+        script_path = f"\"{script_path}\"" 
+    cmd_full = cmd.replace("[script_path]", script_path)
     #if platform.system() == "Windows" and not cmd.startswith("bash"):
     #    cmd_full = cmd_full.replace("/", "\\")
     print(f"Running {cmd_full}")
