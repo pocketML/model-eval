@@ -71,7 +71,7 @@ def system_call(cmd, cwd, script_location):
         stdout_reroute = open(file_path, "w", encoding="utf-8", errors="utf-8")
         cmd = cmd[:index]
 
-    script_path = "{cwd}/{script_location}"
+    script_path = f"{cwd}/{script_location}"
     if platform.system() == "Windows":
         script_path = f"\"{script_path}\"" 
     cmd_full = cmd.replace("[script_path]", script_path)
