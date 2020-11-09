@@ -6,7 +6,7 @@ For the base evaluation platform:
 
 Requirements for the various models:
 
-* BiLSTM-aux
+* bilstm_aux
 ** pip install cython // not sure if this is actually needed (pretty sure it isn't)
 ** pip install dyNET38
 
@@ -14,7 +14,7 @@ Requirements for the various models:
 ** Perl (strawberry)
 ** Run on Linux with gcc/g++ or use Windows and install these on WSL
 
-* pos_adv - BiLSTM-CRF with adversarial training
+* bilstm_crf
 ** pip install --upgrade https://github.com/Theano/Theano/archive/master.zip
 ** pip install --upgrade https://github.com/Lasagne/Lasagne/archive/master.zip
 ** pip install gensim
@@ -33,3 +33,6 @@ Requirements for the various models:
 * CRF
 ** Same requirements as TnT and...
 ** conda install python-crfsuite
+
+* meta_tagger
+** conda install tensorflow
