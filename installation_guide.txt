@@ -1,4 +1,7 @@
-For the base evaluation platform:
+* For the base evaluation platform:
+** If on windows
+chocolatey
+
 ** python 3.8.5
 ** conda install requests
 ** conda install nltk
@@ -28,7 +31,6 @@ Requirements for the various models:
 
 * TnT
 ** conda install nltk
-** conda install dill
 
 * CRF
 ** Same requirements as TnT and...
