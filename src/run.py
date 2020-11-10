@@ -31,26 +31,23 @@ TAGGERS = {
 }
 
 def insert_arg_values(cmd, tagger, args):
-    replaced = cmd.replace("[iters]", str(args.iter))
-    model_base_path = tagger.model_base_path()
-    replaced = replaced.replace("[model_base_path]", model_base_path)
-    model_path = tagger.model_path()
-    replaced = replaced.replace("[model_path]", model_path)
-    predict_path = tagger.predict_path()
-    replaced = replaced.replace("[pred_path]", predict_path)
-    reload_str = tagger.reload_string()
-    if reload_str is None or not args.reload:
+    if reload_str := tagger.reload_string() is None or not args.reload:
         reload_str = ""
-    replaced = replaced.replace("[reload]", reload_str)
-    replaced = replaced.replace("[lang]", args.lang)
-    embeddings = data_archives.get_embeddings_path(args.lang)
-    replaced = replaced.replace("[embeddings]", embeddings)
-    dataset_train = data_archives.get_dataset_path(args.lang, args.treebank, "train")
-    replaced = replaced.replace("[dataset_train]", dataset_train)
-    dataset_test = data_archives.get_dataset_path(args.lang, args.treebank, "test")
-    replaced = replaced.replace("[dataset_test]", dataset_test)
-    dataset_dev = data_archives.get_dataset_path(args.lang, args.treebank, "dev")
-    replaced = replaced.replace("[dataset_dev]", dataset_dev)
+    replacements = [
+        ("[iters]", str(args.iter)),
+        ("[model_base_path]", tagger.model_base_path()),
+        ("[model_path]", tagger.model_path()),
+        ("[pred_path]", tagger.predict_path()),
+        ("[reload]", reload_str),
+        ("[lang]", args.lang),
+        ("[embeddings]", data_archives.get_embeddings_path(args.lang)),
+        ("[dataset_train]", data_archives.get_dataset_path(args.lang, args.treebank, "train")),
+        ("[dataset_test]", data_archives.get_dataset_path(args.lang, args.treebank, "test")),
+        ("[dataset_dev]", data_archives.get_dataset_path(args.lang, args.treebank, "dev"))
+    ]
+    replaced = cmd
+    for old, new in replacements:
+        replaced = replaced.replace(old, new)
     return replaced
 
 def system_call(cmd, cwd, script_location):

@@ -1,7 +1,11 @@
 from taggers.tagger_wrapper_syscall import SysCallTagger
+import os
 
 class METATAGGER(SysCallTagger):
     ACC_STR = 'dev accuracies:'
+
+    def __init__(self, args, model_name, load_model=False):
+        super().__init__(args, model_name, load_model)
 
     async def on_epoch_complete(self, process_handler):
         while (text := self.read_stdout(process_handler)) is not None:
@@ -23,20 +27,21 @@ class METATAGGER(SysCallTagger):
         return 'models/meta_tagger/train_cw.py'
 
     def train_string(self):
+        cwd = os.getcwd().replace('\\', '/')
         return (
             'python [script_path] '
-            '--train=\'[dataset_train]\' '
+            '--train=[dataset_train] '
             '--dev=\'[dataset_dev]\' '
-            '--embeddings=\'[embeddings]\' '
-            '--task=\'xtag\' '
-            '--config=\'config.json\' '
-            f'--output_dir=\'[model_base_path]\''
+            f'--embeddings=[embeddings] '
+            '--task=xtag '
+            '--config=config.json '
+            f'--output_dir=[model_base_path]'
         )
     
     def predict_string(self):
         return (
             'python models/meta_tagger/test_cw.py '
-            '--test=\'[dataset_test]\' '
-            f'--output_dir=\'[model_base_path]\' '
-            '--out=\'preds.out\''
+            '--test=[dataset_test] '
+            f'--output_dir=[model_base_path] '
+            '--out=preds.out'
         )

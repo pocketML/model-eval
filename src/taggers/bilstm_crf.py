@@ -4,6 +4,9 @@ from taggers.tagger_wrapper_syscall import SysCallTagger
 class BILSTMCRF(SysCallTagger):
     ACC_STR = "test loss:"
 
+    def __init__(self, args, model_name, load_model=False):
+        super().__init__(args, model_name, load_model)
+
     async def on_epoch_complete(self, process_handler):
         while (text := self.read_stdout(process_handler)) is not None:
             if (index := text.find(self.ACC_STR)) != -1:
@@ -20,7 +23,7 @@ class BILSTMCRF(SysCallTagger):
     def model_path(self):
         folders = glob(f"{self.model_base_path()}/save/epoch*")
         if len(folders) == 0:
-            return None
+            return ''
         folders.sort(key=lambda x: int(x.replace("\\", "/").split("/")[-1][5:]))
         return folders[-1].replace("\\", "/") + "/final.npz"
 

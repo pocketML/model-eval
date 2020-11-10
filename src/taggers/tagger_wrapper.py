@@ -1,4 +1,5 @@
 from abc import ABC
+from abc import abstractmethod
 import os
 
 class Tagger(ABC):
@@ -6,6 +7,7 @@ class Tagger(ABC):
         self.args = args
         self.model_name = model_name
         self.create_model_folder()
+        self.epoch = 0
 
     def create_model_folder(self):
         cwd = os.getcwd().replace("\\", "/")
@@ -16,4 +18,7 @@ class Tagger(ABC):
             partial_path = "/".join(split[:index])
             if not os.path.exists(partial_path):
                 os.mkdir(partial_path)
-            index -= 1
+
+    @abstractmethod
+    def model_base_path(self):
+        pass
