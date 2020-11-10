@@ -3,11 +3,12 @@ from abc import abstractmethod
 import os
 
 class Tagger(ABC):
-    def __init__(self, args, model_name):
+    def __init__(self, args, model_name, simplified_dataset=True):
         self.args = args
         self.model_name = model_name
         self.create_model_folder()
         self.epoch = 0
+        self.simplified_dataset = simplified_dataset
 
     def create_model_folder(self):
         cwd = os.getcwd().replace("\\", "/")

@@ -41,14 +41,14 @@ def insert_arg_values(cmd, tagger, args):
         ("[reload]", reload_str),
         ("[lang]", args.lang),
         ("[embeddings]", data_archives.get_embeddings_path(args.lang)),
-        ("[dataset_train]", data_archives.get_dataset_path(args.lang, args.treebank, "train")),
-        ("[dataset_test]", data_archives.get_dataset_path(args.lang, args.treebank, "test")),
-        ("[dataset_dev]", data_archives.get_dataset_path(args.lang, args.treebank, "dev"))
+        ("[dataset_train]", data_archives.get_dataset_path(args.lang, args.treebank, "train", simplified=tagger.simplified_dataset)),
+        ("[dataset_test]", data_archives.get_dataset_path(args.lang, args.treebank, "test", simplified=tagger.simplified_dataset)),
+        ("[dataset_dev]", data_archives.get_dataset_path(args.lang, args.treebank, "dev", simplified=tagger.simplified_dataset))
     ]
     replaced = cmd
     for old, new in replacements:
         replaced = replaced.replace(old, new)
-    return replaced
+    return replaced.strip()
 
 def system_call(cmd, cwd, script_location):
     if platform.system() == "Windows" and cmd.startswith("bash"):
@@ -216,13 +216,22 @@ async def main(args):
         plotting.plot_results()
 
 if __name__ == "__main__":
-    print("*****************************************")
-    print("*****************************************")
-    print("****                                 ****")
-    print("***   pocketML model evaluator 4000   ***")
-    print("****                                 ****")
-    print("*****************************************")
-    print("*****************************************\n")
+    logo_str = (
+        "***********************************************************************************\n"
+        "***********************************************************************************\n"
+        "***                                                                             ***\n"
+        "***                             █|                 █|      █|      █| █|        ***\n"
+        "***  █████|     ███|     █████| █|  █|    ███|   ███████|  ███|  ███| █|        ***\n"
+        "***  █|    █| █|    █| █|       ███|    ███|███|   █|      █|  █|  █| █|        ***\n"
+        "***  █|    █| █|    █| █|       █|  █|  █|         █|      █|      █| █|        ***\n"
+        "***  █████|     ███|     █████| █|    █|  █████|     ███|  █|      █| ███████|  ***\n"
+        "***  █|                                                                         ***\n"
+        "***  █|                                                                         ***\n"
+        "***                                                                             ***\n"
+        "***********************************************************************************\n"
+        "***********************************************************************************\n"
+    )
+    print(logo_str)
 
     parser = argparse.ArgumentParser(description="Evaluation of various state of the art POS taggers, on the UD dataset")
 

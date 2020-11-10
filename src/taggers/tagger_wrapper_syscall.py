@@ -4,8 +4,8 @@ from taggers.tagger_wrapper import Tagger
 class SysCallTagger(Tagger):
     IS_IMPORTED = False
 
-    def __init__(self, args, model_name, load_model=False):
-        super().__init__(args, model_name)
+    def __init__(self, args, model_name, load_model=False, simplified_dataset=True):
+        super().__init__(args, model_name, simplified_dataset=simplified_dataset)
         self.epoch = 0
 
     def read_stdout(self, process_handler):
@@ -13,7 +13,6 @@ class SysCallTagger(Tagger):
             return None
         data = process_handler.stdout.readline()
         text = data.decode("utf-8")
-        print(text)
         return text
 
     def is_inference_complete(self, process_handler):
