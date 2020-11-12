@@ -1,17 +1,17 @@
 * For the base evaluation platform:
-** If on windows
-chocolatey
-
 ** python 3.8.5
 ** conda install requests
 ** conda install nltk
 ** conda install matplotlib
+** conda install dill
+** (windows) pip install windows-curses
+** (windows, optional) chocolatey
 
 Requirements for the various models:
 
 * bilstm_aux
 ** pip install cython // not sure if this is actually needed (pretty sure it isn't)
-** pip install dyNET38
+** pip install dyNET
 
 * svmtool
 ** Perl (strawberry)
@@ -26,14 +26,10 @@ Requirements for the various models:
 ** java 8+
 
 * FLAIR
-** conda install pytorch
+** conda install pytorch torchvision torchaudio cudatoolkit=10.1 -c pytorch
 ** pip install flair
 
-* TnT
-** conda install nltk
-
 * CRF
-** Same requirements as TnT and...
 ** conda install python-crfsuite
 
 * meta_tagger

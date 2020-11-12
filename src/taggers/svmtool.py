@@ -50,7 +50,7 @@ class SVMT(SysCallTagger):
 
     def train_string(self):
         return (
-            "bash -c \"perl [script_path] -V 1 [dir]/models/svmtool/bin/config.svmt\""
+            "bash -c \"perl [script_path] -V 1 [model_path]/models/svmtool/bin/config.svmt\""
         )
 
     def predict_string(self):

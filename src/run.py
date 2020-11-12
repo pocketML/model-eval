@@ -73,8 +73,8 @@ def system_call(cmd, cwd, script_location):
     if platform.system() == "Windows":
         script_path = f"\"{script_path}\"" 
     cmd_full = cmd.replace("[script_path]", script_path)
-    #if platform.system() == "Windows" and not cmd.startswith("bash"):
-    #    cmd_full = cmd_full.replace("/", "\\")
+    if platform.system() == "Windows" and not cmd.startswith("bash"):
+        cmd_full = cmd_full.replace("/", "\\")
     print(f"Running {cmd_full}")
 
     if platform.system() != "Windows":
