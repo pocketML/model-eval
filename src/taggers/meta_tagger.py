@@ -41,7 +41,7 @@ class METATAGGER(SysCallTagger):
             f'--embeddings=[embeddings] '
             '--task=xtag '
             '--config=config.json '
-            f'--output_dir=[model_base_path]'
+            f'--output_dir=[model_base_path]/'
         )
     
     def predict_string(self):
@@ -49,7 +49,7 @@ class METATAGGER(SysCallTagger):
             'python [script_path_test] '
             '--test=[dataset_test] '
             '--task=xtag '
-            f'--output_dir=[model_base_path] '
+            f'--output_dir=[model_base_path]/ '
             '--out=[model_base_path]/preds.out'
         )
 

@@ -101,9 +101,13 @@ async def run_with_sys_call(args, tagger_helper, model_name, file_pointer):
     model_footprint = None
     if args.eval: # Run inference task.
         if call_infer is not None:
+            print('inserting arg values')
             call_infer = insert_arg_values(call_infer, tagger_helper, args)
+            print('doing system call')
             process = system_call(call_infer, cwd, tagger_helper.script_path_test())
+            print('measuring footprint')
             model_footprint = await monitor_inference(process)
+            print('done')
         final_acc = tagger_helper.evaluate()
     return final_acc, model_footprint
 
