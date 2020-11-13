@@ -1,7 +1,7 @@
 from taggers.tagger_wrapper_syscall import SysCallTagger
 import os
 import shutil
-import data_archives
+from util import data_archives
 
 class Stanford(SysCallTagger):
     def __init__(self, args, model_name, load_model=False):
@@ -80,3 +80,6 @@ class Stanford(SysCallTagger):
             "--encoding UTF-8 "
             "--testFile format=TSV,wordColumn=0,tagColumn=1,[dataset_test] [stdout] [pred_path]"
         )
+
+    def code_size(self):
+        return 0

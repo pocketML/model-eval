@@ -1,6 +1,7 @@
-from taggers.tagger_wrapper_syscall import SysCallTagger
-import data_archives
+from os.path import getsize
 from glob import glob
+from taggers.tagger_wrapper_syscall import SysCallTagger
+from util import data_archives
 
 class SVMT(SysCallTagger):
     ACC_STR = "TEST ACCURACY:"
@@ -58,3 +59,11 @@ class SVMT(SysCallTagger):
             f"bash -c \"perl [script_path] [model_path] < "
             f"[dataset_test] > [pred_path]\""
         )
+
+    def code_size(self):
+        base = "models/svmtool/"
+        code_paths = [
+            f"{base}/bin/*.pl",
+            f"{base}/lib/SVMTool/"
+        ]
+        return 0

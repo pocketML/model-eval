@@ -21,5 +21,9 @@ class Tagger(ABC):
                 os.mkdir(partial_path)
 
     @abstractmethod
+    def code_size(self):
+        pass
+
+    @abstractmethod
     def model_base_path(self):
         pass

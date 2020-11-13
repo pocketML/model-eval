@@ -49,3 +49,6 @@ class BILSTMCRF(SysCallTagger):
 
     def reload_string(self):
         return f"--reload {self.model_path()}"
+
+    def code_size(self):
+        return 0

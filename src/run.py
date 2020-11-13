@@ -5,17 +5,12 @@ import subprocess
 from datetime import datetime
 import platform
 import argparse
-import data_archives
-import plotting
+from util import data_archives
+from util import plotting
 from inference import monitor_inference
 from training import monitor_training, train_imported_model
 from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, meta_tagger, flair_pos
 from taggers import nltk_tnt, nltk_crf, nltk_brill, nltk_hmm
-
-# hmm = nltk.HiddenMarkovModelTagger()
-# senna = nltk.Senna()
-# brill = nltk.BrillTagger()
-# crf = nltk.CRFTagger()
 
 TAGGERS = {
     "bilstm_aux": bilstm_aux.BILSTMAUX,
@@ -183,6 +178,7 @@ async def main(args):
             # Load model immediately if we are only evaluating, or if we are continuing training.
             load_model = (args.eval and not args.train) or (args.reload and args.train)
             tagger = TAGGERS[model_name](args, model_name, load_model)
+            print(f"Tagger code size: {tagger.code_size()['total_size'] // 1000} KB")
 
             if tagger.IS_IMPORTED:
                 acc_tuple, model_footprint = await run_with_imported_model(args, tagger, model_name)

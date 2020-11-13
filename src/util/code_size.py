@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 import importlib
 from os.path import getsize
-from taggers import nltk_tnt, nltk_hmm, nltk_crf, nltk_brill, flair_pos
+
+PYTHON_3_8_STDLIB_SIZE = 27800000 # Bytes
 
 def get_file_size(module):
     if hasattr(module, "__file__"):
@@ -26,42 +27,24 @@ def get_size_of_imports(module, imports, size):
             imports, size = get_size_of_imports(sub_module, imports, size + module_size)
     return imports, size
 
-def get_code_size(obj):
-    module = load_module(obj.__class__.__module__)
+def get_code_size(module_name):
+    module = load_module(module_name)
     main_module_size = get_file_size(module)
     imports, imports_size = get_size_of_imports(module, set(), 0)
-    total_size = imports_size + main_module_size
+    total_size = imports_size + main_module_size + PYTHON_3_8_STDLIB_SIZE
     return {
-        "class_name": str(obj.__class__),
+        "module_name": module_name,
         "total_size": total_size,
         "module_size": main_module_size,
         "imports_size": imports_size,
         "total_nested_imports": len(imports),
+        "stdlib_size": PYTHON_3_8_STDLIB_SIZE
     }
 
 def pretty_print(result_dict):
-    print(f"=== {result_dict['class_name']} ===")
+    print(f"=== {result_dict['module_name']} ===")
     print(f"Imports (nested):   {result_dict['total_nested_imports']}")
     print(f"Size of module:     {result_dict['module_size'] / 1000:.2f} KB")
     print(f"Size of imports:    {result_dict['imports_size'] / 1000:.2f} KB")
+    print(f"Size of std lib:    {result_dict['stdlib_size'] / 1000:.2f} KB")
     print(f"Total size of code: {result_dict['total_size'] / 1000:.2f} KB")
-
-if __name__ == "__main__":
-    @dataclass
-    class Args: # Dummy class for program args
-        lang = "en"
-        treebank = "gum"
-        iter = 10
-    args = Args()
-
-    taggers = [
-        nltk_tnt.TnT(args, "tnt", True),
-        nltk_brill.Brill(args, "brill", True),
-        nltk_hmm.HMM(args, "hmm", True),
-        nltk_crf.CRF(args, "crf", True),
-        flair_pos.Flair(args, "flair", True)
-    ]
-
-    for tagger in taggers:
-        size_details = get_code_size(tagger.model)
-        pretty_print(size_details)

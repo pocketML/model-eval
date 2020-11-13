@@ -1,9 +1,10 @@
 import nltk
 from os import path
 import dill as pickle
-import data_archives
+from util import data_archives
 from taggers.tagger_wrapper import Tagger
 from loadbar import Loadbar
+from util.code_size import get_code_size
 
 class ImportedTagger(Tagger):
     IS_IMPORTED = True
@@ -86,3 +87,6 @@ class ImportedTagger(Tagger):
             else:
                 curr_senteces.append(tuple(line.split(None)))
         return sentences
+
+    def code_size(self):
+        return get_code_size(self.model.__class__.__module__)

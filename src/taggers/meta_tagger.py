@@ -49,3 +49,6 @@ class METATAGGER(SysCallTagger):
             f'--output_dir=[model_base_path] '
             '--out=[model_base_path]/preds.out'
         )
+
+    def code_size(self):
+        return 0

@@ -41,3 +41,6 @@ class BILSTMAUX(SysCallTagger):
             "--test [dataset_test] "
             "--output [pred_path]"
         )
+    
+    def code_size(self):
+        return 0

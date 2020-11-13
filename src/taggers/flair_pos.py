@@ -10,7 +10,7 @@ from flair import device
 import torch
 import numpy as np
 from taggers.tagger_wrapper_import import ImportedTagger
-import data_archives
+from util import data_archives
 
 class PolyglotEmbeddings(TokenEmbeddings):
     def __init__(self, embeddings_path):
