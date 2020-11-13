@@ -33,4 +33,6 @@ Requirements for the various models:
 ** conda install python-crfsuite
 
 * meta_tagger
+** conda install cudatoolkit=10.1
+** conda install cudnn=7.6.4
 ** conda install tensorflow

@@ -10,6 +10,8 @@ LANGUAGES = {
     "danish": "danish",
     "en": "english",
     "english": "english",
+    "eu": "basque",
+    "basque": "basque",
     "hi": "hindi",
     "hindi": "hindi",
     "ja": "japanese",
@@ -22,8 +24,6 @@ LANGUAGES = {
     "turkish": "turkish",
     "vi": "vietnamese",
     "vietnamese": "vietnamese",
-    "yo": "yoruba",
-    "yoruba": "yoruba"
 }
 
 def download_and_unpack(archive_type, archive):

@@ -9,11 +9,11 @@ class METATAGGER(SysCallTagger):
     async def on_epoch_complete(self, process_handler):
 
         while (text := self.read_stdout(process_handler)) is not None:
-            if (index := text.find(self.ACC_STR[0])) != -1:
+            if text.find('INFO:tensorflow')  != -1 and (index := text.find(self.ACC_STR[0])) != -1:
                 test_str = text[index:].strip().split(' ')[4]
                 self.epoch += 1
                 yield float(test_str)
-            elif (index := text.find(self.ACC_STR[1])) != -1:
+            elif text.find('INFO:tensorflow') != -1 and (index := text.find(self.ACC_STR[1])) != -1:
                 test_str = text[index:].strip().split(' ')[3]
                 self.epoch += 1
                 yield float(test_str)
@@ -45,6 +45,7 @@ class METATAGGER(SysCallTagger):
         return (
             'python models/meta_tagger/test_cw.py '
             '--test=[dataset_test] '
+            '--task=xtag '
             f'--output_dir=[model_base_path] '
-            '--out=preds.out'
+            '--out=[model_base_path]/preds.out'
         )
