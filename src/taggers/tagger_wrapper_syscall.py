@@ -46,10 +46,19 @@ class SysCallTagger(Tagger):
                     correct += 1
                     curr_sent_correct += 1
 
-        return correct / total, correct_sent / total_sent
+        token_acc = correct / total if total > 0 else 0
+        sent_acc = correct_sent / total_sent if total_sent > 0 else 0
+        return token_acc, sent_acc
 
     def reload_string(self):
         return None
+
+    @abstractmethod
+    def script_path_train(self):
+        pass
+
+    def script_path_test(self):
+        return self.script_path_train()
 
     @abstractmethod
     def model_base_path(self):

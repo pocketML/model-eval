@@ -48,7 +48,10 @@ class ImportedTagger(Tagger):
             elif pct > prev_pct:
                 print(f"{pct}%", end="\r", flush=True)
                 prev_pct = pct
-        pipe.send((correct / total, correct_sent / total_sent))
+
+        token_acc = correct / total if total > 0 else 0
+        sent_acc = correct_sent / total_sent if total_sent > 0 else 0
+        pipe.send((token_acc, sent_acc))
 
     def predict(self, sentence):
         return self.model.tag(sentence)
@@ -89,4 +92,4 @@ class ImportedTagger(Tagger):
         return sentences
 
     def code_size(self):
-        return get_code_size(self.model.__class__.__module__)
+        return get_code_size(self.model.__class__.__module__)["total_size"]

@@ -27,12 +27,15 @@ class METATAGGER(SysCallTagger):
     def predict_path(self):
         return f'{self.model_base_path()}/preds.out'
 
-    def script_path(self):
+    def script_path_train(self):
         return 'models/meta_tagger/train_cw.py'
+
+    def script_path_test(self):
+        return 'models/meta_tagger/test_cw.py'
 
     def train_string(self):
         return (
-            'python [script_path] '
+            'python [script_path_train] '
             '--train=[dataset_train] '
             '--dev=[dataset_dev] '
             f'--embeddings=[embeddings] '
@@ -43,7 +46,7 @@ class METATAGGER(SysCallTagger):
     
     def predict_string(self):
         return (
-            'python models/meta_tagger/test_cw.py '
+            'python [script_path_test] '
             '--test=[dataset_test] '
             '--task=xtag '
             f'--output_dir=[model_base_path] '

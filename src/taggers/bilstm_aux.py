@@ -25,19 +25,19 @@ class BILSTMAUX(SysCallTagger):
     def predict_path(self):
         return f"{self.model_base_path()}/preds.out"
 
-    def script_path(self):
+    def script_path_train(self):
         return "models/bilstm_aux/src/structbilty.py"
 
     def train_string(self):
         return (
-            "python [script_path] --dynet-mem 1500 "
+            "python [script_path_train] --dynet-mem 1500 "
             "--train [dataset_train] --dev [dataset_dev] --test [dataset_test] "
             "--iters [iters] --model [model_path] --embeds [embeddings]"
         )
 
     def predict_string(self):
         return (
-            "python [script_path] --model [model_path] "
+            "python [script_path_test] --model [model_path] "
             "--test [dataset_test] "
             "--output [pred_path]"
         )

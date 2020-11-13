@@ -46,24 +46,33 @@ class SVMT(SysCallTagger):
     def predict_path(self):
         return f"{self.model_base_path()}/preds.out"
 
-    def script_path(self):
+    def script_path_train(self):
         return "models/svmtool/bin/SVMTlearn.pl"
+
+    def script_path_test(self):
+        return "models/svmtool/bin/SVMTagger.pl"
 
     def train_string(self):
         return (
-            "bash -c \"perl [script_path] -V 1 [model_path]/models/svmtool/bin/config.svmt\""
+            "bash -c \"perl [script_path_train] -V 1 [model_path]/models/svmtool/bin/config.svmt\""
         )
 
     def predict_string(self):
         return (
-            f"bash -c \"perl [script_path] [model_path] < "
-            f"[dataset_test] > [pred_path]\""
+            f"bash -c \"perl [script_path_test] [model_path] < "
+            f"[dataset_test] [stdout] [pred_path]\""
         )
 
     def code_size(self):
         base = "models/svmtool/"
         code_paths = [
             f"{base}/bin/*.pl",
-            f"{base}/lib/SVMTool/"
+            f"{base}/lib/SVMTool/*.pm",
+            f"{base}/svmlight/*"
         ]
-        return 0
+        total_size = 0
+        for glob_str in code_paths:
+            files = glob(glob_str)
+            for file in files:
+                total_size += getsize(file)
+        return total_size

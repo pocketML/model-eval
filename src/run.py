@@ -38,7 +38,9 @@ def insert_arg_values(cmd, tagger, args):
         ("[embeddings]", data_archives.get_embeddings_path(args.lang)),
         ("[dataset_train]", data_archives.get_dataset_path(args.lang, args.treebank, "train", simplified=tagger.simplified_dataset)),
         ("[dataset_test]", data_archives.get_dataset_path(args.lang, args.treebank, "test", simplified=tagger.simplified_dataset)),
-        ("[dataset_dev]", data_archives.get_dataset_path(args.lang, args.treebank, "dev", simplified=tagger.simplified_dataset))
+        ("[dataset_dev]", data_archives.get_dataset_path(args.lang, args.treebank, "dev", simplified=tagger.simplified_dataset)),
+        ("[stdout]", f"[stdout_{len(tagger.predict_path())}]"),
+        ("[stderr]", f"[stdout_{len(tagger.predict_path())}]")
     ]
     replaced = cmd
     for old, new in replacements:
@@ -51,23 +53,29 @@ def system_call(cmd, cwd, script_location):
         cwd = "/mnt/" + split[0][:-1].lower() + "/" + "/".join(split[1:])
 
     stderr_reroute = subprocess.STDOUT
-    if "[stderr]" in cmd:
-        index = cmd.index("[stderr]")
-        file_path = cmd[index + len("[stderr]") + 1:]
-        stderr_reroute = open(file_path, "w", encoding="utf-8")
-        cmd = cmd[:index]
+    if "[stderr_" in cmd:
+        index = cmd.index("[stderr_")
+        end_stderr = index + cmd[index:].index("]")
+        len_file = int(cmd[index + len("[stderr_"):end_stderr])
+        file_path = cmd[end_stderr + 2: end_stderr + 2 + len_file]
+        stdout_reroute = open(file_path, "w", encoding="utf-8", errors="utf-8")
+        cmd = cmd[:index-1] + cmd[end_stderr + 2 + len_file:]
 
     stdout_reroute = subprocess.PIPE
-    if "[stdout]" in cmd:
-        index = cmd.index("[stdout]")
-        file_path = cmd[index + len("[stdout]") + 1:]
+    if "[stdout_" in cmd:
+        index = cmd.index("[stdout_")
+        end_stdout = index + cmd[index:].index("]")
+        len_file = int(cmd[index + len("[stdout_"):end_stdout])
+        file_path = cmd[end_stdout + 2: end_stdout + 2 + len_file]
         stdout_reroute = open(file_path, "w", encoding="utf-8", errors="utf-8")
-        cmd = cmd[:index]
+        cmd = cmd[:index-1] + cmd[end_stdout + 2 + len_file:]
 
     script_path = f"{cwd}/{script_location}"
     if platform.system() == "Windows":
         script_path = f"\"{script_path}\"" 
-    cmd_full = cmd.replace("[script_path]", script_path)
+    cmd_full = cmd.replace("[script_path_train]", script_path)
+    cmd_full = cmd_full.replace("[script_path_test]", script_path)
+
     if platform.system() == "Windows" and not cmd.startswith("bash"):
         cmd_full = cmd_full.replace("/", "\\")
     print(f"Running {cmd_full}")
@@ -87,14 +95,14 @@ async def run_with_sys_call(args, tagger_helper, model_name, file_pointer):
     final_acc = (0, 0)
     if args.train: # Train model.
         call_train = insert_arg_values(call_train, tagger_helper, args)
-        process = system_call(call_train, cwd, tagger_helper.script_path())
+        process = system_call(call_train, cwd, tagger_helper.script_path_train())
         final_acc = await monitor_training(tagger_helper, process, args, model_name, file_pointer)
 
     model_footprint = None
     if args.eval: # Run inference task.
         if call_infer is not None:
             call_infer = insert_arg_values(call_infer, tagger_helper, args)
-            process = system_call(call_infer, cwd, tagger_helper.script_path())
+            process = system_call(call_infer, cwd, tagger_helper.script_path_test())
             model_footprint = await monitor_inference(process)
         final_acc = tagger_helper.evaluate()
     return final_acc, model_footprint
@@ -178,7 +186,7 @@ async def main(args):
             # Load model immediately if we are only evaluating, or if we are continuing training.
             load_model = (args.eval and not args.train) or (args.reload and args.train)
             tagger = TAGGERS[model_name](args, model_name, load_model)
-            print(f"Tagger code size: {tagger.code_size()['total_size'] // 1000} KB")
+            print(f"Tagger code size: {tagger.code_size() // 1000} KB")
 
             if tagger.IS_IMPORTED:
                 acc_tuple, model_footprint = await run_with_imported_model(args, tagger, model_name)
