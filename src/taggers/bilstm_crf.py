@@ -62,10 +62,11 @@ class BILSTMCRF(SysCallTagger):
         depend_six_size = 13.0e3 # 10 KB
         depend_scipy_size = 31.4e6 # 31.4 MB
         depend_lasagne_size = 949.0e3 # 949 KB
-        depend_smart_open = 187.0e3 # 187 KB
+        depend_smartopen_size = 187.0e3 # 187 KB
+        depend_gensim_size = 24.2e6 # 24.2 MB
         dependency_size = (
             depend_theano_size + depend_six_size + depend_scipy_size +
-            depend_lasagne_size + depend_smart_open
+            depend_lasagne_size + depend_smartopen_size + depend_gensim_size
         )
         base = "models/bilstm_crf/"
         code_files = [
