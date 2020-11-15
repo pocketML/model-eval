@@ -71,9 +71,9 @@ class SVMT(SysCallTagger):
             f"{base}/lib/SVMTool/*.pm",
             f"{base}/svmlight/*"
         ]
-        total_size = int(PERL_STDLIB_SIZE)
+        total_size = PERL_STDLIB_SIZE
         for glob_str in code_files:
             files = glob(glob_str)
             for file in files:
                 total_size += getsize(file)
-        return total_size
+        return int(total_size)

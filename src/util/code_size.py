@@ -4,6 +4,7 @@ from os.path import getsize
 
 PYTHON_STDLIB_SIZE = 27.8e6 # 27.8 MB
 PERL_STDLIB_SIZE = 43.3e6 # 43.3 MB
+JAVA_JRE_SIZE = 170e6 # 170 MB
 
 def get_file_size(module):
     if hasattr(module, "__file__"):

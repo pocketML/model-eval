@@ -1,7 +1,9 @@
-from taggers.tagger_wrapper_syscall import SysCallTagger
 import os
 import shutil
+from glob import glob
+from taggers.tagger_wrapper_syscall import SysCallTagger
 from util import data_archives
+from util.code_size import JAVA_JRE_SIZE
 
 class Stanford(SysCallTagger):
     def __init__(self, args, model_name, load_model=False):
@@ -82,4 +84,13 @@ class Stanford(SysCallTagger):
         )
 
     def code_size(self):
-        return 0
+        base = "models/stanford/"
+        code_files = [
+            f"{base}/stanford-postagger.jar",
+        ]
+        total_size = int(JAVA_JRE_SIZE)
+        for glob_str in code_files:
+            files = glob(glob_str)
+            for file in files:
+                total_size += os.path.getsize(file)
+        return total_size
