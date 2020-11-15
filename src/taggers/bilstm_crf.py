@@ -1,5 +1,8 @@
+from os.path import getsize
 from glob import glob
 from taggers.tagger_wrapper_syscall import SysCallTagger
+from util.code_size import PYTHON_STDLIB_SIZE
+from util import data_archives
 
 class BILSTMCRF(SysCallTagger):
     ACC_STR = "test loss:"
@@ -55,4 +58,24 @@ class BILSTMCRF(SysCallTagger):
         return f"--reload {self.model_path()}"
 
     def code_size(self):
-        return 0
+        depend_theano_size = 16.2e6 # 16.2 MB
+        depend_six_size = 13.0e3 # 10 KB
+        depend_scipy_size = 31.4e6 # 31.4 MB
+        depend_lasagne_size = 949.0e3 # 949 KB
+        depend_smart_open = 187.0e3 # 187 KB
+        dependency_size = (
+            depend_theano_size + depend_six_size + depend_scipy_size +
+            depend_lasagne_size + depend_smart_open
+        )
+        base = "models/bilstm_crf/"
+        code_files = [
+            f"{base}/bilstm_bilstm_crf.py",
+            f"{base}/lasagne_nlp/*/*.py",
+        ]
+        embeddings_size = data_archives.get_embeddings_size(self.args.lang)
+        total_size = PYTHON_STDLIB_SIZE + embeddings_size + dependency_size
+        for glob_str in code_files:
+            files = glob(glob_str)
+            for file in files:
+                total_size += getsize(file)
+        return int(total_size)

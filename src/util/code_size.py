@@ -2,7 +2,8 @@ from dataclasses import dataclass
 import importlib
 from os.path import getsize
 
-PYTHON_3_8_STDLIB_SIZE = 27800000 # Bytes
+PYTHON_STDLIB_SIZE = 27.8e6 # 27.8 MB
+PERL_STDLIB_SIZE = 43.3e6 # 43.3 MB
 
 def get_file_size(module):
     if hasattr(module, "__file__"):
@@ -31,14 +32,14 @@ def get_code_size(module_name):
     module = load_module(module_name)
     main_module_size = get_file_size(module)
     imports, imports_size = get_size_of_imports(module, set(), 0)
-    total_size = imports_size + main_module_size + PYTHON_3_8_STDLIB_SIZE
+    total_size = imports_size + main_module_size + PYTHON_STDLIB_SIZE
     return {
         "module_name": module_name,
         "total_size": total_size,
         "module_size": main_module_size,
         "imports_size": imports_size,
         "total_nested_imports": len(imports),
-        "stdlib_size": PYTHON_3_8_STDLIB_SIZE
+        "stdlib_size": PYTHON_STDLIB_SIZE
     }
 
 def pretty_print(result_dict):

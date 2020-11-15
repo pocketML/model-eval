@@ -126,3 +126,6 @@ def transform_dataset(language):
     for folder in treebanks:
         print(f"Transforming {folder}")
         transform_data(folder)
+
+def get_embeddings_size(lang):
+    return path.getsize(get_embeddings_path(lang))

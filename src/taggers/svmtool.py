@@ -2,6 +2,7 @@ from os.path import getsize
 from glob import glob
 from taggers.tagger_wrapper_syscall import SysCallTagger
 from util import data_archives
+from util.code_size import PERL_STDLIB_SIZE
 
 class SVMT(SysCallTagger):
     ACC_STR = "TEST ACCURACY:"
@@ -65,13 +66,13 @@ class SVMT(SysCallTagger):
 
     def code_size(self):
         base = "models/svmtool/"
-        code_paths = [
+        code_files = [
             f"{base}/bin/*.pl",
             f"{base}/lib/SVMTool/*.pm",
             f"{base}/svmlight/*"
         ]
-        total_size = 0
-        for glob_str in code_paths:
+        total_size = int(PERL_STDLIB_SIZE)
+        for glob_str in code_files:
             files = glob(glob_str)
             for file in files:
                 total_size += getsize(file)

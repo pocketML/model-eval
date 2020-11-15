@@ -1,4 +1,8 @@
+from os.path import getsize
+from glob import glob
 from taggers.tagger_wrapper_syscall import SysCallTagger
+from util.code_size import PYTHON_STDLIB_SIZE
+from util import data_archives
 
 class BILSTMAUX(SysCallTagger):
     ACC_STR = "dev accuracy:"
@@ -41,6 +45,23 @@ class BILSTMAUX(SysCallTagger):
             "--test [dataset_test] "
             "--output [pred_path]"
         )
-    
+
     def code_size(self):
-        return 0
+        depend_dynet_size = 5.1e6 # 5.1 MB
+        depend_numpy_size = 13.0e6 # 13 MB
+        depend_cython_size = 1.7e6 # 1.7 MB
+        dependency_size = (
+            depend_dynet_size + depend_numpy_size + depend_cython_size
+        )
+        base = "models/bilstm_aux/"
+        code_files = [
+            f"{base}/src/*.py",
+            f"{base}/src/lib/*.py",
+        ]
+        embeddings_size = data_archives.get_embeddings_size(self.args.lang)
+        total_size = PYTHON_STDLIB_SIZE + embeddings_size + dependency_size
+        for glob_str in code_files:
+            files = glob(glob_str)
+            for file in files:
+                total_size += getsize(file)
+        return int(total_size)
