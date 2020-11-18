@@ -152,7 +152,9 @@ async def main(args):
     languages_to_use = (data_archives.LANGUAGES.keys() - set(data_archives.LANGUAGES.values())
                         if args.langs == ["all"] else args.langs)
 
+    treebanks = []
     for lang in languages_to_use:
+        treebanks.append(data_archives.get_default_treebank(lang))
         language_full = data_archives.LANGUAGES[lang]
         if not data_archives.archive_exists("data", language_full):
             data_archives.download_and_unpack("data", language_full)
@@ -171,9 +173,8 @@ async def main(args):
         return
 
     for model_name in models_to_run:
-        for lang in languages_to_use:
-            if args.treebank is None: # Get default treebank for given langauge, if none is specified.
-                args.treebank = data_archives.get_default_treebank(lang)
+        for lang, treebank in zip(languages_to_use, treebanks):
+            args.treebank = treebank
             print(
                 f"Using '{model_name}' with '{data_archives.LANGUAGES[lang]}' "
                 f"dataset on '{args.treebank}' treebank."
@@ -191,7 +192,8 @@ async def main(args):
             load_model = (args.eval and not args.train) or (args.reload and args.train)
             tagger = TAGGERS[model_name](args, model_name, load_model)
             print(f"Tagger code size: {tagger.code_size() // 1000} KB")
-            print(f"Tagger model size: {tagger.model_size() // 1000} KB")
+            if load_model:
+                print(f"Tagger model size: {tagger.model_size() // 1000} KB")
 
             if tagger.IS_IMPORTED:
                 acc_tuple, model_footprint = await run_with_imported_model(args, tagger, model_name)

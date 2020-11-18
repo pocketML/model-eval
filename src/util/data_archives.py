@@ -4,8 +4,8 @@ from shutil import unpack_archive
 import requests
 
 LANGUAGES = {
-    "am": "amharic",
-    "amharic": "amharic",
+    #"am": "amharic",
+    #"amharic": "amharic",
     "da": "danish",
     "danish": "danish",
     "en": "english",
