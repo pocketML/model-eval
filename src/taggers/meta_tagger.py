@@ -1,4 +1,8 @@
+from os.path import getsize
+from glob import glob
 from taggers.tagger_wrapper_syscall import SysCallTagger
+from util.code_size import PYTHON_STDLIB_SIZE
+from util import data_archives
 
 class METATAGGER(SysCallTagger):
     ACC_STR = ['dev set', 'dev accuracies:']
@@ -43,15 +47,26 @@ class METATAGGER(SysCallTagger):
             '--config=config.json '
             f'--output_dir=[model_base_path]/'
         )
-    
+
     def predict_string(self):
         return (
             'python [script_path_test] '
             '--test=[dataset_test] '
             '--task=xtag '
-            f'--output_dir=[model_base_path]/ '
+            '--output_dir=[model_base_path]/ '
             '--out=[model_base_path]/preds.out'
         )
 
     def code_size(self):
-        return 0
+        depend_tensorflow_size = 373629600 # 373 MB
+        base = "models/meta_tagger"
+        code_files = [
+            f"{base}/*.py",
+        ]
+        embeddings_size = data_archives.get_embeddings_size(self.args.lang)
+        total_size = PYTHON_STDLIB_SIZE + embeddings_size + depend_tensorflow_size
+        for glob_str in code_files:
+            files = glob(glob_str)
+            for file in files:
+                total_size += getsize(file)
+        return int(total_size)

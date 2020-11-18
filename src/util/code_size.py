@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import importlib
 from os.path import getsize
 
