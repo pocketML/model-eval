@@ -93,3 +93,6 @@ class ImportedTagger(Tagger):
 
     def code_size(self):
         return get_code_size(self.model.__class__.__module__)["total_size"]
+
+    def model_size(self):
+        return path.getsize(self.model_path)

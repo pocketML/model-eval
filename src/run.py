@@ -191,6 +191,7 @@ async def main(args):
             load_model = (args.eval and not args.train) or (args.reload and args.train)
             tagger = TAGGERS[model_name](args, model_name, load_model)
             print(f"Tagger code size: {tagger.code_size() // 1000} KB")
+            print(f"Tagger model size: {tagger.model_size() // 1000} KB")
 
             if tagger.IS_IMPORTED:
                 acc_tuple, model_footprint = await run_with_imported_model(args, tagger, model_name)
@@ -247,7 +248,7 @@ if __name__ == "__main__":
     choices_models = list(TAGGERS.keys()) + ["all"]
     parser.add_argument("model_names", type=str, choices=choices_models, nargs="+", help="name of the model to run")
 
-    choices_langs = data_archives.LANGUAGES.keys() - set(data_archives.LANGUAGES.values())
+    choices_langs = list(data_archives.LANGUAGES.keys() - set(data_archives.LANGUAGES.values())) + ["all"]
 
     # optional arguments
     parser.add_argument("-tg", "--tag", nargs="+", default=[])

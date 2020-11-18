@@ -1,0 +1,28 @@
+2020-11-18 16:44:15.574103: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library cudart64_101.dll
+2020-11-18 16:44:17.667381: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library nvcuda.dll
+2020-11-18 16:44:17.696510: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1716] Found device 0 with properties: 
+pciBusID: 0000:01:00.0 name: GeForce GTX 1070 Ti computeCapability: 6.1
+coreClock: 1.683GHz coreCount: 19 deviceMemorySize: 8.00GiB deviceMemoryBandwidth: 238.66GiB/s
+2020-11-18 16:44:17.697084: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library cudart64_101.dll
+2020-11-18 16:44:17.709153: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library cublas64_10.dll
+2020-11-18 16:44:17.724732: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library cufft64_10.dll
+2020-11-18 16:44:17.729163: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library curand64_10.dll
+2020-11-18 16:44:17.747212: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library cusolver64_10.dll
+2020-11-18 16:44:17.754053: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library cusparse64_10.dll
+2020-11-18 16:44:17.795730: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library cudnn64_7.dll
+2020-11-18 16:44:17.796117: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1858] Adding visible gpu devices: 0
+C:\Users\Guellen\Miniconda3\envs\model_eval\lib\site-packages\numpy\core\_asarray.py:83: VisibleDeprecationWarning: Creating an ndarray from ragged nested sequences (which is a list-or-tuple of lists-or-tuples-or ndarrays with different lengths or shapes) is deprecated. If you meant to do this, you must specify 'dtype=object' when creating the ndarray
+  return array(a, dtype, copy=False, order=order)
+INFO:tensorflow:Created 25 char batches.
+I1118 16:44:18.371780  2776 reader.py:597] Created 25 char batches.
+INFO:tensorflow:Created 11 word batches.
+I1118 16:44:18.435776  2776 reader.py:424] Created 11 word batches.
+2020-11-18 16:44:18.588892: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN)to use the following CPU instructions in performance-critical operations:  AVX2
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2020-11-18 16:44:18.600479: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x24c8b604c00 initialized for platform Host (this does not guarantee that XLA will be used). Devices:
+2020-11-18 16:44:18.600928: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Host, Default Version
+2020-11-18 16:44:18.601297: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1257] Device interconnect StreamExecutor with strength 1 edge matrix:
+2020-11-18 16:44:18.601630: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1263]      
+INFO:tensorflow:Restoring parameters from models\meta_tagger\pocketML\en_gum\meta_word_char_v1
+I1118 16:44:32.647818  2776 saver.py:1293] Restoring parameters from models\meta_tagger\pocketML\en_gum\meta_word_char_v1
+Wrote tagged file to models\meta_tagger\pocketML\en_gum\preds.out

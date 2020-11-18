@@ -25,5 +25,13 @@ class Tagger(ABC):
         pass
 
     @abstractmethod
+    def model_size(self):
+        pass
+
+    @abstractmethod
+    def model_path(self):
+        pass
+
+    @abstractmethod
     def model_base_path(self):
         pass

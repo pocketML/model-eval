@@ -22,6 +22,52 @@ class METATAGGER(SysCallTagger):
                 self.epoch += 1
                 yield float(test_str)
 
+    def evaluate(self, ext=""):
+        total = 0
+        correct = 0
+        curr_sent_correct = 0
+        curr_sent_count = 0
+        correct_sent = 0
+        total_sent = 0
+
+        with open(self.predict_path() + ext, "r", encoding="utf-8") as fp_pred:
+            with open(data_archives.get_dataset_path(self.args.lang, self.args.treebank, "test", False), encoding="utf-8") as fp_test:
+                lines_pred = fp_pred.readlines()
+                lines_data = fp_test.readlines()
+                index_pred = 0
+                index_data = 0
+                while index_pred < len(lines_pred):
+                    line_pred = lines_pred[index_pred].strip()
+                    line_data = lines_data[index_data].strip()
+
+                    if line_pred == "":
+                        total_sent += 1
+                        if curr_sent_count == curr_sent_correct:
+                            correct_sent += 1
+                        curr_sent_correct = 0
+                        curr_sent_count = 0
+                    else:
+                        while line_data[0] == "#":
+                            index_data += 1
+                            line_data = lines_data[index_data]
+                        total += 1
+                        curr_sent_count += 1
+                        split_pred = line_pred.split(None)
+                        split_data = line_data.split(None)
+                        predicted = split_pred[1]
+                        actual = split_data[3]
+                        print(f"{predicted} - {actual}")
+                        if predicted == actual:
+                            correct += 1
+                            curr_sent_correct += 1
+
+                    index_data += 1
+                    index_pred += 1
+
+        token_acc = correct / total if total > 0 else 0
+        sent_acc = correct_sent / total_sent if total_sent > 0 else 0
+        return token_acc, sent_acc
+
     def model_base_path(self):
         return f'models/meta_tagger/pocketML/{self.args.lang}_{self.args.treebank}'
     
@@ -49,6 +95,7 @@ class METATAGGER(SysCallTagger):
         )
 
     def predict_string(self):
+        print(self.evaluate())
         return (
             'python [script_path_test] '
             '--test=[dataset_test] '
@@ -69,4 +116,11 @@ class METATAGGER(SysCallTagger):
             files = glob(glob_str)
             for file in files:
                 total_size += getsize(file)
+        return int(total_size)
+
+    def model_size(self):
+        files = glob(f"{self.model_base_path()}/*")
+        total_size = 0
+        for file in files:
+            total_size += getsize(file)
         return int(total_size)

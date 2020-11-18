@@ -65,3 +65,9 @@ class BILSTMAUX(SysCallTagger):
             for file in files:
                 total_size += getsize(file)
         return int(total_size)
+
+    def model_size(self):
+        return (
+            getsize(self.model_path() + ".model") +
+            getsize(self.model_base_path() + ".params.pickle")
+        )
