@@ -106,7 +106,7 @@ async def run_with_sys_call(args, tagger_helper, model_name, file_pointer):
             print('doing system call')
             process = system_call(call_infer, cwd, tagger_helper.script_path_test())
             print('measuring footprint')
-            model_footprint = await monitor_inference(process)
+            model_footprint = await monitor_inference(tagger_helper, process)
             print('done')
         final_acc = tagger_helper.evaluate()
     return final_acc, model_footprint
