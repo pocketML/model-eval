@@ -149,7 +149,7 @@ async def main(args):
             if not data_archives.archive_exists("models", model_name):
                 data_archives.download_and_unpack("models", model_name)
 
-    languages_to_use = (set(data_archives.LANGUAGES.values())
+    languages_to_use = (data_archives.LANGUAGES.keys() - set(data_archives.LANGUAGES.values())
                         if args.langs == ["all"] else args.langs)
 
     for lang in languages_to_use:

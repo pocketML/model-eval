@@ -54,9 +54,8 @@ class METATAGGER(SysCallTagger):
                         curr_sent_count += 1
                         split_pred = line_pred.split(None)
                         split_data = line_data.split(None)
-                        predicted = split_pred[1]
+                        predicted = split_pred[3]
                         actual = split_data[3]
-                        print(f"{predicted} - {actual}")
                         if predicted == actual:
                             correct += 1
                             curr_sent_correct += 1
@@ -95,7 +94,6 @@ class METATAGGER(SysCallTagger):
         )
 
     def predict_string(self):
-        print(self.evaluate())
         return (
             'python [script_path_test] '
             '--test=[dataset_test] '
