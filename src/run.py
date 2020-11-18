@@ -251,7 +251,6 @@ if __name__ == "__main__":
     parser.add_argument("model_names", type=str, choices=choices_models, nargs="+", help="name of the model to run")
 
     choices_langs = list(data_archives.LANGUAGES.keys() - set(data_archives.LANGUAGES.values())) + ["all"]
-
     # optional arguments
     parser.add_argument("-tg", "--tag", nargs="+", default=[])
     parser.add_argument("-l", "--langs", type=str, choices=choices_langs, nargs="+", default=["en"], help="choose dataset language(s). Default is English.")
