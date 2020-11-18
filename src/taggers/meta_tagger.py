@@ -43,7 +43,7 @@ class METATAGGER(SysCallTagger):
             '--train=[dataset_train] '
             '--dev=[dataset_dev] '
             f'--embeddings=[embeddings] '
-            '--task=xtag '
+            '--task=upos '
             '--config=config.json '
             f'--output_dir=[model_base_path]/'
         )
@@ -52,7 +52,7 @@ class METATAGGER(SysCallTagger):
         return (
             'python [script_path_test] '
             '--test=[dataset_test] '
-            '--task=xtag '
+            '--task=upos '
             '--output_dir=[model_base_path]/ '
             '--out=[model_base_path]/preds.out'
         )
