@@ -154,11 +154,11 @@ async def main(args):
 
     treebanks = []
     for lang in languages_to_use:
-        treebanks.append(data_archives.get_default_treebank(lang))
         language_full = data_archives.LANGUAGES[lang]
         if not data_archives.archive_exists("data", language_full):
             data_archives.download_and_unpack("data", language_full)
             data_archives.transform_dataset(language_full)
+        treebanks.append(data_archives.get_default_treebank(lang))
 
     if not args.train and not args.eval: # Do both training and inference.
         args.train = True
