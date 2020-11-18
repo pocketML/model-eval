@@ -30,7 +30,7 @@ def process_is_alive(process):
         return process.poll() is None # Handle subprocess 'Popen' class.
     return process.exitcode is None # Handle multiprocess 'Process' class.
 
-async def monitor_inference(process):
+async def monitor_inference(model, process):
     """
     This method is called after a call to a model which will run an inference task.
     This method then records how much space the model takes up while running.
@@ -41,8 +41,8 @@ async def monitor_inference(process):
 
     memory_footprints = []
     pid = process.pid
-
     while process_is_alive(process):
+        model.read_stdout(process)
         if (footprint := get_memory_snapshot(pid)) is not None:
             memory_footprints.append(footprint)
             if len(memory_footprints) > max_trace_count:
