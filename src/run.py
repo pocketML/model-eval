@@ -3,6 +3,7 @@ import os
 import multiprocessing
 import subprocess
 from datetime import datetime
+from sys import argv
 import platform
 import argparse
 from util import data_archives
@@ -271,8 +272,14 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--eval", help="whether to predict & evaluate accuracy using the given model", action="store_true")
     parser.add_argument("-p", "--plot", help="whether to plot results from previous/current runs", action="store_true")
     parser.add_argument("-m", "--max-iter", help="where to stop when 'iter' iterations has been run during training", action="store_true")
-    parser.add_argument("-g", "--gpu", type=bool, default=False, help="use GPU where possible")
+    parser.add_argument("-g", "--gpu", help="use GPU where possible", action="store_true")
+    parser.add_argument("-c", "--config", type=str, help="path to a config file from which to read in arguments")
 
-    args = parser.parse_args()
+    args_from_file = None
+    if len(argv) == 3 and argv[1] in ("-c", "--config"):
+        with open(argv[2]) as fp:
+            args_from_file = fp.readline().split(None)
+
+    args = parser.parse_args(args_from_file)
 
     asyncio.run(main(args))

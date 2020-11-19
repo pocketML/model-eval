@@ -6,6 +6,7 @@ models/*
 !models/README.md
 !models/get_model.py
 .vscode/
+config.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
