@@ -1,3 +1,5 @@
+from subprocess import Popen, PIPE
+from asyncio import sleep
 from loadbar import Loadbar
 
 async def monitor_training(monitor, process, args, model_name, file_pointer=None):
@@ -23,7 +25,10 @@ async def monitor_training(monitor, process, args, model_name, file_pointer=None
                 file_pointer.write(f"acc_iter_{monitor.epoch}: {final_acc}\n")
 
         if args.max_iter and monitor.epoch == args.iter:
-            process.kill()
+            print("Stopping process.")
+            Popen(f"TASKKILL /F /PID {process.pid} /T", stdout=PIPE)
+            await sleep(2)
+            print(process.returncode)
             break
 
     return final_acc, 0
