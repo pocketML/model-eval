@@ -131,16 +131,3 @@ def transform_dataset(language):
 
 def get_embeddings_size(lang):
     return path.getsize(get_embeddings_path(lang))
-
-def format_data(lang, treebank, dataset_type):
-    data_path = get_dataset_path(lang, treebank, dataset_type, False)
-    train_data = open(data_path, "r", encoding="utf-8").readlines()
-    sentences = []
-    curr_sentences = []
-    for line in train_data:
-        if line.strip() == "":
-            sentences.append(curr_sentences)
-            curr_sentences = []
-        else:
-            curr_sentences.append(line)
-    return sentences

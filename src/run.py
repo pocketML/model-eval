@@ -270,7 +270,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--train", help="whether to train the given model", action="store_true")
     parser.add_argument("-e", "--eval", help="whether to predict & evaluate accuracy using the given model", action="store_true")
     parser.add_argument("-p", "--plot", help="whether to plot results from previous/current runs", action="store_true")
-    parser.add_argument("-m", "--max-iterations", help="where to stop when 'iter' iterations has been run during training", action="store_true")
+    parser.add_argument("-m", "--max-iter", help="where to stop when 'iter' iterations has been run during training", action="store_true")
     parser.add_argument("-g", "--gpu", type=bool, default=False, help="use GPU where possible")
 
     args = parser.parse_args()
