@@ -22,7 +22,7 @@ async def monitor_training(monitor, process, args, model_name, file_pointer=None
             if file_pointer is not None:
                 file_pointer.write(f"acc_iter_{monitor.epoch}: {final_acc}\n")
 
-        if False: #monitor.epoch == args.iter:
+        if args.max_iterations and monitor.epoch == args.iter:
             process.kill()
             break
 

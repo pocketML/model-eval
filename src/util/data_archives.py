@@ -4,8 +4,8 @@ from shutil import unpack_archive
 import requests
 
 LANGUAGES = {
-    #"am": "amharic",
-    #"amharic": "amharic",
+    "am": "amharic",
+    "amharic": "amharic",
     "da": "danish",
     "danish": "danish",
     "en": "english",
@@ -117,6 +117,8 @@ def transform_data(dataset):
                     else:
                         word = split[1]
                         tag = split[3]
+                        if tag == "_":
+                            continue
                         line_out = f"{word}\t{tag}"
 
                     file_out.write(line_out + "\n")
@@ -129,3 +131,16 @@ def transform_dataset(language):
 
 def get_embeddings_size(lang):
     return path.getsize(get_embeddings_path(lang))
+
+def format_data(lang, treebank, dataset_type):
+    data_path = get_dataset_path(lang, treebank, dataset_type, False)
+    train_data = open(data_path, "r", encoding="utf-8").readlines()
+    sentences = []
+    curr_sentences = []
+    for line in train_data:
+        if line.strip() == "":
+            sentences.append(curr_sentences)
+            curr_sentences = []
+        else:
+            curr_sentences.append(line)
+    return sentences

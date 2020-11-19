@@ -42,12 +42,14 @@ async def monitor_inference(model, process):
     memory_footprints = []
     pid = process.pid
     while process_is_alive(process):
-        model.read_stdout(process)
         if (footprint := get_memory_snapshot(pid)) is not None:
             memory_footprints.append(footprint)
             if len(memory_footprints) > max_trace_count:
                 memory_footprints = [max(memory_footprints)]
         await asyncio.sleep(0.5)
 
+    code_size = model.code_size() // 1000
+    model_size = model.model_size() // 1000
+
     print("Prediction/inference completed.")
-    return max(memory_footprints)
+    return max(memory_footprints), code_size, model_size

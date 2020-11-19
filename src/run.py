@@ -130,7 +130,7 @@ async def run_with_imported_model(args, tagger, model_name):
         process.start()
 
         # Wait for inference to complete.
-        model_footprint = await monitor_inference(process)
+        model_footprint = await monitor_inference(tagger, process)
         final_acc = pipe_1.recv() # Receive accuracy from seperate process.
     return final_acc, model_footprint
 
@@ -212,14 +212,21 @@ async def main(args):
             print(f"Sentence Accuracy: {sent_acc}")
 
             if model_footprint is not None:
-                print(f"Model footprint: {model_footprint}KB")
+                memory_usage, code_size, model_size = model_footprint
+                print(
+                    f"Model footprint - Memory: {memory_usage} KB | "+
+                    f"Code: {code_size} KB | Model: {model_size} KB"
+                )
 
             if file_pointer is not None: # Save final test-set/prediction accuracy.
                 file_pointer.write(f"Final token acc: {token_acc}\n")
                 file_pointer.write(f"Final sentence acc: {sent_acc}\n")
 
                 if model_footprint is not None: # Save size of model footprint.
-                    file_pointer.write(f"Model footprint: {model_footprint}\n")
+                    memory_usage, code_size, model_size = model_footprint
+                    file_pointer.write(f"Memory usage: {memory_usage}\n")
+                    file_pointer.write(f"Code size: {code_size}\n")
+                    file_pointer.write(f"Model size: {model_size}")
 
                 file_pointer.close()
 
@@ -263,6 +270,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--train", help="whether to train the given model", action="store_true")
     parser.add_argument("-e", "--eval", help="whether to predict & evaluate accuracy using the given model", action="store_true")
     parser.add_argument("-p", "--plot", help="whether to plot results from previous/current runs", action="store_true")
+    parser.add_argument("-m", "--max-iterations", help="where to stop when 'iter' iterations has been run during training", action="store_true")
     parser.add_argument("-g", "--gpu", type=bool, default=False, help="use GPU where possible")
 
     args = parser.parse_args()
