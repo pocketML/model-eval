@@ -185,8 +185,8 @@ async def main(args):
             if args.save_results:
                 if not os.path.exists("results"):
                     os.mkdir("results")
-                formatted_date = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
-                file_name = f"results/{model_name}_{formatted_date}.out"
+                formatted_date = datetime.now().strftime("%Y-%m-%d_%H.%M")
+                file_name = f"results/{model_name}_{lang}_{treebank}_{formatted_date}.out"
                 file_pointer = open(file_name, "w")
 
             # Load model immediately if we are only evaluating, or if we are continuing training.
