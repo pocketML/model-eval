@@ -11,7 +11,6 @@ class METATAGGER(SysCallTagger):
         super().__init__(args, model_name, load_model, simplified_dataset=False)
 
     async def on_epoch_complete(self, process_handler):
-
         while (text := self.read_stdout(process_handler)) is not None:
             if text.find('INFO:tensorflow') != -1 and (index := text.find(self.ACC_STR[0])) != -1:
                 test_str = text[index:].strip().split(' ')[4]
