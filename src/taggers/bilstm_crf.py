@@ -12,6 +12,7 @@ class BILSTMCRF(SysCallTagger):
 
     async def on_epoch_complete(self, process_handler):
         while (text := self.read_stdout(process_handler)) is not None:
+            print(text)
             if (index := text.find(self.ACC_STR)) != -1:
                 test_str = text[index + len(self.ACC_STR) + 1:]
                 if (acc_index := test_str.find("acc:")) != -1:
@@ -21,7 +22,7 @@ class BILSTMCRF(SysCallTagger):
                     yield float(acc_str[:pct_index])
 
     def model_base_path(self):
-        return f"models/bilstm_crf/pocketML/pos_{self.args.lang}_{self.args.treebank}"
+        return f"models/bilstm_crf/pocketML/{self.args.lang}_{self.args.treebank}"
 
     def model_path(self):
         folders = glob(f"{self.model_base_path()}/save/epoch*")
