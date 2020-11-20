@@ -6,6 +6,7 @@ models/*
 !models/README.md
 !models/get_model.py
 .vscode/
+results/*
 config.txt
 
 # Byte-compiled / optimized / DLL files

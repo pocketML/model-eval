@@ -1,4 +1,5 @@
 from subprocess import Popen, PIPE
+import platform
 from asyncio import sleep
 from loadbar import Loadbar
 
@@ -26,9 +27,10 @@ async def monitor_training(monitor, process, args, model_name, file_pointer=None
 
         if args.max_iter and monitor.epoch == args.iter:
             print("Stopping process.")
-            Popen(f"TASKKILL /F /PID {process.pid} /T", stdout=PIPE)
+            kill_cmd = (["kill", "-9", str(process.pid)] if platform.system() == "Linux"
+                        else f"TASKKILL /F /PID {process.pid} /T")
+            Popen(kill_cmd, stdout=PIPE)
             await sleep(2)
-            print(process.returncode)
             break
 
     return final_acc, 0
