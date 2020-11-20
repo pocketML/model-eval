@@ -3,7 +3,7 @@ import requests
 URL = "https://mhooge.com/pocketml/save_status.php"
 
 def make_request(url, data):
-    r = requests.post(url, data=data)
+    requests.post(url, data=data)
 
 def send_train_start(model_name, language, total_epochs=None):
     data = {"model_name": model_name, "language": language}
@@ -20,4 +20,5 @@ def send_train_status(epoch, acc=None):
     make_request(URL, data)
 
 if __name__ == "__main__":
-    send_train_status(1, 0.5)
+    #send_train_start("svmtool", "english", 50)
+    send_train_status(1, 0.6)
