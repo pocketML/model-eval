@@ -9,7 +9,8 @@ from util import data_archives
 from util import plotting
 from inference import monitor_inference
 from training import monitor_training, train_imported_model
-from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, meta_tagger, flair_pos
+from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, meta_tagger
+from taggers import flair_pos, bert_bpemb
 from taggers import nltk_tnt, nltk_crf, nltk_brill, nltk_hmm
 
 TAGGERS = {
@@ -23,6 +24,7 @@ TAGGERS = {
     "hmm": nltk_hmm.HMM,
     "meta_tagger": meta_tagger.METATAGGER,
     "flair": flair_pos.Flair,
+    "bert_bpemb": bert_bpemb.BERT_BPEMB,
 }
 
 def insert_arg_values(cmd, tagger, args):
@@ -39,6 +41,7 @@ def insert_arg_values(cmd, tagger, args):
         ("[dataset_train]", data_archives.get_dataset_path(args.lang, args.treebank, "train", simplified=tagger.simplified_dataset)),
         ("[dataset_test]", data_archives.get_dataset_path(args.lang, args.treebank, "test", simplified=tagger.simplified_dataset)),
         ("[dataset_dev]", data_archives.get_dataset_path(args.lang, args.treebank, "dev", simplified=tagger.simplified_dataset)),
+        ("[dataset_folder]", data_archives.get_dataset_folder_path(args.lang, args.treebank, simplified=tagger.simplified_dataset)),
         ("[stdout]", f"[stdout_{len(tagger.predict_path())}]"),
         ("[stderr]", f"[stdout_{len(tagger.predict_path())}]")
     ]
@@ -191,7 +194,7 @@ async def main(args):
             load_model = (args.eval and not args.train) or (args.reload and args.train)
             tagger = TAGGERS[model_name](args, model_name, load_model)
             print(f"Tagger code size: {tagger.code_size() // 1000} KB")
-            print(f"Tagger model size: {tagger.model_size() // 1000} KB")
+            #print(f"Tagger model size: {tagger.model_size() // 1000} KB")
 
             if tagger.IS_IMPORTED:
                 acc_tuple, model_footprint = await run_with_imported_model(args, tagger, model_name)
