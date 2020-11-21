@@ -1,5 +1,5 @@
 from glob import glob
-from os import unlink, path, mkdir
+from os import unlink, path, mkdir, rename
 from shutil import unpack_archive
 import requests
 
@@ -53,16 +53,24 @@ def download_and_unpack(archive_type, archive):
     url = f"https://magnusjacobsen.com/projects/pocketml/{archive_type}/{archive}.tgz"
     response = requests.get(url)
 
-    filename = f"{archive_type}/{url.split('/')[-1]}".lower()
-    print(f"Downloading {archive_type} archive '{archive}'...")
+    archive_name = url.split("/")[-1]
+    name = archive_name.split(".")[0]
 
-    with open(filename, "wb") as fp:
+    archive_path = f"{archive_type}/{archive_name}"
+    folder_path = f"{archive_type}/{name}"
+
+    print(f"Downloading {archive_type} archive '{archive}'...")
+    print(f"Saving archive to {archive_path}...")
+
+    with open(archive_path, "wb") as fp:
         for chunk in response.iter_content(chunk_size=128):
             fp.write(chunk)
 
     try:
-        unpack_archive(filename, f"{archive_type}/")
-        unlink(filename) # Remove old archive.
+        unpack_archive(archive_path, f"{archive_type}/")
+        dataset_file = glob(f"{folder_path}/UD_*")[0]
+        rename(dataset_file, dataset_file.lower())
+        unlink(archive_path) # Remove old archive.
     except ValueError:
         pass
 
