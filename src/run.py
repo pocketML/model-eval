@@ -149,12 +149,12 @@ async def main(args):
             if not data_archives.archive_exists("models", model_name):
                 data_archives.download_and_unpack("models", model_name)
 
-    languages_to_use = (data_archives.LANGUAGES.keys() - set(data_archives.LANGUAGES.values())
+    languages_to_use = (data_archives.LANGS_FULL.keys() - set(data_archives.LANGS_FULL.values())
                         if args.langs == ["all"] else args.langs)
 
     treebanks = []
     for lang in languages_to_use:
-        language_full = data_archives.LANGUAGES[lang]
+        language_full = data_archives.LANGS_FULL[lang]
         if not data_archives.archive_exists("data", language_full):
             data_archives.download_and_unpack("data", language_full)
             data_archives.transform_dataset(language_full)
@@ -176,7 +176,7 @@ async def main(args):
         for lang, treebank in zip(languages_to_use, treebanks):
             args.treebank = treebank
             print(
-                f"Using '{model_name}' with '{data_archives.LANGUAGES[lang]}' "
+                f"Using '{model_name}' with '{data_archives.LANGS_FULL[lang]}' "
                 f"dataset on '{args.treebank}' treebank."
             )
             args.lang = lang
@@ -190,7 +190,7 @@ async def main(args):
 
             if args.online_monitor:
                 total_epochs = args.iter if args.max_iter else None
-                online_monitor.send_train_start(model_name, data_archives.LANGUAGES[lang], total_epochs)
+                online_monitor.send_train_start(model_name, data_archives.LANGS_FULL[lang], total_epochs)
 
             # Load model immediately if we are only evaluating, or if we are continuing training.
             load_model = (args.eval and not args.train) or (args.reload and args.train)
@@ -261,7 +261,7 @@ if __name__ == "__main__":
     choices_models = list(TAGGERS.keys()) + ["all"]
     parser.add_argument("model_names", type=str, choices=choices_models, nargs="+", help="name of the model to run")
 
-    choices_langs = list(data_archives.LANGUAGES.keys() - set(data_archives.LANGUAGES.values())) + ["all"]
+    choices_langs = list(data_archives.LANGS_FULL.keys()) + ["all"]
     # optional arguments
     parser.add_argument("-tg", "--tag", nargs="+", default=[])
     parser.add_argument("-l", "--langs", type=str, choices=choices_langs, nargs="+", default=["en"], help="choose dataset language(s). Default is English.")
@@ -285,5 +285,11 @@ if __name__ == "__main__":
             args_from_file = fp.readline().split(None)
 
     args = parser.parse_args(args_from_file)
+
+    iso_langs = []
+    for lang in args.langs:
+        iso_langs.append(data_archives.LANGS_ISO[lang])
+
+    args.langs = iso_langs
 
     asyncio.run(main(args))

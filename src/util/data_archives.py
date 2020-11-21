@@ -3,19 +3,19 @@ from os import unlink, path, mkdir
 from shutil import unpack_archive
 import requests
 
-LANGUAGES = {
+LANGS_FULL = { # Map from language ISO code or name -> Language name
     "am": "amharic",
     "amharic": "amharic",
     "da": "danish",
     "danish": "danish",
     "en": "english",
     "english": "english",
-    "eu": "basque",
-    "basque": "basque",
+    "ar": "arabic",
+    "arabic": "arabic",
     "hi": "hindi",
     "hindi": "hindi",
-    "ja": "japanese",
-    "japanese": "japanese",
+    "zh": "chinese",
+    "chinese": "chinese",
     "ru": "russian",
     "russian": "russian",
     "es": "spanish",
@@ -23,7 +23,30 @@ LANGUAGES = {
     "tr": "turkish",
     "turkish": "turkish",
     "vi": "vietnamese",
-    "vietnamese": "vietnamese",
+    "vietnamese": "vietnamese"
+}
+
+LANGS_ISO = { # Map from language ISO code or name -> Language ISO code
+    "am": "am",
+    "amharic": "am",
+    "da": "da",
+    "danish": "da",
+    "en": "en",
+    "english": "en",
+    "ar": "ar",
+    "arabic": "ar",
+    "hi": "hi",
+    "hindi": "hi",
+    "zh": "zh",
+    "chinese": "zh",
+    "ru": "ru",
+    "russian": "ru",
+    "es": "es",
+    "spanish": "es",
+    "tr": "tr",
+    "turkish": "tr",
+    "vi": "vi",
+    "vietnamese": "vi"
 }
 
 def download_and_unpack(archive_type, archive):
@@ -47,12 +70,12 @@ def archive_exists(archive_type, archive):
     return len(glob(f"{archive_type}/{archive}/*")) > 1
 
 def get_default_treebank(lang):
-    language = LANGUAGES[lang]
+    language = LANGS_FULL[lang]
     folder_name = glob(f"data/{language}/ud_{language}-*")[0].replace("\\", "/").split("/")[-1]
     return folder_name.split("-")[-1].lower()
 
 def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
-    language = LANGUAGES[lang]
+    language = LANGS_FULL[lang]
     if treebank is None:
         treebank = get_default_treebank(lang).upper()
     dataset_path = f"data/{language}/ud_{language}-{treebank}"
@@ -88,7 +111,7 @@ def tagset_mapping(lang, treebank, dataset_type, from_complex=True):
     return tag_mapping
 
 def get_embeddings_path(lang):
-    language = LANGUAGES[lang]
+    language = LANGS_FULL[lang]
     return f"data/{language}/embeddings/polyglot-{lang}.pkl"
 
 def transform_data(dataset):
