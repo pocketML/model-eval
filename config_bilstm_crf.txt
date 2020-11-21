@@ -1,0 +1,1 @@
+bilstm_crf -t -i 12 -m -l am da eu hi ja ru es tr vi -om
