@@ -9,7 +9,8 @@ import argparse
 from util import data_archives, plotting, online_monitor
 from inference import monitor_inference
 from training import monitor_training, train_imported_model
-from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, meta_tagger, flair_pos
+from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, meta_tagger
+from taggers import flair_pos, bert_bpemb
 from taggers import nltk_tnt, nltk_crf, nltk_brill, nltk_hmm
 
 TAGGERS = {
@@ -23,6 +24,7 @@ TAGGERS = {
     "hmm": nltk_hmm.HMM,
     "meta_tagger": meta_tagger.METATAGGER,
     "flair": flair_pos.Flair,
+    "bert_bpemb": bert_bpemb.BERT_BPEMB,
 }
 
 def insert_arg_values(cmd, tagger, args):
@@ -39,6 +41,7 @@ def insert_arg_values(cmd, tagger, args):
         ("[dataset_train]", data_archives.get_dataset_path(args.lang, args.treebank, "train", simplified=tagger.simplified_dataset)),
         ("[dataset_test]", data_archives.get_dataset_path(args.lang, args.treebank, "test", simplified=tagger.simplified_dataset)),
         ("[dataset_dev]", data_archives.get_dataset_path(args.lang, args.treebank, "dev", simplified=tagger.simplified_dataset)),
+        ("[dataset_folder]", data_archives.get_dataset_folder_path(args.lang, args.treebank, simplified=tagger.simplified_dataset)),
         ("[stdout]", f"[stdout_{len(tagger.predict_path())}]"),
         ("[stderr]", f"[stdout_{len(tagger.predict_path())}]")
     ]

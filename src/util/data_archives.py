@@ -3,9 +3,15 @@ from os import unlink, path, mkdir, rename
 from shutil import unpack_archive
 import requests
 
+<<<<<<< HEAD
 LANGS_FULL = { # Map from language ISO code or name -> Language name
     "am": "amharic",
     "amharic": "amharic",
+=======
+LANGUAGES = {
+    #"am": "amharic",
+    #"amharic": "amharic",
+>>>>>>> efb8776... hvornår committede jeg sidst??
     "da": "danish",
     "danish": "danish",
     "en": "english",
@@ -82,13 +88,22 @@ def get_default_treebank(lang):
     folder_name = glob(f"data/{language}/ud_{language}-*")[0].replace("\\", "/").split("/")[-1]
     return folder_name.split("-")[-1].lower()
 
+<<<<<<< HEAD
 def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
     language = LANGS_FULL[lang]
+=======
+def get_dataset_folder_path(lang, treebank, simplified=True):
+    language = LANGUAGES[lang]
+>>>>>>> efb8776... hvornår committede jeg sidst??
     if treebank is None:
         treebank = get_default_treebank(lang).upper()
     dataset_path = f"data/{language}/ud_{language}-{treebank}"
     if simplified:
         dataset_path += "/simplified"
+    return dataset_path
+
+def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
+    dataset_path = get_dataset_folder_path(lang, treebank, simplified=simplified)
     glob_str = f"-{dataset_type}" if dataset_type is not None else ""
     paths = glob(f"{dataset_path}/*{glob_str}.conllu")
 
