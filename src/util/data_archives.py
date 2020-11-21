@@ -30,7 +30,7 @@ def download_and_unpack(archive_type, archive):
     url = f"https://magnusjacobsen.com/projects/pocketml/{archive_type}/{archive}.tgz"
     response = requests.get(url)
 
-    filename = f"{archive_type}/{url.split('/')[-1]}"
+    filename = f"{archive_type}/{url.split('/')[-1]}".lower()
     print(f"Downloading {archive_type} archive '{archive}'...")
 
     with open(filename, "wb") as fp:
@@ -54,10 +54,8 @@ def get_default_treebank(lang):
 def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
     language = LANGUAGES[lang]
     if treebank is None:
-        treebank_upper = get_default_treebank(lang).upper()
-    else:
-        treebank_upper = treebank.upper()
-    dataset_path = f"data/{language}/UD_{language.capitalize()}-{treebank_upper}"
+        treebank = get_default_treebank(lang).upper()
+    dataset_path = f"data/{language}/ud_{language}-{treebank}"
     if simplified:
         dataset_path += "/simplified"
     glob_str = f"-{dataset_type}" if dataset_type is not None else ""
