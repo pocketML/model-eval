@@ -14,18 +14,9 @@ class SysCallTagger(Tagger):
             return None
         data = process_handler.stdout.readline()
         text = data.decode("utf-8")
-<<<<<<< HEAD
         modified = text.strip()#.replace('\r','').replace('\n','')
         if modified != '':
             print(modified)
-=======
-<<<<<<< HEAD
-=======
-        modified = text.strip()#.replace('\r','').replace('\n','')
-        if modified != '':
-            print(modified)
->>>>>>> efb8776... hvornår committede jeg sidst??
->>>>>>> tmp
         return text
 
     def is_inference_complete(self, process_handler):
