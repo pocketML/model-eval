@@ -48,7 +48,7 @@ def archive_exists(archive_type, archive):
 
 def get_default_treebank(lang):
     language = LANGUAGES[lang]
-    folder_name = glob(f"data/{language}/UD_{language.capitalize()}-*")[0].replace("\\", "/").split("/")[-1]
+    folder_name = glob(f"data/{language}/ud_{language}-*")[0].replace("\\", "/").split("/")[-1]
     return folder_name.split("-")[-1].lower()
 
 def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
