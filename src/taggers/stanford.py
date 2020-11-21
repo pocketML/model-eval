@@ -37,7 +37,7 @@ class Stanford(SysCallTagger):
             fp.write(f"model = {self.model_path()}\n")
             fp.write("encoding = UTF-8\n")
             fp.write(f"iterations = {self.args.iter}\n")
-            fp.write(f"lang = {data_archives.LANGUAGES[self.args.lang]}\n")
+            fp.write(f"lang = {data_archives.LANGS_FULL[self.args.lang]}\n")
             fp.write("tagSeparator = \\t\n")
             train_set = data_archives.get_dataset_path(self.args.lang, self.args.treebank, "train")
             fp.write(f"trainFile = format=TSV,wordColumn=0,tagColumn=1,{train_set}")

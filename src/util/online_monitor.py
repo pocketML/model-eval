@@ -3,8 +3,7 @@ import requests
 URL = "https://mhooge.com/pocketml/save_status.php"
 
 def make_request(url, data):
-    r = requests.post(url, data=data)
-    print(r.status_code)
+    requests.post(url, data=data)
 
 def send_train_start(model_name, language, total_epochs=None):
     data = {"model_name": model_name, "language": language}
