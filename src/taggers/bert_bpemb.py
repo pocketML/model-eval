@@ -87,7 +87,7 @@ class BERT_BPEMB(SysCallTagger):
             '--use-char '
             '--use-bpe '
             '--use-meta-rnn '
-            #'--use-bert '
+            #'--use-bert ' # requires a GPU with A LOT of mem
             '--best-vocab-size '
             '--char-emb-dim 50 '
             '--char-nhidden 256 '
@@ -101,11 +101,23 @@ class BERT_BPEMB(SysCallTagger):
 
     def predict_string(self):
         return (
-            'python [script_path_test] '
-            '--test=[dataset_test] '
-            '--task=upos '
-            '--output_dir=[model_base_path]/ '
-            '--out=[model_base_path]/preds.out'
+            'python [script_path_train] eval '
+            '--dataset ud_1_2 '
+            '--lang [lang] '
+            '--tag upostag '
+            '--use-char '
+            '--use-bpe '
+            '--use-meta-rnn '
+            #'--use-bert ' # requires a GPU with A LOT of mem
+            '--best-vocab-size '
+            '--char-emb-dim 50 '
+            '--char-nhidden 256 '
+            '--bpe-nhidden 256 '
+            '--meta-nhidden 256 '
+            '--dropout 0.2 '
+            '--data-dir [dataset_folder] '
+            '--outdir [model_base_path] '
+            f'--relative_path models/bert_bpemb'
         )
 
     def code_size(self):

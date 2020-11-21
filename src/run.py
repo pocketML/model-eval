@@ -3,10 +3,10 @@ import os
 import multiprocessing
 import subprocess
 from datetime import datetime
+from sys import argv
 import platform
 import argparse
-from util import data_archives
-from util import plotting
+from util import data_archives, plotting, online_monitor
 from inference import monitor_inference
 from training import monitor_training, train_imported_model
 from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, meta_tagger
@@ -133,7 +133,7 @@ async def run_with_imported_model(args, tagger, model_name):
         process.start()
 
         # Wait for inference to complete.
-        model_footprint = await monitor_inference(process)
+        model_footprint = await monitor_inference(tagger, process)
         final_acc = pipe_1.recv() # Receive accuracy from seperate process.
     return final_acc, model_footprint
 
@@ -152,14 +152,16 @@ async def main(args):
             if not data_archives.archive_exists("models", model_name):
                 data_archives.download_and_unpack("models", model_name)
 
-    languages_to_use = (data_archives.LANGUAGES.keys() - set(data_archives.LANGUAGES.values())
+    languages_to_use = (data_archives.LANGS_FULL.keys() - set(data_archives.LANGS_FULL.values())
                         if args.langs == ["all"] else args.langs)
 
+    treebanks = []
     for lang in languages_to_use:
-        language_full = data_archives.LANGUAGES[lang]
+        language_full = data_archives.LANGS_FULL[lang]
         if not data_archives.archive_exists("data", language_full):
             data_archives.download_and_unpack("data", language_full)
             data_archives.transform_dataset(language_full)
+        treebanks.append(data_archives.get_default_treebank(lang))
 
     if not args.train and not args.eval: # Do both training and inference.
         args.train = True
@@ -174,11 +176,10 @@ async def main(args):
         return
 
     for model_name in models_to_run:
-        for lang in languages_to_use:
-            if args.treebank is None: # Get default treebank for given langauge, if none is specified.
-                args.treebank = data_archives.get_default_treebank(lang)
+        for lang, treebank in zip(languages_to_use, treebanks):
+            args.treebank = treebank
             print(
-                f"Using '{model_name}' with '{data_archives.LANGUAGES[lang]}' "
+                f"Using '{model_name}' with '{data_archives.LANGS_FULL[lang]}' "
                 f"dataset on '{args.treebank}' treebank."
             )
             args.lang = lang
@@ -186,15 +187,20 @@ async def main(args):
             if args.save_results:
                 if not os.path.exists("results"):
                     os.mkdir("results")
-                formatted_date = datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
-                file_name = f"results/{model_name}_{formatted_date}.out"
+                formatted_date = datetime.now().strftime("%Y-%m-%d_%H.%M")
+                file_name = f"results/{model_name}_{lang}_{treebank}_{formatted_date}.out"
                 file_pointer = open(file_name, "w")
+
+            if args.online_monitor:
+                total_epochs = args.iter if args.max_iter else None
+                online_monitor.send_train_start(model_name, data_archives.LANGS_FULL[lang], total_epochs)
 
             # Load model immediately if we are only evaluating, or if we are continuing training.
             load_model = (args.eval and not args.train) or (args.reload and args.train)
             tagger = TAGGERS[model_name](args, model_name, load_model)
             print(f"Tagger code size: {tagger.code_size() // 1000} KB")
-            #print(f"Tagger model size: {tagger.model_size() // 1000} KB")
+            if load_model:
+                print(f"Tagger model size: {tagger.model_size() // 1000} KB")
 
             if tagger.IS_IMPORTED:
                 acc_tuple, model_footprint = await run_with_imported_model(args, tagger, model_name)
@@ -213,14 +219,21 @@ async def main(args):
             print(f"Sentence Accuracy: {sent_acc}")
 
             if model_footprint is not None:
-                print(f"Model footprint: {model_footprint}KB")
+                memory_usage, code_size, model_size = model_footprint
+                print(
+                    f"Model footprint - Memory: {memory_usage} KB | "+
+                    f"Code: {code_size} KB | Model: {model_size} KB"
+                )
 
             if file_pointer is not None: # Save final test-set/prediction accuracy.
                 file_pointer.write(f"Final token acc: {token_acc}\n")
                 file_pointer.write(f"Final sentence acc: {sent_acc}\n")
 
                 if model_footprint is not None: # Save size of model footprint.
-                    file_pointer.write(f"Model footprint: {model_footprint}\n")
+                    memory_usage, code_size, model_size = model_footprint
+                    file_pointer.write(f"Memory usage: {memory_usage}\n")
+                    file_pointer.write(f"Code size: {code_size}\n")
+                    file_pointer.write(f"Model size: {model_size}")
 
                 file_pointer.close()
 
@@ -251,7 +264,7 @@ if __name__ == "__main__":
     choices_models = list(TAGGERS.keys()) + ["all"]
     parser.add_argument("model_names", type=str, choices=choices_models, nargs="+", help="name of the model to run")
 
-    choices_langs = list(data_archives.LANGUAGES.keys() - set(data_archives.LANGUAGES.values())) + ["all"]
+    choices_langs = list(data_archives.LANGS_FULL.keys()) + ["all"]
     # optional arguments
     parser.add_argument("-tg", "--tag", nargs="+", default=[])
     parser.add_argument("-l", "--langs", type=str, choices=choices_langs, nargs="+", default=["en"], help="choose dataset language(s). Default is English.")
@@ -264,8 +277,22 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--train", help="whether to train the given model", action="store_true")
     parser.add_argument("-e", "--eval", help="whether to predict & evaluate accuracy using the given model", action="store_true")
     parser.add_argument("-p", "--plot", help="whether to plot results from previous/current runs", action="store_true")
-    parser.add_argument("-g", "--gpu", type=bool, default=False, help="use GPU where possible")
+    parser.add_argument("-m", "--max-iter", help="where to stop when 'iter' iterations has been run during training", action="store_true")
+    parser.add_argument("-g", "--gpu", help="use GPU where possible", action="store_true")
+    parser.add_argument("-om", "--online-monitor", help="send status updates about training to a website", action="store_true")
+    parser.add_argument("-c", "--config", type=str, help="path to a config file from which to read in arguments")
 
-    args = parser.parse_args()
+    args_from_file = None
+    if len(argv) == 3 and argv[1] in ("-c", "--config"):
+        with open(argv[2]) as fp:
+            args_from_file = fp.readline().split(None)
+
+    args = parser.parse_args(args_from_file)
+
+    iso_langs = []
+    for lang in args.langs:
+        iso_langs.append(data_archives.LANGS_ISO[lang])
+
+    args.langs = iso_langs
 
     asyncio.run(main(args))

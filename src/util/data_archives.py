@@ -1,21 +1,33 @@
 from glob import glob
-from os import unlink, path, mkdir
+from os import unlink, path, mkdir, rename
 from shutil import unpack_archive
 import requests
 
+<<<<<<< HEAD
 LANGUAGES = {
     #"am": "amharic",
     #"amharic": "amharic",
+=======
+<<<<<<< HEAD
+LANGS_FULL = { # Map from language ISO code or name -> Language name
+    "am": "amharic",
+    "amharic": "amharic",
+=======
+LANGUAGES = {
+    #"am": "amharic",
+    #"amharic": "amharic",
+>>>>>>> efb8776... hvornår committede jeg sidst??
+>>>>>>> tmp
     "da": "danish",
     "danish": "danish",
     "en": "english",
     "english": "english",
-    "eu": "basque",
-    "basque": "basque",
+    "ar": "arabic",
+    "arabic": "arabic",
     "hi": "hindi",
     "hindi": "hindi",
-    "ja": "japanese",
-    "japanese": "japanese",
+    "zh": "chinese",
+    "chinese": "chinese",
     "ru": "russian",
     "russian": "russian",
     "es": "spanish",
@@ -23,23 +35,54 @@ LANGUAGES = {
     "tr": "turkish",
     "turkish": "turkish",
     "vi": "vietnamese",
-    "vietnamese": "vietnamese",
+    "vietnamese": "vietnamese"
+}
+
+LANGS_ISO = { # Map from language ISO code or name -> Language ISO code
+    "am": "am",
+    "amharic": "am",
+    "da": "da",
+    "danish": "da",
+    "en": "en",
+    "english": "en",
+    "ar": "ar",
+    "arabic": "ar",
+    "hi": "hi",
+    "hindi": "hi",
+    "zh": "zh",
+    "chinese": "zh",
+    "ru": "ru",
+    "russian": "ru",
+    "es": "es",
+    "spanish": "es",
+    "tr": "tr",
+    "turkish": "tr",
+    "vi": "vi",
+    "vietnamese": "vi"
 }
 
 def download_and_unpack(archive_type, archive):
     url = f"https://magnusjacobsen.com/projects/pocketml/{archive_type}/{archive}.tgz"
     response = requests.get(url)
 
-    filename = f"{archive_type}/{url.split('/')[-1]}"
-    print(f"Downloading {archive_type} archive '{archive}'...")
+    archive_name = url.split("/")[-1]
+    name = archive_name.split(".")[0]
 
-    with open(filename, "wb") as fp:
+    archive_path = f"{archive_type}/{archive_name}"
+    folder_path = f"{archive_type}/{name}"
+
+    print(f"Downloading {archive_type} archive '{archive}'...")
+    print(f"Saving archive to {archive_path}...")
+
+    with open(archive_path, "wb") as fp:
         for chunk in response.iter_content(chunk_size=128):
             fp.write(chunk)
 
     try:
-        unpack_archive(filename, f"{archive_type}/")
-        unlink(filename) # Remove old archive.
+        unpack_archive(archive_path, f"{archive_type}/")
+        dataset_file = glob(f"{folder_path}/UD_*")[0]
+        rename(dataset_file, dataset_file.lower())
+        unlink(archive_path) # Remove old archive.
     except ValueError:
         pass
 
@@ -47,17 +90,23 @@ def archive_exists(archive_type, archive):
     return len(glob(f"{archive_type}/{archive}/*")) > 1
 
 def get_default_treebank(lang):
-    language = LANGUAGES[lang]
-    folder_name = glob(f"data/{language}/UD_{language.capitalize()}-*")[0].replace("\\", "/").split("/")[-1]
+    language = LANGS_FULL[lang]
+    folder_name = glob(f"data/{language}/ud_{language}-*")[0].replace("\\", "/").split("/")[-1]
     return folder_name.split("-")[-1].lower()
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
+    language = LANGS_FULL[lang]
+=======
+>>>>>>> tmp
 def get_dataset_folder_path(lang, treebank, simplified=True):
     language = LANGUAGES[lang]
+>>>>>>> efb8776... hvornår committede jeg sidst??
     if treebank is None:
-        treebank_upper = get_default_treebank(lang).upper()
-    else:
-        treebank_upper = treebank.upper()
-    dataset_path = f"data/{language}/UD_{language.capitalize()}-{treebank_upper}"
+        treebank = get_default_treebank(lang).upper()
+    dataset_path = f"data/{language}/ud_{language}-{treebank}"
     if simplified:
         dataset_path += "/simplified"
     return dataset_path
@@ -94,7 +143,7 @@ def tagset_mapping(lang, treebank, dataset_type, from_complex=True):
     return tag_mapping
 
 def get_embeddings_path(lang):
-    language = LANGUAGES[lang]
+    language = LANGS_FULL[lang]
     return f"data/{language}/embeddings/polyglot-{lang}.pkl"
 
 def transform_data(dataset):
@@ -121,6 +170,8 @@ def transform_data(dataset):
                     else:
                         word = split[1]
                         tag = split[3]
+                        if tag == "_":
+                            continue
                         line_out = f"{word}\t{tag}"
 
                     file_out.write(line_out + "\n")

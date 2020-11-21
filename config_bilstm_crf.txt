@@ -1,0 +1,1 @@
+bilstm_crf -t -i 12 -m -l arabic hi zh ru es tr vi -om
