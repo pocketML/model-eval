@@ -92,4 +92,4 @@ class ImportedTagger(Tagger):
         return sentences
 
     def code_size(self):
-        return get_code_size(self.model.__class__.__module__)["total_size"]
+        return int(get_code_size(self.model.__class__.__module__)["total_size"])
