@@ -28,7 +28,7 @@ TAGGERS = {
 }
 
 def insert_arg_values(cmd, tagger, args):
-    if reload_str := tagger.reload_string() is None or not args.reload:
+    if (reload_str := tagger.reload_string()) is None or (args.train and not args.reload):
         reload_str = ""
     replacements = [
         ("[iters]", str(args.iter)),

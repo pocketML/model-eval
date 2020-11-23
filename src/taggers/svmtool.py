@@ -67,13 +67,29 @@ class SVMT(SysCallTagger):
     def code_size(self):
         base = "models/svmtool/"
         code_files = [
-            f"{base}/bin/*.pl",
-            f"{base}/lib/SVMTool/*.pm",
-            f"{base}/svmlight/*"
+            f"bin/*.pl",
+            f"lib/SVMTool/*.pm",
+            f"svmlight/*"
         ]
         total_size = PERL_STDLIB_SIZE
         for glob_str in code_files:
-            files = glob(glob_str)
+            files = glob(f"{base}/{glob_str}")
             for file in files:
                 total_size += getsize(file)
         return int(total_size)
+
+    def necessary_model_files(self):
+        base = self.model_path()
+        exclude_files = [
+            "*.SAMPLES*",
+            "*.W",
+            "*.TEST",
+            "*.TRAIN"
+        ]
+        glob_all_files = set(glob(f"{base}*"))
+        glob_exclude_files = set()
+        for glob_exclude in exclude_files:
+            for filename in glob(f"{base}{glob_exclude}"):
+                glob_exclude_files.add(filename)
+        
+        return list(glob_all_files - glob_exclude_files)

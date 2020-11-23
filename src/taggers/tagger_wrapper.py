@@ -1,5 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
+import shutil
 import os
 
 class Tagger(ABC):
@@ -20,16 +21,41 @@ class Tagger(ABC):
             if not os.path.exists(partial_path):
                 os.mkdir(partial_path)
 
+    def necessary_model_files(self):
+        """
+        Returns the minimum necessary files needed to run prediction
+        tasks with a tagger.
+        """
+        return [self.model_path()]
+
+    def model_size(self):
+        return sum(os.path.getsize(filename)
+                   for filename in self.necessary_model_files())
+
+    def compressed_model_size(self, format_extension):
+        return os.path.getsize(f"{self.model_base_path()}/compressed.{format_extension}")
+
+    def compress_model(self, compression_format):
+        folder_to_compress = f"{self.model_base_path()}/compressed"
+        os.mkdir(folder_to_compress)
+        for filename in self.necessary_model_files():
+            # Copy all necessary files to the archive that we will compress.
+            shutil.copy(filename, folder_to_compress)
+
+        archive = shutil.make_archive(folder_to_compress, compression_format, folder_to_compress)
+        shutil.rmtree(folder_to_compress)
+        return archive
+
     @abstractmethod
     def code_size(self):
         pass
 
     @abstractmethod
-    def model_size(self):
-        pass
-
-    @abstractmethod
     def model_path(self):
+        """
+        The name of the saved model given to the tagger when doing prediction.
+        This is not always a file, but may simply be a name or a folder.
+        """
         pass
 
     @abstractmethod

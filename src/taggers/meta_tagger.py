@@ -68,9 +68,9 @@ class METATAGGER(SysCallTagger):
 
     def model_base_path(self):
         return f'models/meta_tagger/pocketML/{self.args.lang}_{self.args.treebank}'
-    
+
     def model_path(self):
-        return ''
+        return glob(f"{self.model_base_path()}/*.data*")[0]
 
     def predict_path(self):
         return f'{self.model_base_path()}/preds.out'
@@ -115,9 +115,8 @@ class METATAGGER(SysCallTagger):
                 total_size += getsize(file)
         return int(total_size)
 
-    def model_size(self):
-        files = glob(f"{self.model_base_path()}/*")
-        total_size = 0
-        for file in files:
-            total_size += getsize(file)
-        return int(total_size)
+    def necessary_model_files(self):
+        return [
+            self.model_path(),
+            self.model_base_path() + "/meta_word_char_v1.meta"
+        ]

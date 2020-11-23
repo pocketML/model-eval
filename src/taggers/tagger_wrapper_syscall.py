@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from os.path import getsize
 from taggers.tagger_wrapper import Tagger
 
 class SysCallTagger(Tagger):
@@ -75,6 +74,3 @@ class SysCallTagger(Tagger):
     @abstractmethod
     def predict_string(self):
         pass
-
-    def model_size(self):
-        return getsize(self.model_path())

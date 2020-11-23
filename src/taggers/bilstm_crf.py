@@ -38,8 +38,6 @@ class BILSTMCRF(SysCallTagger):
         return "models/bilstm_crf/bilstm_bilstm_crf.py"
 
     def train_string(self):
-        import os
-        os.environ['THEANO_FLAGS'] = "mode=FAST_RUN,device=cpu,floatX=float32,blas.ldflags=''"
         return (
             "python [script_path_train] --fine_tune --embedding polyglot --oov embedding --update momentum --adv 0.05 "
             "--batch_size 10 --num_units 150 --num_filters 50 --learning_rate 0.01 --decay_rate 0.05 --grad_clipping 5 --regular none --dropout "
@@ -51,9 +49,7 @@ class BILSTMCRF(SysCallTagger):
         )
 
     def predict_string(self):
-        import os
-        os.environ['THEANO_FLAGS'] = "mode=FAST_RUN,device=cpu1,floatX=float32,blas.ldflags=''"
-        return self.train_string() + " --output_prediction"
+        return self.train_string().strip() + " --output_prediction"
 
     def reload_string(self):
         return f"--reload {self.model_path()}"
