@@ -1,5 +1,5 @@
 from glob import glob
-from os import unlink, path, mkdir, rename
+from os import unlink, path, mkdir, rename, walk
 from shutil import unpack_archive
 import requests
 
@@ -166,3 +166,11 @@ def transform_dataset(language):
 
 def get_embeddings_size(lang):
     return path.getsize(get_embeddings_path(lang))
+
+def get_folder_size(folder_path):
+    total_size = 0
+    for dirpath, dirnames, filenames in walk(folder_path):
+        for f in filenames:
+            fp = path.join(dirpath, f)
+            total_size += path.getsize(fp)
+    return total_size
