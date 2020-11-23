@@ -3,7 +3,10 @@ import requests
 URL = "https://mhooge.com/pocketml/save_status.php"
 
 def make_request(url, data):
-    requests.post(url, data=data)
+    try:
+        requests.post(url, data=data)
+    except requests.exceptions.RequestException as e:
+        print("Error ignored in online_monitor: " + str(e))
 
 def send_train_start(model_name, language, total_epochs=None):
     data = {"model_name": model_name, "language": language}

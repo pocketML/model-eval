@@ -59,7 +59,7 @@ def find_best_compression_method(tagger):
 
 if __name__ == "__main__":
     TAGGERS = {
-        #"bilstm_aux": bilstm_aux.BILSTMAUX,
+        "bilstm_aux": bilstm_aux.BILSTMAUX,
         "bilstm_crf": bilstm_crf.BILSTMCRF,
         "svmtool": svmtool.SVMT,
         "stanford": stanford.Stanford,
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         "brill": nltk_brill.Brill,
         "crf": nltk_crf.CRF,
         "hmm": nltk_hmm.HMM,
-        #"meta_tagger": meta_tagger.METATAGGER,
+        "meta_tagger": meta_tagger.METATAGGER,
         "flair": flair_pos.Flair
         #"bert_bpemb": bert_bpemb.BERT_BPEMB,
     }
