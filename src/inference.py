@@ -42,6 +42,7 @@ async def monitor_inference(model, process):
     memory_footprints = []
     pid = process.pid
     while process_is_alive(process):
+        model.read_stdout(process)
         if (footprint := get_memory_snapshot(pid)) is not None:
             memory_footprints.append(footprint)
             if len(memory_footprints) > max_trace_count:
