@@ -1,6 +1,6 @@
 from glob import glob
+import math
 import matplotlib.pyplot as plt
-import numpy as np
 
 def find_value(lines, key):
     for line in lines:
@@ -30,12 +30,6 @@ def load_results():
                     "model": model_size, "compressed": compressed_size
                 }
     return mapped_data
-
-def pareto_distribution(x, a, L, H):
-    cummulative = False
-    if cummulative:
-        return (1 - L ** a * x ** -a) / (1 - (L/H) ** a)
-    return (a * L ** a * x ** (-a - 1)) / (1 - (L/H) ** a)
 
 def plot_data(data, acc_measure="token", size_measure="memory"):
     legend_text = {
@@ -67,8 +61,10 @@ def plot_data(data, acc_measure="token", size_measure="memory"):
     return sorted_data
 
 def plot_pareto(data):
-    points_x = [min(x[2] for x in data) - 0.1]
-    points_y = []
+    points_x = []
+    min_y = min(x[1] for x in data)
+    min_y = (math.floor(min_y * 100.0)) / 100.0
+    points_y = [min_y]
     highest_acc = 0
     for _, accuracy, footprint in data:
         y = highest_acc
@@ -78,7 +74,7 @@ def plot_pareto(data):
         points_x.extend([footprint] * 2)
         points_y.extend([y] * 2)
 
-    points_y.append(points_y[-1])
+    points_x.append(points_x[-1])
 
     plt.grid(b=True, which="major", axis="both")
     plt.plot(points_x, points_y)
