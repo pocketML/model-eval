@@ -50,6 +50,11 @@ async def monitor_inference(model, process):
 
     code_size = model.code_size() // 1000
     model_size = model.model_size() // 1000
+    if not model.compressed_model_exists():
+        print("Compressing trained model...")
+        model.compress_model()
+
+    compressed_size = model.compressed_model_size() // 1000
 
     print("Prediction/inference completed.")
-    return max(memory_footprints), code_size, model_size
+    return max(memory_footprints), code_size, model_size, compressed_size

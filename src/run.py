@@ -219,10 +219,11 @@ async def main(args):
             print(f"Sentence Accuracy: {sent_acc}")
 
             if model_footprint is not None:
-                memory_usage, code_size, model_size = model_footprint
+                memory_usage, code_size, model_size, size_compressed = model_footprint
                 print(
                     f"Model footprint - Memory: {memory_usage} KB | "+
-                    f"Code: {code_size} KB | Model: {model_size} KB"
+                    f"Code: {code_size} KB | Model: {model_size} KB | " +
+                    f"Compressed: {size_compressed} KB"
                 )
 
             if file_pointer is not None: # Save final test-set/prediction accuracy.
@@ -230,10 +231,11 @@ async def main(args):
                 file_pointer.write(f"Final sentence acc: {sent_acc}\n")
 
                 if model_footprint is not None: # Save size of model footprint.
-                    memory_usage, code_size, model_size = model_footprint
+                    memory_usage, code_size, model_size, size_compressed = model_footprint
                     file_pointer.write(f"Memory usage: {memory_usage}\n")
                     file_pointer.write(f"Code size: {code_size}\n")
-                    file_pointer.write(f"Model size: {model_size}")
+                    file_pointer.write(f"Model size: {model_size}\n")
+                    file_pointer.write(f"Compressed size: {size_compressed}")
 
                 file_pointer.close()
 

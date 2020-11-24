@@ -1,40 +1,20 @@
-import math
 import os
 from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, meta_tagger
 from taggers import flair_pos, bert_bpemb
 from taggers import nltk_tnt, nltk_crf, nltk_brill, nltk_hmm
-
-def shannon_entropy(*filenames):
-    total_length = 0
-    counts = [0] * 256
-    entropy = 0.0
-
-    for filename in filenames:
-        with open(filename, "rb") as fp:
-            byte_arr = fp.read() # Read bytes.
-            total_length += len(byte_arr) # Add length of bytes to total length.
-
-            for byte in byte_arr: # Save frequencies of each byte.
-                counts[byte] += 1
-
-    for count in counts:
-        if count != 0:
-            probability = float(count) / total_length
-            entropy -= probability * math.log(probability, 2)
-
-    return entropy
+from util.model_compression import shannon_entropy, COMPRESSION_EXTS
 
 def test_compression_methods(tagger):
     formats = ["zip", "gztar", "bztar", "xztar"]
-    exts = ["zip", "tar.gz", "tar.bz2", "tar.xz"]
     results = []
     entropy_before = shannon_entropy(*tagger.necessary_model_files())
     size_before = tagger.model_size()
     print(f"Entropy before: {entropy_before}")
     print(f"Size before: {size_before} KB")
 
-    for comp_format, ext in zip(formats, exts):
+    for comp_format in zip(formats):
         print("Compressing...")
+        ext = COMPRESSION_EXTS[comp_format]
         compressed = tagger.compress_model(comp_format)
         entropy_after = shannon_entropy(compressed)
         size_after = tagger.compressed_model_size(ext)

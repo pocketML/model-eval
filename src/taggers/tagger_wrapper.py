@@ -1,5 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
+from util.model_compression import COMPRESSION_EXTS
 import shutil
 import os
 
@@ -10,6 +11,7 @@ class Tagger(ABC):
         self.create_model_folder()
         self.epoch = 0
         self.simplified_dataset = simplified_dataset
+        self.best_compression_method = "xztar"
 
     def create_model_folder(self):
         cwd = os.getcwd().replace("\\", "/")
@@ -32,10 +34,31 @@ class Tagger(ABC):
         return sum(os.path.getsize(filename)
                    for filename in self.necessary_model_files())
 
-    def compressed_model_size(self, format_extension):
-        return os.path.getsize(f"{self.model_base_path()}/compressed.{format_extension}")
+    def compressed_model_path(self, compression_format=None):
+        if compression_format is None:
+            compression_format = self.best_compression_method
+        format_ext = COMPRESSION_EXTS[compression_format]
 
-    def compress_model(self, compression_format):
+        return f"{self.model_base_path()}/compressed.{format_ext}"
+
+    def compressed_model_exists(self, compression_format=None):
+        if compression_format is None:
+            compression_format = self.best_compression_method
+
+        return os.path.exists(self.compressed_model_path(compression_format))
+
+    def compressed_model_size(self, compression_format=None):
+        if compression_format is None:
+            compression_format = self.best_compression_method
+
+        if self.compressed_model_exists(compression_format):
+            return os.path.getsize(self.compressed_model_path(compression_format))
+        return 0
+
+    def compress_model(self, compression_format=None):
+        if compression_format is None:
+            compression_format = self.best_compression_method
+
         folder_to_compress = f"{self.model_base_path()}/compressed"
         os.mkdir(folder_to_compress)
         for filename in self.necessary_model_files():
