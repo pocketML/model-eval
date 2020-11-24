@@ -1,61 +1,51 @@
 import math
+import os
 from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, meta_tagger
 from taggers import flair_pos, bert_bpemb
 from taggers import nltk_tnt, nltk_crf, nltk_brill, nltk_hmm
 
-def shannon_entropy(model_filename):
-    with open(model_filename, "rb") as fp:
-        byte_arr = fp.read()
-        counts = [0] * 256
-        entropy = 0.0
-        length = len(byte_arr)
+def shannon_entropy(*filenames):
+    total_length = 0
+    counts = [0] * 256
+    entropy = 0.0
 
-        readable_bytes = length
-        descriptor = "Bytes"
-        if (readable_bytes > 1000):
-            readable_bytes /= 1000
-            descriptor = "KB"
-        if (readable_bytes > 1000):
-            readable_bytes /= 1000
-            descriptor = "MB"
+    for filename in filenames:
+        with open(filename, "rb") as fp:
+            byte_arr = fp.read() # Read bytes.
+            total_length += len(byte_arr) # Add length of bytes to total length.
 
-        print(
-            "Calculating Shannon entropy on file with a size of " +
-            f"{readable_bytes:.2f}{descriptor}"
-        )
+            for byte in byte_arr: # Save frequencies of each byte.
+                counts[byte] += 1
 
-        for byte in byte_arr:
-            counts[byte] += 1
+    for count in counts:
+        if count != 0:
+            probability = float(count) / total_length
+            entropy -= probability * math.log(probability, 2)
 
-        for count in counts:
-            if count != 0:
-                probability = float(count) / length
-                entropy -= probability * math.log(probability, 2)
+    return entropy
 
-        return entropy
-
-def find_best_compression_method(tagger):
+def test_compression_methods(tagger):
     formats = ["zip", "gztar", "bztar", "xztar"]
     exts = ["zip", "tar.gz", "tar.bz2", "tar.xz"]
     results = []
-    entropy_before = 0
-    for filename in tagger.necessary_model_files():
-        entropy_before += shannon_entropy(filename)
+    entropy_before = shannon_entropy(*tagger.necessary_model_files())
     size_before = tagger.model_size()
     print(f"Entropy before: {entropy_before}")
+    print(f"Size before: {size_before} KB")
+
     for comp_format, ext in zip(formats, exts):
-        print(f"Size before: {size_before}")
         print("Compressing...")
         compressed = tagger.compress_model(comp_format)
         entropy_after = shannon_entropy(compressed)
         size_after = tagger.compressed_model_size(ext)
         results.append(
-            (comp_format, entropy_after - entropy_before, size_before - size_after)
+            (comp_format, entropy_before, entropy_after, size_before, size_after)
         )
         print(f"Entropy after: {entropy_after}")
-        print(f"Size after: {size_after}")
+        print(f"Size after: {size_after} KB")
+        os.remove(compressed)
 
-    return sorted(results, key=lambda x: x[1], reverse=True)
+    return results
 
 if __name__ == "__main__":
     TAGGERS = {
@@ -78,7 +68,16 @@ if __name__ == "__main__":
             self.treebank = "gum"
             self.iter = 10
 
-    for tagger in TAGGERS:
-        print(tagger)
-        best_format = find_best_compression_method(TAGGERS[tagger](Args(), tagger))
-        print(best_format)
+    with open("compression_test.txt", "w", encoding="utf-8") as file_out:
+        for tagger in TAGGERS:
+            print(f"########## {tagger} ##########")
+            test_results = test_compression_methods(TAGGERS[tagger](Args(), tagger))
+            file_out.write(tagger + "\n")
+            for comp_format, ent_before, ent_after, size_before, size_after in test_results:
+                file_out.write(
+                    f"{comp_format} {ent_before} {ent_after} {ent_after - ent_before} " +
+                    f"{ent_after / ent_before} {size_before} {size_after} " +
+                    f"{size_before - size_after} {size_before / size_after}\n"
+                )
+
+            file_out.write("\n")

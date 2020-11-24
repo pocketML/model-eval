@@ -7,7 +7,7 @@ models/*
 !models/get_model.py
 .vscode/
 results/*
-config.txt
+config*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
