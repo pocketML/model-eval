@@ -1,6 +1,7 @@
 from os.path import getsize
 from pathlib import Path
 from glob import glob
+from os import path, walk
 from taggers.tagger_wrapper_syscall import SysCallTagger
 from util.code_size import PYTHON_STDLIB_SIZE
 from util import data_archives
@@ -90,14 +91,15 @@ class BERT_BPEMB(SysCallTagger):
                 total_size += getsize(file)
         return int(total_size)
 
-    def model_size(self):
-        filenames = glob(self.model_base_path() + '/**/*_model.pt', recursive=True)
-        filenames.sort(key= lambda x: float(x.split('acc_')[1].split('_model')[0]))
-        filename = filenames[-1]
-        total_size = getsize(filename)
-        
+    def necessary_model_files(self):    
+        model_paths = glob(self.model_base_path() + '/**/*_model.pt', recursive=True)
+        model_paths.sort(key= lambda x: float(x.split('acc_')[1].split('_model')[0]))
+        filenames = [model_paths[-1]]
+
         # if using bert
         bert_path = Path.home() / '.cache' / 'torch' / 'transformers'
-        total_size += data_archives.get_folder_size(bert_path)
+        for dirpath, _, filenames in walk(bert_path):
+            for f in filenames:
+                filenames.append(path.join(dirpath, f))
 
-        return int(total_size)
+        return filenames

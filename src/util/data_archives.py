@@ -169,7 +169,7 @@ def get_embeddings_size(lang):
 
 def get_folder_size(folder_path):
     total_size = 0
-    for dirpath, dirnames, filenames in walk(folder_path):
+    for dirpath, _, filenames in walk(folder_path):
         for f in filenames:
             fp = path.join(dirpath, f)
             total_size += path.getsize(fp)
