@@ -1,6 +1,8 @@
 from glob import glob
+from os import path
 import math
 import matplotlib.pyplot as plt
+from util.data_archives import LANGS_FULL
 
 def find_value(lines, key):
     for line in lines:
@@ -10,13 +12,18 @@ def find_value(lines, key):
     return None
 
 def load_results():
-    result_files = glob("results/plot/*.out")
+    model_folders = glob("results/*")
     mapped_data = {}
-    for file_name in result_files:
-        last_part = file_name.replace("\\", "/").split("/")[-1]
-        model_name = "_".join(last_part.split("_")[:-2])
-        if model_name not in mapped_data:
-            with open(file_name, "r") as fp:
+    for model_folder in model_folders:
+        model_name = path.split(model_folder)[1]
+        language_folders = glob(f"{model_folder}/*")
+        for language_folder in language_folders:
+            language_name = path.split(language_folder)[1].split("_")[0]
+            if language_name not in mapped_data:
+                mapped_data[language_name] = {}
+
+            filename = glob(f"{language_folder}/*")[-1]
+            with open(filename, "r") as fp:
                 lines = fp.readlines()
                 token_acc = find_value(lines, "Final token acc")
                 sentence_acc = find_value(lines, "Final sentence acc")
@@ -24,11 +31,12 @@ def load_results():
                 code_size = find_value(lines, "Code size")
                 model_size = find_value(lines, "Model size")
                 compressed_size = find_value(lines, "Compressed size")
-                mapped_data[model_name] = {
+                mapped_data[language_name][model_name] = {
                     "token": token_acc, "sentence": sentence_acc,
                     "memory": memory_footprint, "code": code_size,
                     "model": model_size, "compressed": compressed_size
                 }
+
     return mapped_data
 
 def plot_data(data, acc_measure="token", size_measure="memory"):
@@ -79,11 +87,9 @@ def plot_pareto(data):
     plt.grid(b=True, which="major", axis="both")
     plt.plot(points_x, points_y, linestyle=":", linewidth=2)
 
-def plot_results():
+def plot_results(language):
     results = load_results()
-    sorted_data = plot_data(results)
+    plt.title(f"{LANGS_FULL[language].capitalize()}")
+    sorted_data = plot_data(results[language])
     plot_pareto(sorted_data)
     plt.show()
-
-if __name__ == "__main__":
-    plot_results()
