@@ -77,7 +77,7 @@ def plot_pareto(data):
     points_x.append(points_x[-1])
 
     plt.grid(b=True, which="major", axis="both")
-    plt.plot(points_x, points_y)
+    plt.plot(points_x, points_y, linestyle=":", linewidth=2)
 
 def plot_results():
     results = load_results()

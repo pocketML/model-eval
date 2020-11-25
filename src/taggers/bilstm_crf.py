@@ -1,4 +1,4 @@
-from os.path import getsize
+from os.path import getsize, exists
 from glob import glob
 from taggers.tagger_wrapper_syscall import SysCallTagger
 from util.code_size import PYTHON_STDLIB_SIZE
@@ -29,7 +29,11 @@ class BILSTMCRF(SysCallTagger):
         if len(folders) == 0:
             return ''
         folders.sort(key=lambda x: int(x.replace("\\", "/").split("/")[-1][5:]))
-        return folders[-1].replace("\\", "/") + "/final.npz"
+        latest_folder = folders[-1].replace("\\", "/")
+        if not exists(latest_folder) + "/final.npz":
+            # A folder may have been created by bilstm_crf, but no file was yet saved.
+            latest_folder = folders[-2].replace("\\", "/")
+        return latest_folder + "/final.npz"
 
     def predict_path(self):
         return f"{self.model_base_path()}/preds.out"
