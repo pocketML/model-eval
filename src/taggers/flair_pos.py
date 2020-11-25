@@ -125,3 +125,6 @@ class Flair(ImportedTagger):
             simple_tag = self.tag_remapping[span.tag]
             predictions.append((span.text, simple_tag))
         return predictions
+
+    def necessary_model_files(self):
+        return super().necessary_model_files() + [data_archives.get_embeddings_path(self.args.lang)]

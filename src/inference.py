@@ -10,7 +10,13 @@ def get_memory_snapshot(pid):
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     data = process.stdout.read()
-    text = data.decode("utf-8")
+    text = ""
+    try:
+        print(data)
+        text = data.decode("utf-8")
+    except UnicodeDecodeError: # Apparently this happens sometimes.
+        print("Unicode decode error during memory snapshot.")
+        return None
     if text == "":
         return None
 

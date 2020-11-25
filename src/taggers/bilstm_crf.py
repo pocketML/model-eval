@@ -30,7 +30,7 @@ class BILSTMCRF(SysCallTagger):
             return ''
         folders.sort(key=lambda x: int(x.replace("\\", "/").split("/")[-1][5:]))
         latest_folder = folders[-1].replace("\\", "/")
-        if not exists(latest_folder) + "/final.npz":
+        if not exists(latest_folder + "/final.npz"):
             # A folder may have been created by bilstm_crf, but no file was yet saved.
             latest_folder = folders[-2].replace("\\", "/")
         return latest_folder + "/final.npz"
@@ -74,10 +74,12 @@ class BILSTMCRF(SysCallTagger):
             f"{base}/bilstm_bilstm_crf.py",
             f"{base}/lasagne_nlp/*/*.py",
         ]
-        embeddings_size = data_archives.get_embeddings_size(self.args.lang)
-        total_size = PYTHON_STDLIB_SIZE + embeddings_size + dependency_size
+        total_size = PYTHON_STDLIB_SIZE + dependency_size
         for glob_str in code_files:
             files = glob(glob_str)
             for file in files:
                 total_size += getsize(file)
         return int(total_size)
+
+    def necessary_model_files(self):
+        return super().necessary_model_files() + [data_archives.get_embeddings_path(self.args.lang)]

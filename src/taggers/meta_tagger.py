@@ -118,5 +118,6 @@ class METATAGGER(SysCallTagger):
     def necessary_model_files(self):
         return [
             self.model_path(),
-            self.model_base_path() + "/meta_word_char_v1.meta"
+            self.model_base_path() + "/meta_word_char_v1.meta",
+            data_archives.get_embeddings_path(self.args.lang)
         ]

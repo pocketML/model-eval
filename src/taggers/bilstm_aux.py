@@ -1,5 +1,6 @@
 from os.path import getsize
 from glob import glob
+
 from taggers.tagger_wrapper_syscall import SysCallTagger
 from util.code_size import PYTHON_STDLIB_SIZE
 from util import data_archives
@@ -58,8 +59,7 @@ class BILSTMAUX(SysCallTagger):
             f"{base}/src/*.py",
             f"{base}/src/lib/*.py",
         ]
-        embeddings_size = data_archives.get_embeddings_size(self.args.lang)
-        total_size = PYTHON_STDLIB_SIZE + embeddings_size + dependency_size
+        total_size = PYTHON_STDLIB_SIZE + dependency_size
         for glob_str in code_files:
             files = glob(glob_str)
             for file in files:
@@ -69,5 +69,6 @@ class BILSTMAUX(SysCallTagger):
     def necessary_model_files(self):
         return [
             self.model_path() + ".model",
-            self.model_path() + ".params.pickle"
+            self.model_path() + ".params.pickle",
+            data_archives.get_embeddings_path(self.args.lang)
         ]

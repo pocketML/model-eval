@@ -81,10 +81,7 @@ class BERT_BPEMB(SysCallTagger):
         code_files = [
             f"{base}/*.py",
         ]
-        bpemb_path = Path.home() / '.cache' / 'bpemb' / self.args.lang
-        print(f'bpemb path: {bpemb_path}')
-        embeddings_size = data_archives.get_folder_size(bpemb_path)
-        total_size = PYTHON_STDLIB_SIZE + embeddings_size
+        total_size = PYTHON_STDLIB_SIZE
         for glob_str in code_files:
             files = glob(glob_str)
             for file in files:
@@ -99,6 +96,12 @@ class BERT_BPEMB(SysCallTagger):
         # if using bert
         bert_path = Path.home() / '.cache' / 'torch' / 'transformers'
         for dirpath, _, filenames in walk(bert_path):
+            for f in filenames:
+                filenames.append(path.join(dirpath, f))
+
+        # Embeddings
+        bpemb_path = Path.home() / '.cache' / 'bpemb' / self.args.lang
+        for dirpath, _, filenames in walk(bpemb_path):
             for f in filenames:
                 filenames.append(path.join(dirpath, f))
 

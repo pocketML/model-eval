@@ -12,12 +12,11 @@ def test_compression_methods(tagger):
     print(f"Entropy before: {entropy_before}")
     print(f"Size before: {size_before} KB")
 
-    for comp_format in zip(formats):
+    for comp_format in formats:
         print("Compressing...")
-        ext = COMPRESSION_EXTS[comp_format]
         compressed = tagger.compress_model(comp_format)
         entropy_after = shannon_entropy(compressed)
-        size_after = tagger.compressed_model_size(ext)
+        size_after = tagger.compressed_model_size(comp_format)
         results.append(
             (comp_format, entropy_before, entropy_after, size_before, size_after)
         )
@@ -29,16 +28,16 @@ def test_compression_methods(tagger):
 
 if __name__ == "__main__":
     TAGGERS = {
-        "bilstm_aux": bilstm_aux.BILSTMAUX,
-        "bilstm_crf": bilstm_crf.BILSTMCRF,
-        "svmtool": svmtool.SVMT,
-        "stanford": stanford.Stanford,
-        "tnt": nltk_tnt.TnT,
-        "brill": nltk_brill.Brill,
-        "crf": nltk_crf.CRF,
-        "hmm": nltk_hmm.HMM,
-        "meta_tagger": meta_tagger.METATAGGER,
-        "flair": flair_pos.Flair
+        "bilstm_aux": bilstm_aux.BILSTMAUX
+        # "bilstm_crf": bilstm_crf.BILSTMCRF,
+        # "svmtool": svmtool.SVMT,
+        # "stanford": stanford.Stanford,
+        # "tnt": nltk_tnt.TnT,
+        # "brill": nltk_brill.Brill,
+        # "crf": nltk_crf.CRF,
+        # "hmm": nltk_hmm.HMM,
+        # "meta_tagger": meta_tagger.METATAGGER,
+        # "flair": flair_pos.Flair
         #"bert_bpemb": bert_bpemb.BERT_BPEMB,
     }
 
