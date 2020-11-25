@@ -68,8 +68,9 @@ def download_and_unpack(archive_type, archive):
 
     try:
         unpack_archive(archive_path, f"{archive_type}/")
-        dataset_file = glob(f"{folder_path}/UD_*")[0]
-        rename(dataset_file, dataset_file.lower())
+        if archive_type == "data":
+            dataset_file = glob(f"{folder_path}/UD_*")[0]
+            rename(dataset_file, dataset_file.lower())
         unlink(archive_path) # Remove old archive.
     except ValueError:
         pass

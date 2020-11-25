@@ -35,6 +35,8 @@ class BERT_BPEMB(SysCallTagger):
         return self.script_path_train()
 
     def train_string(self):
+        import os
+        os.environ["MKL_THREADING_LAYER"] = "GNU"
         return (
             'python [script_path_train] train '
             '--dataset ud_1_2 '
