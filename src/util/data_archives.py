@@ -92,7 +92,6 @@ def get_dataset_folder_path(lang, treebank, simplified=True):
     return dataset_path
 
 def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
-    print(f"{lang} - {treebank}")
     dataset_path = get_dataset_folder_path(lang, treebank, simplified=simplified)
     glob_str = f"-{dataset_type}" if dataset_type is not None else ""
     paths = glob(f"{dataset_path}/*{glob_str}.conllu")
