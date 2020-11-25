@@ -12,7 +12,6 @@ def get_memory_snapshot(pid):
     data = process.stdout.read()
     text = ""
     try:
-        print(data)
         text = data.decode("utf-8")
     except UnicodeDecodeError: # Apparently this happens sometimes.
         print("Unicode decode error during memory snapshot.")
