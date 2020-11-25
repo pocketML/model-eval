@@ -292,8 +292,11 @@ if __name__ == "__main__":
     args = parser.parse_args(args_from_file)
 
     iso_langs = []
-    for lang in args.langs:
-        iso_langs.append(data_archives.LANGS_ISO[lang])
+    if args.langs == ["all"]:
+        iso_langs = list(set(data_archives.LANGS_ISO.values()))
+    else:
+        for lang in args.langs:
+            iso_langs.append(data_archives.LANGS_ISO[lang])
 
     args.langs = iso_langs
 
