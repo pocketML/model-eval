@@ -188,7 +188,15 @@ async def main(args):
                 if not os.path.exists("results"):
                     os.mkdir("results")
                 formatted_date = datetime.now().strftime("%Y-%m-%d_%H.%M")
-                file_name = f"results/{model_name}_{lang}_{treebank}_{formatted_date}.out"
+                model_dir = f"results/{model_name}"
+                if not os.path.exists(model_dir):
+                    print(f"Creating result directory for model: {model_dir}")
+                    os.mkdir(model_dir)
+                language_dir = f"{model_dir}/{lang}_{treebank}"
+                if not os.path.exists(language_dir):
+                    print(f"Creating result directory for language: {model_dir}")
+                    os.mkdir(language_dir)
+                file_name = f"{language_dir}/{formatted_date}.out"
                 file_pointer = open(file_name, "w")
 
             if args.online_monitor:
