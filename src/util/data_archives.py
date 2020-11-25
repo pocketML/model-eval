@@ -85,15 +85,14 @@ def get_default_treebank(lang):
 def get_dataset_folder_path(lang, treebank, simplified=True):
     language = LANGS_FULL[lang]
     if treebank is None:
-        treebank_upper = get_default_treebank(lang).upper()
-    else:
-        treebank_upper = treebank.upper()
-    dataset_path = f"data/{language}/UD_{language.capitalize()}-{treebank_upper}"
+        treebank = get_default_treebank(lang)
+    dataset_path = f"data/{language}/ud_{language}-{treebank}"
     if simplified:
         dataset_path += "/simplified"
     return dataset_path
 
 def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
+    print(f"{lang} - {treebank}")
     dataset_path = get_dataset_folder_path(lang, treebank, simplified=simplified)
     glob_str = f"-{dataset_type}" if dataset_type is not None else ""
     paths = glob(f"{dataset_path}/*{glob_str}.conllu")

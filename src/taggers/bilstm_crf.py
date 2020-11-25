@@ -30,7 +30,7 @@ class BILSTMCRF(SysCallTagger):
             return ''
         folders.sort(key=lambda x: int(x.replace("\\", "/").split("/")[-1][5:]))
         latest_folder = folders[-1].replace("\\", "/")
-        if not exists(latest_folder) + "/final.npz":
+        if not exists(latest_folder + "/final.npz"):
             # A folder may have been created by bilstm_crf, but no file was yet saved.
             latest_folder = folders[-2].replace("\\", "/")
         return latest_folder + "/final.npz"
