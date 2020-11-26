@@ -1,8 +1,10 @@
 from glob import glob
 from os import path
+from sys import argv
+import argparse
 import math
 import matplotlib.pyplot as plt
-from util.data_archives import LANGS_FULL
+from util.data_archives import LANGS_FULL, LANGS_ISO
 
 def find_value(lines, key):
     for line in lines:
@@ -39,20 +41,20 @@ def load_results():
 
     return mapped_data
 
-def plot_data(data, acc_measure="token", size_measure="memory"):
+def plot_data(data, acc_metric="token", size_metric="memory"):
     legend_text = {
         "token": "Token Accuracy", "sentence": "Sentence Accuracy",
         "memory": "Memory Footprint", "code": "Code Size",
         "model": "Uncompresse Model Size", "compressed": "Compressed Model Size"
     }
-    plt.xlabel(f"{legend_text[size_measure]} (MB)")
-    plt.ylabel(legend_text[acc_measure])
+    plt.xlabel(f"{legend_text[size_metric]} (MB)")
+    plt.ylabel(legend_text[acc_metric])
 
     sorted_data = []
     for model in data:
         model_data = data[model]
-        accuracy = float(model_data[acc_measure])
-        footprint = int(model_data[size_measure]) / 1000
+        accuracy = float(model_data[acc_metric])
+        footprint = int(model_data[size_metric]) / 1000
         sorted_data.append((model, accuracy, footprint))
 
     sorted_data.sort(key=lambda x: x[2])
@@ -87,9 +89,29 @@ def plot_pareto(data):
     plt.grid(b=True, which="major", axis="both")
     plt.plot(points_x, points_y, linestyle=":", linewidth=2)
 
-def plot_results(language):
+def plot_results(language, acc_metric, size_metric):
     results = load_results()
     plt.title(f"{LANGS_FULL[language].capitalize()}")
-    sorted_data = plot_data(results[language])
+    sorted_data = plot_data(results[language], acc_metric, size_metric)
     plot_pareto(sorted_data)
     plt.show()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Plot skyline/pareto curve of accuracy vs. size of POS taggers")
+
+    choices_langs = LANGS_FULL.keys()
+    parser.add_argument("language", type=str, choices=choices_langs, help="language to plot data for")
+    parser.add_argument(
+        "-am", "--accuracy-metric",
+        choices=["token", "sentence"], default="token",
+        help="The accuracy metric of the taggers"
+    )
+    parser.add_argument(
+        "-sm", "--size-metric",
+        choices=["memory", "code", "model", "compressed"],
+        default="memory", help="The size metric of the taggers"
+    )
+
+    args = parser.parse_args()
+
+    plot_results(LANGS_ISO[args.language], args.accuracy_metric, args.size_metric)
