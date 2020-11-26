@@ -6,7 +6,7 @@ from datetime import datetime
 from sys import argv
 import platform
 import argparse
-from util import data_archives, plotting, online_monitor
+from util import data_archives, online_monitor
 from inference import monitor_inference
 from training import monitor_training, train_imported_model
 from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, meta_tagger
