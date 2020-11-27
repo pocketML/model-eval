@@ -93,18 +93,18 @@ class BERT_BPEMB(SysCallTagger):
     def necessary_model_files(self):    
         model_paths = glob(self.model_base_path() + '/**/*_model.pt', recursive=True)
         model_paths.sort(key= lambda x: float(x.split('acc_')[1].split('_model')[0]))
-        filenames = [model_paths[-1]]
+        necessary_filenames = [model_paths[-1]]
 
         # if using bert
         bert_path = Path.home() / '.cache' / 'torch' / 'transformers'
         for dirpath, _, filenames in walk(bert_path):
             for f in filenames:
-                filenames.append(path.join(dirpath, f))
+                necessary_filenames.append(path.join(dirpath, f))
 
         # Embeddings
         bpemb_path = Path.home() / '.cache' / 'bpemb' / self.args.lang
         for dirpath, _, filenames in walk(bpemb_path):
             for f in filenames:
-                filenames.append(path.join(dirpath, f))
+                necessary_filenames.append(path.join(dirpath, f))
 
-        return filenames
+        return necessary_filenames
