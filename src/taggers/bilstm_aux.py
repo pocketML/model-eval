@@ -35,14 +35,14 @@ class BILSTMAUX(SysCallTagger):
 
     def train_string(self):
         return (
-            "python [script_path_train] --dynet-mem 1500 "
+            "python -X utf8 [script_path_train] --dynet-mem 1500 "
             "--train [dataset_train] --dev [dataset_dev] --test [dataset_test] "
             "--iters [iters] --model [model_path] --embeds [embeddings]"
         )
 
     def predict_string(self):
         return (
-            "python [script_path_test] --model [model_path] "
+            "python -X utf8 [script_path_test] --model [model_path] "
             "--test [dataset_test] "
             "--output [pred_path]"
         )

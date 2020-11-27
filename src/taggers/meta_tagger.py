@@ -83,7 +83,7 @@ class METATAGGER(SysCallTagger):
 
     def train_string(self):
         return (
-            'python [script_path_train] '
+            'python -X utf8 [script_path_train] '
             '--train=[dataset_train] '
             '--dev=[dataset_dev] '
             f'--embeddings=[embeddings] '
@@ -94,7 +94,7 @@ class METATAGGER(SysCallTagger):
 
     def predict_string(self):
         return (
-            'python [script_path_test] '
+            'python -X utf8 [script_path_test] '
             '--test=[dataset_test] '
             '--task=upos '
             '--output_dir=[model_base_path]/ '

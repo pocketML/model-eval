@@ -38,7 +38,7 @@ class BERT_BPEMB(SysCallTagger):
         import os
         os.environ["MKL_THREADING_LAYER"] = "GNU"
         return (
-            'python [script_path_train] train '
+            'python -X utf8 [script_path_train] train '
             '--dataset ud_1_2 '
             '--lang [lang] '
             '--tag upostag '
@@ -59,7 +59,7 @@ class BERT_BPEMB(SysCallTagger):
 
     def predict_string(self):
         return (
-            'python [script_path_train] eval '
+            'python -X utf8 [script_path_train] eval '
             '--dataset ud_1_2 '
             '--lang [lang] '
             '--tag upostag '

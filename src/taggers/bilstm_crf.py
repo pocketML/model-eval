@@ -43,7 +43,7 @@ class BILSTMCRF(SysCallTagger):
 
     def train_string(self):
         return (
-            "python [script_path_train] --fine_tune --embedding polyglot --oov embedding --update momentum --adv 0.05 "
+            "python -X utf8 [script_path_train] --fine_tune --embedding polyglot --oov embedding --update momentum --adv 0.05 "
             "--batch_size 10 --num_units 150 --num_filters 50 --learning_rate 0.01 --decay_rate 0.05 --grad_clipping 5 --regular none --dropout "
             "--train [dataset_train] "
             "--dev [dataset_dev] "
