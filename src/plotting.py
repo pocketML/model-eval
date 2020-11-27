@@ -4,7 +4,7 @@ from sys import argv
 import argparse
 import math
 import matplotlib.pyplot as plt
-from util.data_archives import LANGS_FULL, LANGS_ISO
+from util.data_archives import LANGS_FULL, LANGS_ISO, get_default_treebank
 
 def find_value(lines, key):
     for line in lines:
@@ -60,11 +60,13 @@ def plot_data(data, acc_metric="token", size_metric="memory"):
     sorted_data.sort(key=lambda x: x[2])
 
     for model, accuracy, footprint in sorted_data:
-        x, y = accuracy, footprint
-        offset_x = 50
-        offset_y = 0.005
-        plt.text(x - offset_x, y + offset_y, f"Acc = {x}")
-        plt.text(x - offset_x, y + offset_y, f"Footprint = {y} MB")
+        x, y = footprint, accuracy
+        offset_x = 500
+        offset_y = 0.004
+        if model == "brill":
+            y += 0.008
+        plt.text(x + offset_x, y - offset_y, f"Size = {x} MB")
+        plt.text(x + offset_x, y - offset_y * 2, f"Acc = {y}")
         plt.scatter(footprint, accuracy, label=model)
 
     plt.legend()
@@ -91,7 +93,8 @@ def plot_pareto(data):
 
 def plot_results(language, acc_metric, size_metric):
     results = load_results()
-    plt.title(f"{LANGS_FULL[language].capitalize()}")
+    treebank = get_default_treebank(language)
+    plt.title(f"{LANGS_FULL[language].capitalize()} ({treebank.upper()} Treebank)")
     sorted_data = plot_data(results[language], acc_metric, size_metric)
     plot_pareto(sorted_data)
     plt.show()
