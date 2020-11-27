@@ -184,6 +184,7 @@ async def main(args):
             )
             args.lang = lang
             file_pointer = None
+            file_name = None
             if args.save_results:
                 if not os.path.exists("results"):
                     os.mkdir("results")
@@ -245,6 +246,7 @@ async def main(args):
                     file_pointer.write(f"Model size: {model_size}\n")
                     file_pointer.write(f"Compressed size: {size_compressed}")
 
+                print(f"Wrote results of run to '{file_name}'")
                 file_pointer.close()
 
     if args.plot:
