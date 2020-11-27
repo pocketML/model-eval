@@ -6,7 +6,7 @@ from datetime import datetime
 from sys import argv
 import platform
 import argparse
-from util import data_archives, plotting, online_monitor
+from util import data_archives, online_monitor
 from inference import monitor_inference
 from training import monitor_training, train_imported_model
 from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, meta_tagger
@@ -184,6 +184,7 @@ async def main(args):
             )
             args.lang = lang
             file_pointer = None
+            file_name = None
             if args.save_results:
                 if not os.path.exists("results"):
                     os.mkdir("results")
@@ -245,6 +246,7 @@ async def main(args):
                     file_pointer.write(f"Model size: {model_size}\n")
                     file_pointer.write(f"Compressed size: {size_compressed}")
 
+                print(f"Wrote results of run to '{file_name}'")
                 file_pointer.close()
 
     if args.plot:
