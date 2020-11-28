@@ -139,16 +139,18 @@ def transform_data(dataset):
     for tags in (tags_train_in, tags_test_in, tags_dev_in):
         file_name = tags.replace("\\", "/").split("/")[-1]
         new_file = f"{new_dir}/{file_name}"
-        with open(new_file, "w", encoding="UTF-8") as file_out:
-            with open(tags, "r", encoding="UTF-8") as file_in:
+        with open(new_file, "w", encoding="utf-8") as file_out:
+            with open(tags, "r", encoding="utf-8") as file_in:
                 for line in file_in.readlines():
                     if line.startswith("#"):
                         continue
-                    split = line.split(None)
 
-                    if split == []: # New sentence
+                    stripped = line.strip()
+
+                    if stripped == "": # New sentence
                         line_out = ""
                     else:
+                        split = stripped.split("\t")
                         word = split[1]
                         tag = split[3]
                         if tag == "_":
@@ -173,3 +175,28 @@ def get_folder_size(folder_path):
             fp = path.join(dirpath, f)
             total_size += path.getsize(fp)
     return total_size
+
+def validate_simplified_datasets():
+    possible_tags = {
+        "ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM",
+        "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM", "VERB", "X", "_"
+    }
+
+    for lang in set(LANGS_ISO.values()):
+        lang_full = LANGS_FULL[lang]
+        print(f"====== {lang_full} =====")
+        if not archive_exists("data", lang_full):
+            download_and_unpack("data", lang_full)
+            transform_dataset(lang_full)
+
+        treebank = get_default_treebank(lang)
+        for dataset_type in ("train", "test", "dev"):
+            dataset_path = get_dataset_path(lang, treebank, dataset_type, True)
+            with open(dataset_path, "r", encoding="utf-8") as fp:
+                for index, line in enumerate(fp, start=1):
+                    stripped = line.strip()
+                    if stripped == "":
+                        continue
+                    split = stripped.split("\t")
+                    if split[1] not in possible_tags:
+                        print(f"Illegal tag '{split[1]}' on line {index} in {dataset_type} set!!!!")
