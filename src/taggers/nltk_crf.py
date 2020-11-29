@@ -1,3 +1,4 @@
+from util import data_archives
 from taggers.tagger_wrapper_import import ImportedTagger
 import nltk
 

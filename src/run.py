@@ -213,11 +213,12 @@ async def main(args):
     for model_name in models_to_run:
         for lang, treebank in zip(languages_to_use, treebanks):
             args.treebank = treebank
+            args.lang = lang
+            print("=" * 40)
             print(
                 f"Using '{model_name}' with '{data_archives.LANGS_FULL[lang]}' "
                 f"dataset on '{args.treebank}' treebank."
             )
-            args.lang = lang
             file_pointer = None
             file_name = None
             if args.save_results:
