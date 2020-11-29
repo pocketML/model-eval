@@ -152,6 +152,7 @@ def transform_data(dataset):
                     else:
                         split = stripped.split("\t")
                         word = split[1]
+                        word = word.replace(" ", "_")
                         tag = split[3]
                         if tag == "_":
                             continue
