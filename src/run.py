@@ -249,9 +249,6 @@ async def main(args):
                 print(f"Wrote results of run to '{file_name}'")
                 file_pointer.close()
 
-    if args.plot:
-        plotting.plot_results()
-
 if __name__ == "__main__":
     logo_str = (
         "***********************************************************************************\n"
@@ -288,7 +285,6 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--save-results", help="whether to save accuracy & size complexity measurements", action="store_true")
     parser.add_argument("-t", "--train", help="whether to train the given model", action="store_true")
     parser.add_argument("-e", "--eval", help="whether to predict & evaluate accuracy using the given model", action="store_true")
-    parser.add_argument("-p", "--plot", help="whether to plot results from previous/current runs", action="store_true")
     parser.add_argument("-m", "--max-iter", help="where to stop when 'iter' iterations has been run during training", action="store_true")
     parser.add_argument("-g", "--gpu", help="use GPU where possible", action="store_true")
     parser.add_argument("-om", "--online-monitor", help="send status updates about training to a website", action="store_true")

@@ -145,12 +145,15 @@ def transform_data(dataset):
                 for line in file_in.readlines():
                     if line.startswith("#"):
                         continue
-                    split = line.split(None)
 
-                    if split == []: # New sentence
+                    stripped = line.strip()
+
+                    if stripped == "": # New sentence
                         line_out = ""
                     else:
+                        split = stripped.split("\t")
                         word = split[1]
+                        word = word.replace(" ", "_")
                         tag = split[3]
                         if tag == "_":
                             continue
@@ -175,7 +178,28 @@ def get_folder_size(folder_path):
             total_size += path.getsize(fp)
     return total_size
 
-if __name__ == "__main__":
+def validate_simplified_datasets():
+    possible_tags = {
+        "ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM",
+        "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM", "VERB", "X", "_"
+    }
+
     for lang in set(LANGS_ISO.values()):
-        transform_dataset(LANGS_FULL[lang])
+        lang_full = LANGS_FULL[lang]
+        print(f"====== {lang_full} =====")
+        if not archive_exists("data", lang_full):
+            download_and_unpack("data", lang_full)
+            transform_dataset(lang_full)
+
+        treebank = get_default_treebank(lang)
+        for dataset_type in ("train", "test", "dev"):
+            dataset_path = get_dataset_path(lang, treebank, dataset_type, True)
+            with open(dataset_path, "r", encoding="utf-8") as fp:
+                for index, line in enumerate(fp, start=1):
+                    stripped = line.strip()
+                    if stripped == "":
+                        continue
+                    split = stripped.split("\t")
+                    if split[1] not in possible_tags:
+                        print(f"Illegal tag '{split[1]}' on line {index} in {dataset_type} set!!!!")
 

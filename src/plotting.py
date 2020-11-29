@@ -61,7 +61,7 @@ def plot_data(data, acc_metric="token", size_metric="memory"):
 
     for model, accuracy, footprint in sorted_data:
         x, y = footprint, accuracy
-        offset_x = 500
+        offset_x = 10
         offset_y = 0.004
         if model == "brill":
             y += 0.008
