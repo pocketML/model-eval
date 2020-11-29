@@ -96,6 +96,7 @@ def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
     dataset_path = get_dataset_folder_path(lang, treebank, simplified=simplified)
     glob_str = f"-{dataset_type}" if dataset_type is not None else ""
     paths = glob(f"{dataset_path}/*{glob_str}.conllu")
+    print(dataset_path)
 
     for index, path_str in enumerate(paths):
         paths[index] = path_str.replace("\\", "/")
@@ -139,8 +140,8 @@ def transform_data(dataset):
     for tags in (tags_train_in, tags_test_in, tags_dev_in):
         file_name = tags.replace("\\", "/").split("/")[-1]
         new_file = f"{new_dir}/{file_name}"
-        with open(new_file, "w", encoding="UTF-8") as file_out:
-            with open(tags, "r", encoding="UTF-8") as file_in:
+        with open(new_file, "w", encoding="utf-8") as file_out:
+            with open(tags, "r", encoding="utf-8") as file_in:
                 for line in file_in.readlines():
                     if line.startswith("#"):
                         continue
@@ -158,7 +159,7 @@ def transform_data(dataset):
                     file_out.write(line_out + "\n")
 
 def transform_dataset(language):
-    treebanks = glob(f"data/{language}/UD_*")
+    treebanks = glob(f"data/{language}/ud_*")
     for folder in treebanks:
         print(f"Transforming {folder}")
         transform_data(folder)
@@ -173,3 +174,8 @@ def get_folder_size(folder_path):
             fp = path.join(dirpath, f)
             total_size += path.getsize(fp)
     return total_size
+
+if __name__ == "__main__":
+    for lang in set(LANGS_ISO.values()):
+        transform_dataset(LANGS_FULL[lang])
+
