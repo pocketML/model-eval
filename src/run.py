@@ -207,6 +207,7 @@ async def main(args):
             # Load model immediately if we are only evaluating, or if we are continuing training.
             load_model = (args.eval and not args.train) or (args.reload and args.train)
             tagger = TAGGERS[model_name](args, model_name, load_model)
+
             print(f"Tagger code size: {tagger.code_size() // 1000} KB")
             if load_model:
                 print(f"Tagger model size: {tagger.model_size() // 1000} KB")

@@ -3,7 +3,7 @@ from six.moves import cPickle as pickle
 import re
 from flair.data import Sentence
 from flair.models import SequenceTagger
-from flair.embeddings import TokenEmbeddings
+from flair.embeddings import TokenEmbeddings, CharacterEmbeddings, StackedEmbeddings
 from flair.datasets import UniversalDependenciesCorpus
 from flair.trainers import ModelTrainer
 from flair import device
@@ -85,20 +85,26 @@ class Flair(ImportedTagger):
         super().__init__(args, model_name, load_model)
         (data_folder, train_file, test_file, dev_file) = self.format_data("train")
         self.corpus = UniversalDependenciesCorpus(data_folder, train_file, test_file, dev_file)
+        dictionary = self.corpus.make_tag_dictionary("pos")
         self.tag_remapping = data_archives.tagset_mapping(args.lang, args.treebank, "train")
         if not load_model:
             embedding_path = data_archives.get_embeddings_path(args.lang)
-            embeddings = PolyglotEmbeddings(embedding_path)
-            dictionary = self.corpus.make_tag_dictionary("pos")
+            embeddings = [
+                PolyglotEmbeddings(embedding_path),
+                CharacterEmbeddings()
+            ]
+            stacked = StackedEmbeddings(embeddings=embeddings)
 
-            self.model = SequenceTagger(hidden_size=256, embeddings=embeddings,
+            self.model = SequenceTagger(hidden_size=256, embeddings=stacked,
                                         tag_dictionary=dictionary, tag_type="pos",
                                         use_crf=True)
+        else:
+            self.model.tag_dictionary = dictionary
 
     def train(self, train_data):
         trainer = ModelTrainer(self.model, self.corpus)
 
-        trainer.train(f"models/flair/{self.args.lang}_{self.args.treebank}",
+        trainer.train(self.model_base_path(),
                       learning_rate=0.1, mini_batch_size=32,
                       max_epochs=self.args.iter, embeddings_storage_mode="gpu")
 
@@ -128,3 +134,10 @@ class Flair(ImportedTagger):
 
     def necessary_model_files(self):
         return super().necessary_model_files() + [data_archives.get_embeddings_path(self.args.lang)]
+
+    def __getstate__(self):
+        return (self.args, self.model_name)
+
+    def __setstate__(self, state):
+        args, model_name = state
+        self.__init__(args, model_name, True)

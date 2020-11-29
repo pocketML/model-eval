@@ -13,7 +13,7 @@ class ImportedTagger(Tagger):
         super().__init__(args, model_name)
         if load_model:
             if self.saved_model_exists():
-                print(f"Loading saved '{model_name}' model.")
+                print(f"Loading saved '{model_name}' model from '{self.model_path()}'.")
                 self.load_model()
             else:
                 print(f"Error: No trained model for '{self.model_name}' exists!")

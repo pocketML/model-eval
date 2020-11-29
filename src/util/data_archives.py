@@ -117,6 +117,8 @@ def tagset_mapping(lang, treebank, dataset_type, from_complex=True):
             split = stripped.split("\t")
             simple_tag = split[3]
             full_tag = split[4]
+            if full_tag == "_":
+                full_tag = simple_tag
             if from_complex:
                 tag_mapping[full_tag] = simple_tag
             else:
@@ -152,7 +154,6 @@ def transform_data(dataset):
                     else:
                         split = stripped.split("\t")
                         word = split[1]
-                        word = word.replace(" ", "_")
                         tag = split[3]
                         if tag == "_":
                             continue

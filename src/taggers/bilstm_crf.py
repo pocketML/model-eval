@@ -12,7 +12,6 @@ class BILSTMCRF(SysCallTagger):
 
     async def on_epoch_complete(self, process_handler):
         while (text := self.read_stdout(process_handler)) is not None:
-            print(text)
             if (index := text.find(self.ACC_STR)) != -1:
                 test_str = text[index + len(self.ACC_STR) + 1:]
                 if (acc_index := test_str.find("acc:")) != -1:
