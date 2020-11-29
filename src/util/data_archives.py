@@ -96,6 +96,7 @@ def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
     dataset_path = get_dataset_folder_path(lang, treebank, simplified=simplified)
     glob_str = f"-{dataset_type}" if dataset_type is not None else ""
     paths = glob(f"{dataset_path}/*{glob_str}.conllu")
+    print(dataset_path)
 
     for index, path_str in enumerate(paths):
         paths[index] = path_str.replace("\\", "/")
@@ -157,12 +158,14 @@ def transform_data(dataset):
                         tag = split[3]
                         if tag == "_":
                             continue
+                        if " " in word:
+                            word = word.replace(" ", "_")
                         line_out = f"{word}\t{tag}"
 
                     file_out.write(line_out + "\n")
 
 def transform_dataset(language):
-    treebanks = glob(f"data/{language}/UD_*")
+    treebanks = glob(f"data/{language}/ud_*")
     for folder in treebanks:
         print(f"Transforming {folder}")
         transform_data(folder)
@@ -202,3 +205,4 @@ def validate_simplified_datasets():
                     split = stripped.split("\t")
                     if split[1] not in possible_tags:
                         print(f"Illegal tag '{split[1]}' on line {index} in {dataset_type} set!!!!")
+

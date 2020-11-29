@@ -9,23 +9,56 @@ import argparse
 from util import data_archives, online_monitor
 from inference import monitor_inference
 from training import monitor_training, train_imported_model
-from taggers import bilstm_aux, bilstm_crf, svmtool, stanford, meta_tagger
-from taggers import flair_pos, bert_bpemb
-from taggers import nltk_tnt, nltk_crf, nltk_brill, nltk_hmm
 
 TAGGERS = {
-    "bilstm_aux": bilstm_aux.BILSTMAUX,
-    "bilstm_crf": bilstm_crf.BILSTMCRF,
-    "svmtool": svmtool.SVMT,
-    "stanford": stanford.Stanford,
-    "tnt": nltk_tnt.TnT,
-    "brill": nltk_brill.Brill,
-    "crf": nltk_crf.CRF,
-    "hmm": nltk_hmm.HMM,
-    "meta_tagger": meta_tagger.METATAGGER,
-    "flair": flair_pos.Flair,
-    "bert_bpemb": bert_bpemb.BERT_BPEMB,
+    "bilstm_aux": None,
+    "bilstm_crf": None,
+    "svmtool": None,
+    "stanford": None,
+    "tnt": None,
+    "brill": None,
+    "crf": None,
+    "hmm": None,
+    "meta_tagger": None,
+    "flair": None,
+    "bert_bpemb": None,
 }
+
+def set_up_taggers(model_names):
+    for model_name in model_names:
+        if model_name == "bilstm_aux" or model_name == "all":
+            from taggers import bilstm_aux
+            TAGGERS["bilstm_aux"] = bilstm_aux.BILSTMAUX
+        if model_name == "bilstm_crf" or model_name == "all":
+            from taggers import bilstm_crf
+            TAGGERS["bilstm_crf"] = bilstm_crf.BILSTMCRF
+        if model_name == "svmtool" or model_name == "all":
+            from taggers import svmtool
+            TAGGERS["svmtool"] = svmtool.SVMT
+        if model_name == "stanford" or model_name == "all":
+            from taggers import stanford
+            TAGGERS["stanford"] = stanford.Stanford
+        if model_name == "tnt" or model_name == "all":
+            from taggers import nltk_tnt
+            TAGGERS["tnt"] = nltk_tnt.TnT
+        if model_name == "brill" or model_name == "all":
+            from taggers import nltk_brill
+            TAGGERS["brill"] = nltk_brill.Brill
+        if model_name == "crf" or model_name == "all":
+            from taggers import nltk_crf
+            TAGGERS["crf"] = nltk_crf.CRF
+        if model_name == "hmm" or model_name == "all":
+            from taggers import nltk_hmm
+            TAGGERS["hmm"] = nltk_hmm.HMM
+        if model_name == "meta_tagger" or model_name == "all":
+            from taggers import meta_tagger
+            TAGGERS["meta_tagger"] = meta_tagger.METATAGGER
+        if model_name == "flair" or model_name == "all":
+            from taggers import flair_pos
+            TAGGERS["flair"] = flair_pos.Flair
+        if model_name == "bert_bpemb" or model_name == "all":
+            from taggers import bert_bpemb
+            TAGGERS["bert_bpemb"] = bert_bpemb.BERT_BPEMB
 
 def insert_arg_values(cmd, tagger, args):
     if (reload_str := tagger.reload_string()) is None or (args.train and not args.reload):
@@ -143,6 +176,8 @@ async def main(args):
     print(f"verbose: {args.verbose}")
     print(f"dataset languages: {args.langs}")
     print(f"iterations: {args.iter}")
+
+    set_up_taggers(args.model_names)
 
     models_to_run = (TAGGERS.keys()
                      if args.model_names == ["all"] else args.model_names)
