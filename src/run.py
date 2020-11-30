@@ -137,13 +137,9 @@ async def run_with_sys_call(args, tagger_helper, model_name, file_pointer):
     model_footprint = None
     if args.eval: # Run inference task.
         if call_infer is not None:
-            print('inserting arg values')
             call_infer = insert_arg_values(call_infer, tagger_helper, args)
-            print('doing system call')
             process = system_call(call_infer, cwd, tagger_helper.script_path_test())
-            print('measuring footprint')
             model_footprint = await monitor_inference(tagger_helper, process)
-            print('done')
         final_acc = tagger_helper.evaluate()
     return final_acc, model_footprint
 
@@ -171,12 +167,6 @@ async def run_with_imported_model(args, tagger, model_name):
     return final_acc, model_footprint
 
 async def main(args):
-    print("Arguments:")
-    print(f"models: {args.model_names}")
-    print(f"verbose: {args.verbose}")
-    print(f"dataset languages: {args.langs}")
-    print(f"iterations: {args.iter}")
-
     set_up_taggers(args.model_names)
 
     models_to_run = (TAGGERS.keys()
@@ -214,7 +204,7 @@ async def main(args):
         for lang, treebank in zip(languages_to_use, treebanks):
             args.treebank = treebank
             args.lang = lang
-            print("=" * 40)
+            print("=" * 60)
             print(
                 f"Using '{model_name}' with '{data_archives.LANGS_FULL[lang]}' "
                 f"dataset on '{args.treebank}' treebank."

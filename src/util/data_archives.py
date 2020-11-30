@@ -96,7 +96,6 @@ def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
     dataset_path = get_dataset_folder_path(lang, treebank, simplified=simplified)
     glob_str = f"-{dataset_type}" if dataset_type is not None else ""
     paths = glob(f"{dataset_path}/*{glob_str}.conllu")
-    print(dataset_path)
 
     for index, path_str in enumerate(paths):
         paths[index] = path_str.replace("\\", "/")
