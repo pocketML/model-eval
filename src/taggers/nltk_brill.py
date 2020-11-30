@@ -9,9 +9,29 @@ class Brill(ImportedTagger):
         super().__init__(args, model_name, load_model)
         if not load_model:
             base_tagger = HMM(args, "hmm", load_model=True)
+            # features = [
+            #     Template(Pos([-1])), Template(Pos([1])), Template(Word([0]))
+            # ]
             features = [
-                Template(Pos([-1])), Template(Pos([1])), Template(Word([0]))
-            ]
+                Template(Pos([-1])),
+                Template(Pos([1])),
+                Template(Pos([-2])),
+                Template(Pos([2])),
+                Template(Pos([-2, -1])),
+                Template(Pos([1, 2])),
+                Template(Pos([-3, -2, -1])),
+                Template(Pos([1, 2, 3])),
+                Template(Pos([-1]), Pos([1])),
+                Template(Word([-1])),
+                Template(Word([1])),
+                Template(Word([-2])),
+                Template(Word([2])),
+                Template(Word([-2, -1])),
+                Template(Word([1, 2])),
+                Template(Word([-3, -2, -1])),
+                Template(Word([1, 2, 3])),
+                Template(Word([-1]), Word([1])),
+                ]
             self.model = nltk.BrillTaggerTrainer(base_tagger.model, features)
 
     def __getstate__(self):

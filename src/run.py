@@ -167,6 +167,8 @@ async def run_with_imported_model(args, tagger, model_name):
     return final_acc, model_footprint
 
 async def main(args):
+    actions = "Eval" if args.eval else ("Train" if args.train else "Eval & Train")
+    print(f"{actions} with models: {args.model_names} on languages: {args.langs}")
     set_up_taggers(args.model_names)
 
     models_to_run = (TAGGERS.keys()
@@ -206,7 +208,7 @@ async def main(args):
             args.lang = lang
             print("=" * 60)
             print(
-                f"Using '{model_name}' with '{data_archives.LANGS_FULL[lang]}' "
+                f"Running '{model_name}' with '{data_archives.LANGS_FULL[lang]}' "
                 f"dataset on '{args.treebank}' treebank."
             )
             file_pointer = None
