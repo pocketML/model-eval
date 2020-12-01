@@ -54,6 +54,7 @@ class BERT_BPEMB(SysCallTagger):
             '--dropout 0.2 '
             '--data-dir [dataset_folder] '
             '--outdir [model_base_path] '
+            '--best-vocab-size-file data/best_vocab_size.json '
             f'--relative_path models/bert_bpemb'
         )
 
