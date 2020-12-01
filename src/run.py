@@ -45,10 +45,10 @@ def insert_arg_values(cmd, tagger, args):
         ("[reload]", reload_str),
         ("[lang]", args.lang),
         ("[embeddings]", data_archives.get_embeddings_path(args.lang)),
-        ("[dataset_train]", data_archives.get_dataset_path(args.lang, args.treebank, "train", simplified=tagger.simplified_dataset)),
-        ("[dataset_test]", data_archives.get_dataset_path(args.lang, args.treebank, "test", simplified=tagger.simplified_dataset)),
-        ("[dataset_dev]", data_archives.get_dataset_path(args.lang, args.treebank, "dev", simplified=tagger.simplified_dataset)),
-        ("[dataset_folder]", data_archives.get_dataset_folder_path(args.lang, args.treebank, simplified=tagger.simplified_dataset)),
+        ("[dataset_train]", data_archives.get_dataset_path(args.lang, args.treebank, "train", simplified=tagger.simplified_dataset, eos=tagger.simplified_eos_dataset)),
+        ("[dataset_test]", data_archives.get_dataset_path(args.lang, args.treebank, "test", simplified=tagger.simplified_dataset, eos=tagger.simplified_eos_dataset)),
+        ("[dataset_dev]", data_archives.get_dataset_path(args.lang, args.treebank, "dev", simplified=tagger.simplified_dataset, eos=tagger.simplified_eos_dataset)),
+        ("[dataset_folder]", data_archives.get_dataset_folder_path(args.lang, args.treebank, simplified=tagger.simplified_dataset, eos=tagger.simplified_eos_dataset)),
         ("[stdout]", f"[stdout_{len(tagger.predict_path())}]"),
         ("[stderr]", f"[stdout_{len(tagger.predict_path())}]")
     ]

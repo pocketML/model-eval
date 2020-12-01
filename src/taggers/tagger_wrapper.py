@@ -5,12 +5,15 @@ import shutil
 import os
 
 class Tagger(ABC):
-    def __init__(self, args, model_name, simplified_dataset=True):
+    def __init__(self, args, model_name, simplified_dataset=True, simplified_eos_dataset=False):
         self.args = args
         self.model_name = model_name
         self.create_model_folder()
         self.epoch = 0
         self.simplified_dataset = simplified_dataset
+        self.simplified_eos_dataset = simplified_eos_dataset
+        if self.simplified_eos_dataset:
+            self.simplified_dataset = False
         self.best_compression_method = "xztar"
 
     def create_model_folder(self):

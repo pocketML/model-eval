@@ -8,13 +8,13 @@ class SVMT(SysCallTagger):
     ACC_STR = "TEST ACCURACY:"
 
     def __init__(self, args, model_name, load_model=False):
-        super().__init__(args, model_name, load_model)
+        super().__init__(args, model_name, load_model, simplified_eos_dataset=True)
         cfg_path = "models/svmtool/bin/config.svmt"
         with open(cfg_path, "r", encoding="utf-8", newline=None) as fp:
             lines = fp.readlines()
-        train_set = data_archives.get_dataset_path(self.args.lang, self.args.treebank, "train")
-        test_set = data_archives.get_dataset_path(self.args.lang, self.args.treebank, "test")
-        dev_set = data_archives.get_dataset_path(self.args.lang, self.args.treebank, "dev")
+        train_set = data_archives.get_dataset_path(self.args.lang, self.args.treebank, "train", simplified=False, eos=True)
+        test_set = data_archives.get_dataset_path(self.args.lang, self.args.treebank, "test", simplified=False, eos=True)
+        dev_set = data_archives.get_dataset_path(self.args.lang, self.args.treebank, "dev", simplified=False, eos=True)
         lines[3] = f"TRAINSET = {train_set}\n"
         lines[5] = f"VALSET = {dev_set}\n"
         lines[7] = f"TESTSET = {test_set}\n"
@@ -55,7 +55,7 @@ class SVMT(SysCallTagger):
 
     def train_string(self):
         return (
-            "bash -c \"perl [script_path_train] -V 1 models/svmtool/bin/config.svmt\""
+            "bash -c \"perl [script_path_train] -V 3 models/svmtool/bin/config.svmt\""
         )
 
     def predict_string(self):

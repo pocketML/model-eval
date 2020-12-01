@@ -83,17 +83,19 @@ def get_default_treebank(lang):
     folder_name = glob(f"data/{language}/ud_{language}-*")[0].replace("\\", "/").split("/")[-1]
     return folder_name.split("-")[-1].lower()
 
-def get_dataset_folder_path(lang, treebank, simplified=True):
+def get_dataset_folder_path(lang, treebank, simplified=True, eos=False):
     language = LANGS_FULL[lang]
     if treebank is None:
         treebank = get_default_treebank(lang)
     dataset_path = f"data/{language}/ud_{language}-{treebank}"
     if simplified:
         dataset_path += "/simplified"
+    elif eos:
+        dataset_path += "/simplified_eos"
     return dataset_path
 
-def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
-    dataset_path = get_dataset_folder_path(lang, treebank, simplified=simplified)
+def get_dataset_path(lang, treebank, dataset_type=None, simplified=True, eos=False):
+    dataset_path = get_dataset_folder_path(lang, treebank, simplified=simplified, eos=eos)
     glob_str = f"-{dataset_type}" if dataset_type is not None else ""
     paths = glob(f"{dataset_path}/*{glob_str}.conllu")
 
@@ -170,11 +172,45 @@ def transform_data(dataset):
 
                     file_out.write(line_out + "\n")
 
+# expects the existence of simplified files
+# this fix is for 
+def create_simplified_eos(dataset):
+    tags_train_in = glob(f"{dataset}/simplified/*ud-train.conllu")[0]
+    tags_test_in = glob(f"{dataset}/simplified/*ud-test.conllu")[0]
+    tags_dev_in = glob(f"{dataset}/simplified/*ud-dev.conllu")[0]
+
+    new_dir = f"{dataset}/simplified_eos"
+    if not path.exists(new_dir):
+        mkdir(new_dir)
+
+    for tags in (tags_train_in, tags_test_in, tags_dev_in):
+        file_name = tags.replace("\\", "/").split("/")[-1]
+        new_file = f"{new_dir}/{file_name}"
+        with open(new_file, "w", encoding="utf-8") as file_out:
+            with open(tags, "r", encoding="utf-8") as file_in:
+                prev = ""
+                for line in file_in.readlines():
+                    stripped = line.strip()         
+
+                    # Check if need an artificial sentence-end
+                    if stripped == "" and (prev not in ".!?"):
+                        line_out = ".\tPUNCT"
+                    else:
+                        line_out = stripped
+
+                    if stripped != "":
+                        prev = stripped.split("\t")[0]
+                    else:
+                        prev = stripped
+                    file_out.write(line_out + "\n")
+
 def transform_dataset(language):
     treebanks = glob(f"data/{language}/ud_*")
     for folder in treebanks:
         print(f"Transforming {folder}")
         transform_data(folder)
+        create_simplified_eos(folder)
+
 
 def get_embeddings_size(lang):
     return path.getsize(get_embeddings_path(lang))

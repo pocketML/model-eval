@@ -4,8 +4,8 @@ from taggers.tagger_wrapper import Tagger
 class SysCallTagger(Tagger):
     IS_IMPORTED = False
 
-    def __init__(self, args, model_name, load_model=False, simplified_dataset=True):
-        super().__init__(args, model_name, simplified_dataset=simplified_dataset)
+    def __init__(self, args, model_name, load_model=False, simplified_dataset=True, simplified_eos_dataset=False):
+        super().__init__(args, model_name, simplified_dataset=simplified_dataset, simplified_eos_dataset=simplified_eos_dataset)
         self.epoch = 0
 
     def read_stdout(self, process_handler):
