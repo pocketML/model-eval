@@ -6,59 +6,33 @@ from datetime import datetime
 from sys import argv
 import platform
 import argparse
+import importlib
 from util import data_archives, online_monitor
 from inference import monitor_inference
 from training import monitor_training, train_imported_model
 
-TAGGERS = {
-    "bilstm_aux": None,
-    "bilstm_crf": None,
-    "svmtool": None,
-    "stanford": None,
-    "tnt": None,
-    "brill": None,
-    "crf": None,
-    "hmm": None,
-    "meta_tagger": None,
-    "flair": None,
-    "bert_bpemb": None,
+# All tagger helpers will be dynamically imported at runtime.
+TAGGERS = { # Entries are: model_name -> (module_name, class_name)
+    "bilstm_aux": ("bilstm_aux", "BILSTMAUX"),
+    "bilstm_crf": ("bilstm_crf", "BILSTMCRF"),
+    "svmtool": ("svmtool", "SVMT"),
+    "stanford": ("stanford", "Stanford"),
+    "tnt": ("nltk_tnt", "TnT"),
+    "brill": ("nltk_brill", "Brill"),
+    "crf": ("nltk_crf", "CRF"),
+    "hmm": ("nltk_hmm", "HMM"),
+    "senna": ("nltk_senna", "Senna"),
+    "meta_tagger": ("meta_tagger", "METATAGGER"),
+    "flair": ("flair_pos", "Flair"),
+    "bert_bpemb": ("bert_bpemp", "BERT_BPEMB")
 }
 
-def set_up_taggers(model_names):
+def import_taggers(model_names):
     for model_name in model_names:
-        if model_name == "bilstm_aux" or model_name == "all":
-            from taggers import bilstm_aux
-            TAGGERS["bilstm_aux"] = bilstm_aux.BILSTMAUX
-        if model_name == "bilstm_crf" or model_name == "all":
-            from taggers import bilstm_crf
-            TAGGERS["bilstm_crf"] = bilstm_crf.BILSTMCRF
-        if model_name == "svmtool" or model_name == "all":
-            from taggers import svmtool
-            TAGGERS["svmtool"] = svmtool.SVMT
-        if model_name == "stanford" or model_name == "all":
-            from taggers import stanford
-            TAGGERS["stanford"] = stanford.Stanford
-        if model_name == "tnt" or model_name == "all":
-            from taggers import nltk_tnt
-            TAGGERS["tnt"] = nltk_tnt.TnT
-        if model_name == "brill" or model_name == "all":
-            from taggers import nltk_brill
-            TAGGERS["brill"] = nltk_brill.Brill
-        if model_name == "crf" or model_name == "all":
-            from taggers import nltk_crf
-            TAGGERS["crf"] = nltk_crf.CRF
-        if model_name == "hmm" or model_name == "all":
-            from taggers import nltk_hmm
-            TAGGERS["hmm"] = nltk_hmm.HMM
-        if model_name == "meta_tagger" or model_name == "all":
-            from taggers import meta_tagger
-            TAGGERS["meta_tagger"] = meta_tagger.METATAGGER
-        if model_name == "flair" or model_name == "all":
-            from taggers import flair_pos
-            TAGGERS["flair"] = flair_pos.Flair
-        if model_name == "bert_bpemb" or model_name == "all":
-            from taggers import bert_bpemb
-            TAGGERS["bert_bpemb"] = bert_bpemb.BERT_BPEMB
+        print(f"Dynamically importing tagger class '{model_name}'...")
+        module_name, class_name = TAGGERS[model_name]
+        module = importlib.import_module(f"taggers.{module_name}")
+        TAGGERS[model_name] = module.__dict__[class_name]
 
 def insert_arg_values(cmd, tagger, args):
     if (reload_str := tagger.reload_string()) is None or (args.train and not args.reload):
@@ -169,10 +143,11 @@ async def run_with_imported_model(args, tagger, model_name):
 async def main(args):
     actions = "Eval" if args.eval else ("Train" if args.train else "Eval & Train")
     print(f"{actions} with models: {args.model_names} on languages: {args.langs}")
-    set_up_taggers(args.model_names)
 
     models_to_run = (TAGGERS.keys()
                      if args.model_names == ["all"] else args.model_names)
+
+    import_taggers(models_to_run)
 
     for model_name in models_to_run:
         if not TAGGERS[model_name].IS_IMPORTED:

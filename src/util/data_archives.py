@@ -97,6 +97,13 @@ def get_dataset_path(lang, treebank, dataset_type=None, simplified=True):
     glob_str = f"-{dataset_type}" if dataset_type is not None else ""
     paths = glob(f"{dataset_path}/*{glob_str}.conllu")
 
+    if paths == []:
+        dataset_name = "" if dataset_type is None else f"'{dataset_type.capitalize()}'"
+        raise FileNotFoundError(
+            f"{dataset_name}Dataset for '{LANGS_FULL[lang].capitalize()}' " +
+            "using '{treebank}' treebank was not found."
+        )
+
     for index, path_str in enumerate(paths):
         paths[index] = path_str.replace("\\", "/")
 
@@ -204,4 +211,3 @@ def validate_simplified_datasets():
                     split = stripped.split("\t")
                     if split[1] not in possible_tags:
                         print(f"Illegal tag '{split[1]}' on line {index} in {dataset_type} set!!!!")
-

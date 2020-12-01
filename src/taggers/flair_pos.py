@@ -106,7 +106,8 @@ class Flair(ImportedTagger):
 
         trainer.train(self.model_base_path(),
                       learning_rate=0.1, mini_batch_size=32,
-                      max_epochs=self.args.iter, embeddings_storage_mode="gpu")
+                      max_epochs=self.args.iter, train_with_dev=True,
+                      monitor_test=True, embeddings_storage_mode="gpu")
 
     def format_data(self, dataset_type):
         if dataset_type == "train": # Flair expects URI paths to data when training.

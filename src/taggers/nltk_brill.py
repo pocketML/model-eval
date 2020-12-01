@@ -9,9 +9,9 @@ class Brill(ImportedTagger):
         super().__init__(args, model_name, load_model)
         if not load_model:
             base_tagger = HMM(args, "hmm", load_model=True)
-            # features = [
-            #     Template(Pos([-1])), Template(Pos([1])), Template(Word([0]))
-            # ]
+            if not base_tagger.saved_model_exists():
+                raise FileNotFoundError(f"Brill base tagger '{base_tagger.model_name}' missing!")
+
             features = [
                 Template(Pos([-1])),
                 Template(Pos([1])),
