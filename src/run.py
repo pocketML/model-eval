@@ -24,7 +24,7 @@ TAGGERS = { # Entries are: model_name -> (module_name, class_name)
     "senna": ("nltk_senna", "Senna"),
     "meta_tagger": ("meta_tagger", "METATAGGER"),
     "flair": ("flair_pos", "Flair"),
-    "bert_bpemb": ("bert_bpemp", "BERT_BPEMB")
+    "bert_bpemb": ("bert_bpemb", "BERT_BPEMB")
 }
 
 def import_taggers(model_names):
