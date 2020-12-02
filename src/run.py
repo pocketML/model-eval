@@ -282,7 +282,7 @@ if __name__ == "__main__":
     parser.add_argument("-tg", "--tag", nargs="+", default=[])
     parser.add_argument("-l", "--langs", type=str, choices=choices_langs, nargs="+", default=["en"], help="choose dataset language(s). Default is English.")
     parser.add_argument("-i", "--iter", type=int, default=10, help="number of training iterations. Default is 10.")
-    parser.add_argument("-v", "--verbose", help="increase output verbosity")
+    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
     parser.add_argument("-tb", "--treebank", type=str, help="UD treebank to use as dataset (fx. 'gum')", default=None, required=False)
     parser.add_argument("-r", "--reload", help="whether to load a saved model for further training", action="store_true")
     parser.add_argument("-lb", "--loadbar", help="whether to run with loadbar", action="store_true")

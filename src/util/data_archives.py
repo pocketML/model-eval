@@ -166,8 +166,8 @@ def transform_data(dataset):
                         tag = split[3]
                         if tag == "_":
                             continue
-                        if " " in word:
-                            word = word.replace(" ", "_")
+                        #if " " in word:
+                        #    word = word.replace(" ", "_")
                         line_out = f"{word}\t{tag}"
 
                     file_out.write(line_out + "\n")

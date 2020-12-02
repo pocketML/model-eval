@@ -13,9 +13,8 @@ class SysCallTagger(Tagger):
             return None
         data = process_handler.stdout.readline()
         text = data.decode("utf-8")
-        modified = text.strip()#.replace('\r','').replace('\n','')
-        #if modified != '':
-        #   print(modified)
+        if self.args.verbose and text.strip() != '':
+            print(text)
         return text
 
     def is_inference_complete(self, process_handler):
