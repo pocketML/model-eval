@@ -70,7 +70,8 @@ class METATAGGER(SysCallTagger):
         return f'models/meta_tagger/pocketML/{self.args.lang}_{self.args.treebank}'
 
     def model_path(self):
-        return glob(f"{self.model_base_path()}/*.data*")[0]
+        glob_paths = glob(f"{self.model_base_path()}/*.data*")
+        return glob_paths[0] if len(glob_paths) > 0 else ""
 
     def predict_path(self):
         return f'{self.model_base_path()}/preds.out'
