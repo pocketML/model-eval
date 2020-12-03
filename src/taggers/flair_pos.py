@@ -1,5 +1,6 @@
 from functools import lru_cache
 import logging
+from flair import embeddings
 from six.moves import cPickle as pickle
 import re
 import sys
@@ -114,20 +115,25 @@ class Flair(ImportedTagger):
         self.corpus = UniversalDependenciesCorpus(data_folder, train_file, test_file, dev_file)
         dictionary = self.corpus.make_tag_dictionary("upos")
         if not load_model:
-            embedding_path = data_archives.get_embeddings_path(args.lang)
-            # embeddings = [
-            #     PolyglotEmbeddings(embedding_path),
-            #     WordEmbeddings(args.lang),
-            #     CharacterEmbeddings()
-            # ]
-            #stacked = StackedEmbeddings(embeddings=embeddings)
-            embeddings = PolyglotEmbeddings(embedding_path)
+            embeddings = self.get_embeddings()
 
             self.model = SequenceTagger(hidden_size=256, embeddings=embeddings,
                                         tag_dictionary=dictionary, tag_type="upos",
                                         rnn_layers=2, use_crf=True)
         else:
             self.model.tag_dictionary = dictionary
+
+    def get_embeddings(self):
+        embedding_path = data_archives.get_embeddings_path(self.args.lang)
+        if self.args.lang == "am":
+            return PolyglotEmbeddings(embedding_path)
+    
+        embeddings = [
+            PolyglotEmbeddings(embedding_path),
+            WordEmbeddings(self.args.lang),
+            CharacterEmbeddings()
+        ]
+        return StackedEmbeddings(embeddings=embeddings)
 
     def train(self, train_data):
         flair_logger = logging.getLogger("flair")
