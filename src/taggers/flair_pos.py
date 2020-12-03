@@ -1,16 +1,18 @@
 from functools import lru_cache
+import logging
 from six.moves import cPickle as pickle
 import re
-from flair.data import Sentence, Token, List
+import sys
+from flair.data import Sentence
 from flair.models import SequenceTagger
 from flair.embeddings import TokenEmbeddings, CharacterEmbeddings, StackedEmbeddings, WordEmbeddings
-from flair.datasets import UniversalDependenciesCorpus, UniversalDependenciesDataset
+from flair.datasets import UniversalDependenciesCorpus
 from flair.trainers import ModelTrainer
 from flair import device
 import torch
 import numpy as np
 from taggers.tagger_wrapper_import import ImportedTagger
-from util import data_archives
+from util import data_archives, online_monitor
 
 class PolyglotEmbeddings(TokenEmbeddings):
     def __init__(self, embeddings_path):
@@ -80,6 +82,31 @@ class PolyglotEmbeddings(TokenEmbeddings):
 
         return f"'{self.embeddings}'"
 
+class ListenFilter(logging.Filter):
+    def __init__(self, name, args):
+        super().__init__(name=name)
+        self.args = args
+        self.curr_epoch = 0
+
+    def filter(self, record):
+        text = record.getMessage()
+        if text.startswith("EPOCH"):
+            split = text.split(" ")
+            self.curr_epoch = int(split[1].strip())
+        elif text.startswith("TEST"):
+            split = text.split("score ")
+            acc = float(split[1])
+            if self.args.online_monitor:
+                online_monitor.send_train_status(self.curr_epoch, acc)
+
+        if self.args.verbose:
+            return True
+        return False
+
+class RequestsHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
 class Flair(ImportedTagger):
     def __init__(self, args, model_name, load_model=False):
         super().__init__(args, model_name, load_model)
@@ -88,26 +115,34 @@ class Flair(ImportedTagger):
         dictionary = self.corpus.make_tag_dictionary("upos")
         if not load_model:
             embedding_path = data_archives.get_embeddings_path(args.lang)
-            embeddings = [
-                PolyglotEmbeddings(embedding_path),
-                WordEmbeddings(args.lang),
-                CharacterEmbeddings()
-            ]
-            stacked = StackedEmbeddings(embeddings=embeddings)
+            # embeddings = [
+            #     PolyglotEmbeddings(embedding_path),
+            #     WordEmbeddings(args.lang),
+            #     CharacterEmbeddings()
+            # ]
+            #stacked = StackedEmbeddings(embeddings=embeddings)
+            embeddings = PolyglotEmbeddings(embedding_path)
 
-            self.model = SequenceTagger(hidden_size=256, embeddings=stacked,
-                                        tag_dictionary=dictionary, tag_type="pos",
+            self.model = SequenceTagger(hidden_size=256, embeddings=embeddings,
+                                        tag_dictionary=dictionary, tag_type="upos",
                                         rnn_layers=2, use_crf=True)
         else:
             self.model.tag_dictionary = dictionary
 
     def train(self, train_data):
+        flair_logger = logging.getLogger("flair")
+        handler = RequestsHandler()
+        flair_logger.addHandler(handler)
+
+        filter = ListenFilter("filter", self.args)
+        flair_logger.addFilter(filter)
+
         trainer = ModelTrainer(self.model, self.corpus)
 
         trainer.train(self.model_base_path(),
-                      learning_rate=0.1, mini_batch_size=32,
-                      max_epochs=self.args.iter if self.args.max_iter else 100,
-                      train_with_dev=True, monitor_test=True, embeddings_storage_mode="gpu")
+                        learning_rate=0.1, mini_batch_size=32,
+                        max_epochs=self.args.iter if self.args.max_iter else 100,
+                        train_with_dev=True, monitor_test=True, embeddings_storage_mode="gpu")
 
     def format_data(self, dataset_type):
         if dataset_type == "train": # Flair expects URI paths to data when training.
