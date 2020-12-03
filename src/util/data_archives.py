@@ -186,23 +186,24 @@ def create_simplified_eos(dataset):
         new_file = f"{new_dir}/{file_name}"
         with open(new_file, "w", encoding="utf-8") as file_out:
             with open(tags, "r", encoding="utf-8") as file_in:
-                prev = ""
+                prev_token = ""
                 for line in file_in.readlines():
                     stripped = line.strip()         
 
                     # Check if need an artificial sentence-end
-                    if stripped == "" and (prev not in ".!?"):
+                    if stripped == "" and (prev_token not in ".!?"):
                         line_out = ".\tPUNCT"
                     else:
                         line_out = stripped
 
-                    if " " in stripped:
-                        stripped = stripped.replace(" ", "_")
+                    if " " in line_out:
+                        line_out = line_out.replace(" ", "_")
 
-                    if stripped != "":
-                        prev = stripped.split("\t")[0]
+                    if line_out != "":
+                        prev_token = line_out.split("\t")[0]
                     else:
-                        prev = stripped
+                        prev_token = line_out
+
                     file_out.write(line_out + "\n")
 
 def transform_dataset(language):
