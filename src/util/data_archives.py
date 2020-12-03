@@ -103,7 +103,7 @@ def get_dataset_path(lang, treebank, dataset_type=None, simplified=True, eos=Fal
         dataset_name = "" if dataset_type is None else f"'{dataset_type.capitalize()}'"
         raise FileNotFoundError(
             f"{dataset_name}Dataset for '{LANGS_FULL[lang].capitalize()}' " +
-            "using '{treebank}' treebank was not found."
+            f"using '{treebank}' treebank was not found."
         )
 
     for index, path_str in enumerate(paths):
@@ -210,7 +210,6 @@ def transform_dataset(language):
         print(f"Transforming {folder}")
         transform_data(folder)
         create_simplified_eos(folder)
-
 
 def get_embeddings_size(lang):
     return path.getsize(get_embeddings_path(lang))

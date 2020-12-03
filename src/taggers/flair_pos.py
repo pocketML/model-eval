@@ -1,9 +1,9 @@
 from functools import lru_cache
 import logging
-from flair import embeddings
+import flair
 from six.moves import cPickle as pickle
+from pathlib import Path
 import re
-import sys
 from flair.data import Sentence
 from flair.models import SequenceTagger
 from flair.embeddings import TokenEmbeddings, CharacterEmbeddings, StackedEmbeddings, WordEmbeddings
@@ -174,7 +174,15 @@ class Flair(ImportedTagger):
         return predictions
 
     def necessary_model_files(self):
-        return super().necessary_model_files() + [data_archives.get_embeddings_path(self.args.lang)]
+        necessary_files = [data_archives.get_embeddings_path(self.args.lang)]
+
+        if self.args.lang != "am":
+            flair_emb_path = Path.home() / '.flair' / 'embeddings'
+            glob_files = flair_emb_path.glob(f"{self.args.lang}-*")
+            for emb_file in glob_files:
+                necessary_files.append(emb_file)
+
+        return super().necessary_model_files() + necessary_files
 
     def __getstate__(self):
         return (self.args, self.model_name)
