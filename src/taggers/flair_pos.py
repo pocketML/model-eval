@@ -1,10 +1,10 @@
 from functools import lru_cache
 from six.moves import cPickle as pickle
 import re
-from flair.data import Sentence
+from flair.data import Sentence, Token, List
 from flair.models import SequenceTagger
-from flair.embeddings import TokenEmbeddings, CharacterEmbeddings, StackedEmbeddings
-from flair.datasets import UniversalDependenciesCorpus
+from flair.embeddings import TokenEmbeddings, CharacterEmbeddings, StackedEmbeddings, WordEmbeddings
+from flair.datasets import UniversalDependenciesCorpus, UniversalDependenciesDataset
 from flair.trainers import ModelTrainer
 from flair import device
 import torch
@@ -85,19 +85,19 @@ class Flair(ImportedTagger):
         super().__init__(args, model_name, load_model)
         (data_folder, train_file, test_file, dev_file) = self.format_data("train")
         self.corpus = UniversalDependenciesCorpus(data_folder, train_file, test_file, dev_file)
-        dictionary = self.corpus.make_tag_dictionary("pos")
-        self.tag_remapping = data_archives.tagset_mapping(args.lang, args.treebank, "train")
+        dictionary = self.corpus.make_tag_dictionary("upos")
         if not load_model:
             embedding_path = data_archives.get_embeddings_path(args.lang)
             embeddings = [
                 PolyglotEmbeddings(embedding_path),
+                WordEmbeddings(args.lang),
                 CharacterEmbeddings()
             ]
             stacked = StackedEmbeddings(embeddings=embeddings)
 
             self.model = SequenceTagger(hidden_size=256, embeddings=stacked,
                                         tag_dictionary=dictionary, tag_type="pos",
-                                        use_crf=True)
+                                        rnn_layers=2, use_crf=True)
         else:
             self.model.tag_dictionary = dictionary
 
@@ -106,8 +106,8 @@ class Flair(ImportedTagger):
 
         trainer.train(self.model_base_path(),
                       learning_rate=0.1, mini_batch_size=32,
-                      max_epochs=self.args.iter, train_with_dev=True,
-                      monitor_test=True, embeddings_storage_mode="gpu")
+                      max_epochs=self.args.iter if self.args.max_iter else 100,
+                      train_with_dev=True, monitor_test=True, embeddings_storage_mode="gpu")
 
     def format_data(self, dataset_type):
         if dataset_type == "train": # Flair expects URI paths to data when training.
@@ -129,8 +129,7 @@ class Flair(ImportedTagger):
         self.model.predict(flair_sentence)
         predictions = []
         for span in flair_sentence.get_spans():
-            simple_tag = self.tag_remapping[span.tag]
-            predictions.append((span.text, simple_tag))
+            predictions.append((span.text, span.tag))
         return predictions
 
     def necessary_model_files(self):
