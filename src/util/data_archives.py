@@ -166,8 +166,6 @@ def transform_data(dataset):
                         tag = split[3]
                         if tag == "_":
                             continue
-                        #if " " in word:
-                        #    word = word.replace(" ", "_")
                         line_out = f"{word}\t{tag}"
 
                     file_out.write(line_out + "\n")
@@ -197,6 +195,9 @@ def create_simplified_eos(dataset):
                         line_out = ".\tPUNCT"
                     else:
                         line_out = stripped
+
+                    if " " in stripped:
+                        stripped = stripped.replace(" ", "_")
 
                     if stripped != "":
                         prev = stripped.split("\t")[0]
