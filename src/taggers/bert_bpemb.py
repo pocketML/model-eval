@@ -4,7 +4,6 @@ from glob import glob
 from os import path, walk
 from taggers.tagger_wrapper_syscall import SysCallTagger
 from util.code_size import PYTHON_STDLIB_SIZE
-from util import data_archives
 
 class BERT_BPEMB(SysCallTagger):
     ACC_STR = ['score acc_']
@@ -21,7 +20,7 @@ class BERT_BPEMB(SysCallTagger):
 
     def model_base_path(self):
         return f'models/bert_bpemb/pocketML/{self.args.lang}_{self.args.treebank}'
-    
+
     def model_path(self):
         return ''
 
