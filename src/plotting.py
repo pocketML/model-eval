@@ -3,19 +3,21 @@ from os import path
 from sys import argv
 import argparse
 import math
-import matplotlib
-matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
+font = {'size': 20}
+
+plt.rc('font', **font)
 from util.data_archives import LANGS_FULL, LANGS_ISO, get_default_treebank
 
 SOUTH = 0
 EAST = 1
 NORTH = 2
 WEST = 3
+ARROW_SOUTH = 4
 POS_OFFSETS = {
     "en_token_memory": [
         NORTH, WEST, WEST, EAST, EAST, NORTH,
-        WEST, EAST, SOUTH, SOUTH, SOUTH
+        WEST, ARROW_SOUTH, SOUTH, SOUTH, SOUTH
     ],
     "en_token_code": [
         EAST, NORTH, EAST, EAST, EAST, SOUTH,
@@ -27,7 +29,7 @@ POS_OFFSETS = {
     ],
     "en_token_compressed": [
         NORTH, EAST, SOUTH, EAST, WEST, SOUTH,
-        WEST, NORTH, SOUTH, WEST, SOUTH
+        WEST, SOUTH, SOUTH, EAST, SOUTH
     ]
 }
 
@@ -66,7 +68,20 @@ def load_results():
 
     return mapped_data
 
-def plot_data(data, axis, directions, acc_metric="token", size_metric="memory"):
+def sort_data_by_size(data, acc_metric, size_metric):
+    sorted_data = []
+    for model in data:
+        model_data = data[model]
+        accuracy = float(model_data[acc_metric])
+        footprint = int(model_data[size_metric]) / 1000
+        sorted_data.append((model, accuracy, footprint))
+
+    return sorted(sorted_data, key=lambda x: x[2])
+
+def plot_data(
+        sorted_data, models_on_skyline, axis, directions,
+        acc_metric="token", size_metric="memory"
+):
     legend_text = {
         "token": "Token Accuracy", "sentence": "Sentence Accuracy",
         "memory": "Memory Footprint", "code": "Code Size",
@@ -75,37 +90,39 @@ def plot_data(data, axis, directions, acc_metric="token", size_metric="memory"):
     axis.set_xlabel(f"{legend_text[size_metric]} (MB)")
     axis.set_ylabel(legend_text[acc_metric])
 
-    sorted_data = []
-    for model in data:
-        model_data = data[model]
-        accuracy = float(model_data[acc_metric])
-        footprint = int(model_data[size_metric]) / 1000
-        sorted_data.append((model, accuracy, footprint))
-
-    sorted_data.sort(key=lambda x: x[2])
-
     for model, accuracy, footprint in sorted_data:
-        axis.scatter(footprint, accuracy, label=model)
+        edge_color, line_width = (("red", 2) if model in models_on_skyline
+                                  else ("black", 1))
+        axis.scatter(
+            footprint, accuracy, label=model, s=150, zorder=5,
+            edgecolors=edge_color, linewidths=line_width
+        )
 
     for index, (model, accuracy, footprint) in enumerate(sorted_data):
         x, y = axis.transData.transform((footprint, accuracy))
 
         text_1 = f"{model}"
-        text_2 = f"{footprint:.2f}MB"
+        if footprint >= 1000:
+            text_2 = f"{footprint:.0f}MB"
+        else:
+            text_2 = f"{footprint:.2f}MB"
+
         text_3 = f"{accuracy:.4f}"
 
         # Define offsets.
         text_max = max(len(text_1), len(text_2), len(text_3))
-        offset_x = (12 + int(text_max))
-        y_gap = 10
-        offset_y_1 = 6
-        offset_y_2 = offset_y_1 + y_gap
+        offset_x = (15 + int(text_max) * 1.4)
+        y_gap = 12
+        offset_y_2 = 21
+        offset_y_1 = offset_y_2 - y_gap
         offset_y_3 = offset_y_2 + y_gap
+        xy_text = (0, 0)
+        arrow_props = None
 
         # Center x and y on the data points (roughly).
         x = x - offset_x
         x += 8
-        y += 2
+        y += 2.5
         y_1 = y - offset_y_1
         y_2 = y - offset_y_2
         y_3 = y - offset_y_3
@@ -119,11 +136,11 @@ def plot_data(data, axis, directions, acc_metric="token", size_metric="memory"):
             y_1 += y_gap
             y_2 += y_gap
             y_3 += y_gap
-        elif directions[index] == NORTH:
+        elif directions[index] == NORTH: # Write text above data points.
             y_1 += offset_y_2 * 2
             y_2 += offset_y_2 * 2
             y_3 += offset_y_2 * 2
-        elif directions[index] == EAST:
+        elif directions[index] == EAST: # Write text to the right of data points.
             x += offset_x
             y_1 += y_gap
             y_2 += y_gap
@@ -133,13 +150,37 @@ def plot_data(data, axis, directions, acc_metric="token", size_metric="memory"):
         x_2, y_2 = axis.transData.inverted().transform((x, y_2))
         x_3, y_3 = axis.transData.inverted().transform((x, y_3))
 
-        bbox = dict(boxstyle="square", fc="1", linewidth=0)
+        if directions[index] == ARROW_SOUTH:
+            # Our text wont fit. Draw text elsewhere and draw an arrow pointing to it.
+            arrow_props = {"facecolor": "black", "width": 2}
+            xy_text = (-50, -100)
+            tilt_x = axis.transData.inverted().transform((x + 15, 0))[0]
+            x_1 = tilt_x
+            shift_y_2 = axis.transData.inverted().transform((0, y-100+y_gap))[1]
+            shift_y_3 = axis.transData.inverted().transform((0, y-100))[1]
+            shift_x = axis.transData.inverted().transform((x - 15, 0))[0]
+            x_2 = shift_x
+            x_3 = shift_x
+            y_2 = shift_y_2
+            y_3 = shift_y_3
 
-        axis.annotate(text_1, (x_1, y_1), xytext=(0, 0), xycoords="data", textcoords="offset points", fontweight=800)
-        axis.annotate(text_2, (x_2, y_2), xytext=(0, 0), xycoords="data", textcoords="offset points", bbox=bbox)
-        axis.annotate(text_3, (x_3, y_3), xytext=(0, 0), xycoords="data", textcoords="offset points", bbox=bbox)
+        bbox = dict(boxstyle="square", fc="1", linewidth=0, pad=0)
 
-    return sorted_data
+        font_size = 16
+
+        axis.annotate(
+            text_2, (x_2, y_2), xytext=(0, 0), xycoords="data",
+            textcoords="offset points", fontsize=font_size, bbox=bbox
+        )
+        axis.annotate(
+            text_3, (x_3, y_3), xytext=(0, 0), xycoords="data",
+            textcoords="offset points", fontsize=font_size, bbox=bbox
+        )
+        axis.annotate(
+            text_1, (x_1, y_1), xytext=xy_text, xycoords="data",
+            textcoords="offset points", fontsize=font_size, fontweight=800,
+            arrowprops=arrow_props
+        )
 
 def plot_pareto(data, axis):
     points_x = []
@@ -147,11 +188,13 @@ def plot_pareto(data, axis):
     min_y = (math.floor(min_y * 100.0)) / 100.0
     points_y = [min_y]
     highest_acc = 0
-    for _, accuracy, footprint in data:
+    models_on_skyline = set()
+    for model, accuracy, footprint in data:
         y = highest_acc
         if accuracy > highest_acc:
             highest_acc = accuracy
             y = accuracy
+            models_on_skyline.add(model)
         points_x.extend([footprint] * 2)
         points_y.extend([y] * 2)
 
@@ -159,6 +202,7 @@ def plot_pareto(data, axis):
 
     axis.grid(b=True, which="major", axis="both")
     axis.plot(points_x, points_y, linestyle=":", linewidth=2, c="red")
+    return models_on_skyline
 
 def plot_results(language, acc_metric, size_metric, save_to_file):
     results = load_results()
@@ -168,8 +212,9 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
     ax.set_xscale("log")
 
     directions = POS_OFFSETS[f"{language}_{acc_metric}_{size_metric}"]
-    sorted_data = plot_data(results[language], ax, directions, acc_metric, size_metric)
-    plot_pareto(sorted_data, ax)
+    sorted_data = sort_data_by_size(results[language], acc_metric, size_metric)
+    models_on_skyline = plot_pareto(sorted_data, ax)
+    plot_data(sorted_data, models_on_skyline, ax, directions, acc_metric, size_metric)
 
     manager = plt.get_current_fig_manager()
     w, h = manager.window.maxsize()
@@ -181,6 +226,7 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
     if save_to_file:
         filename = f"plots/{language}_{treebank}-{acc_metric}_{size_metric}.png"
         plt.savefig(filename)
+        print(f"Saved image of plot to {filename}.")
     else:
         plt.show()
     

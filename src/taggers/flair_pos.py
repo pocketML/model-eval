@@ -112,7 +112,9 @@ class Flair(ImportedTagger):
     def __init__(self, args, model_name, load_model=False):
         super().__init__(args, model_name, load_model)
         (data_folder, train_file, test_file, dev_file) = self.format_data("train")
-        self.corpus = UniversalDependenciesCorpus(data_folder, train_file, test_file, dev_file)
+        self.corpus = UniversalDependenciesCorpus(
+            data_folder, train_file, test_file, dev_file, split_multiwords=False
+        )
         dictionary = self.corpus.make_tag_dictionary("upos")
         if not load_model:
             embeddings = self.get_embeddings()
