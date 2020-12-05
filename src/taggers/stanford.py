@@ -5,6 +5,45 @@ from taggers.tagger_wrapper_syscall import SysCallTagger
 from util import data_archives
 from util.code_size import JAVA_JRE_SIZE
 
+PROPS_ENGLISH = { # Copied from stanfords example model english-left3words-distsim.
+    "arch": (
+        "bidirectional5words,wordshapes(-1,1),"
+        ",rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorUCase),"
+        "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorCNumber),"
+        "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorDash),"
+        "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorLetterDigitDash),"
+        "rareExtractor(edu.stanford.nlp.tagger.maxent.CompanyNameDetector),"
+        "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorAllCapitalized),"
+        "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorUpperDigitDash),"
+        "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorStartSentenceCap),"
+        "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorMidSentenceCapC),"
+        "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorMidSentenceCap),"
+        "prefix(10),suffix(10),unicodeshapes(0),"
+        "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorNonAlphanumeric)"
+    ),
+    "closedClassTagThreshold": "40",
+    "curWordMinFeatureThresh": "2",
+    "rareWordMinFeatureThresh": "5",
+    "rareWordThresh": "5",
+    "search": "owlqn",
+    "sgml": "false",
+    "sigmaSquared": "0.5",
+    "regL1": "0.75",
+    "tokenize": "true",
+    "veryCommonWordThresh": "250",
+    "nthreads": 8,
+    "minWordsLockTags": 1
+}
+
+SHARED_PROPS = {
+    "tagSeparator" : "\\t",
+    "encoding": "UTF-8",
+    "trainFile": None,
+    "lang": None,
+    "iterations": None,
+    "model": None
+}
+
 class Stanford(SysCallTagger):
     def __init__(self, args, model_name, load_model=False):
         super().__init__(args, model_name, load_model)
@@ -18,29 +57,14 @@ class Stanford(SysCallTagger):
                 os.environ["JAVAHOME"] = java_path
 
         with open(f"{self.model_base_path()}/pocketML.props", "w", encoding="utf-8") as fp:
-            architecture = (
-                "bidirectional5words,allwordshapes(-1,1)," +
-                "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorUCase)," +
-                "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorCNumber)," +
-                "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorDash)," +
-                "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorLetterDigitDash)," +
-                "rareExtractor(edu.stanford.nlp.tagger.maxent.CompanyNameDetector)," +
-                "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorAllCapitalized)," +
-                "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorUpperDigitDash)," +
-                "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorStartSentenceCap)," +
-                "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorMidSentenceCapC)," +
-                "rareExtractor(edu.stanford.nlp.tagger.maxent.ExtractorMidSentenceCap)," +
-                "prefix(10),suffix(10),unicodeshapes(0),rareExtractor(" +
-                "edu.stanford.nlp.tagger.maxent.ExtractorNonAlphanumeric)"
-            )
-            fp.write(f"arch = {architecture}\n")
-            fp.write(f"model = {self.model_path()}\n")
-            fp.write("encoding = UTF-8\n")
-            fp.write(f"iterations = {self.args.iter}\n")
-            fp.write(f"lang = {data_archives.LANGS_FULL[self.args.lang]}\n")
-            fp.write("tagSeparator = \\t\n")
             train_set = data_archives.get_dataset_path(self.args.lang, self.args.treebank, "train")
-            fp.write(f"trainFile = format=TSV,wordColumn=0,tagColumn=1,{train_set}")
+            SHARED_PROPS["trainFile"] = f"format=TSV,wordColumn=0,tagColumn=1,{train_set}"
+            SHARED_PROPS["lang"] = data_archives.LANGS_FULL[self.args.lang]
+            SHARED_PROPS["iterations"] = self.args.iter
+            SHARED_PROPS["model"] = self.model_path()
+            PROPS_ENGLISH.update(SHARED_PROPS)
+            for key in PROPS_ENGLISH:
+                fp.write(f"{key} = {PROPS_ENGLISH[key]}\n")
 
     async def on_epoch_complete(self, process_handler):
         while (text := self.read_stdout(process_handler)) is not None:
