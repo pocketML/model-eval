@@ -28,11 +28,31 @@ PROPS_ENGLISH = { # Copied from stanfords example model english-left3words-dists
     "search": "owlqn",
     "sgml": "false",
     "sigmaSquared": "0.5",
+    "minFeatureThresh": "2",
     "regL1": "0.75",
     "tokenize": "true",
     "veryCommonWordThresh": "250",
-    "nthreads": 8,
-    "minWordsLockTags": 1
+    "nthreads": "8",
+    "minWordsLockTags": "1"
+}
+
+PROPS_ARABIC = {
+    "arch": "words(-2,2),order(1),prefix(6),suffix(6),unicodeshapes(1)",
+    "learnClosedClassTags": "false",
+    "minFeatureThresh": "3",
+    "rareWordMinFeatureThresh": 3,
+    "rareWordThresh": 5,
+    "search": "owlqn",
+    "sgml": "false",
+    "sigmaSquared": "0.0",
+    "regL1": "0.75",
+    "veryCommonWordThresh": "250",
+    "nthreads": "8"
+}
+
+PROPS = {
+    "en": PROPS_ENGLISH,
+    "ar": PROPS_ARABIC
 }
 
 SHARED_PROPS = {
@@ -62,9 +82,10 @@ class Stanford(SysCallTagger):
             SHARED_PROPS["lang"] = data_archives.LANGS_FULL[self.args.lang]
             SHARED_PROPS["iterations"] = self.args.iter
             SHARED_PROPS["model"] = self.model_path()
-            PROPS_ENGLISH.update(SHARED_PROPS)
-            for key in PROPS_ENGLISH:
-                fp.write(f"{key} = {PROPS_ENGLISH[key]}\n")
+            props_lang = PROPS["lang"]
+            props_lang.update(SHARED_PROPS)
+            for key in props_lang:
+                fp.write(f"{key} = {props_lang[key]}\n")
 
     async def on_epoch_complete(self, process_handler):
         while (text := self.read_stdout(process_handler)) is not None:
