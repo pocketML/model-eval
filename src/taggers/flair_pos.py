@@ -124,12 +124,14 @@ class Flair(ImportedTagger):
                                         rnn_layers=2, use_crf=True)
         else:
             self.model.tag_dictionary = dictionary
+        
+        self.embeds_unsupported_langs = ("am", "vi")
 
     def get_embeddings(self):
         embedding_path = data_archives.get_embeddings_path(self.args.lang)
-        if self.args.lang == "am":
+        if self.args.lang in self.embeds_unsupported_langs:
             return PolyglotEmbeddings(embedding_path)
-    
+
         embeddings = [
             PolyglotEmbeddings(embedding_path),
             WordEmbeddings(self.args.lang),
@@ -178,7 +180,7 @@ class Flair(ImportedTagger):
     def necessary_model_files(self):
         necessary_files = [data_archives.get_embeddings_path(self.args.lang)]
 
-        if self.args.lang != "am":
+        if self.args.lang not in self.embeds_unsupported_langs:
             flair_emb_path = Path.home() / '.flair' / 'embeddings'
             glob_files = flair_emb_path.glob(f"{self.args.lang}-*")
             for emb_file in glob_files:
