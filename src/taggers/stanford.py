@@ -26,13 +26,9 @@ PROPS_ENGLISH = { # Copied from stanfords example model english-left3words-dists
     "rareWordMinFeatureThresh": "5",
     "rareWordThresh": "5",
     "search": "owlqn",
-    "sgml": "false",
     "sigmaSquared": "0.5",
     "minFeatureThresh": "2",
-    "regL1": "0.75",
     "tokenize": "true",
-    "veryCommonWordThresh": "250",
-    "nthreads": "8",
     "minWordsLockTags": "1"
 }
 
@@ -40,22 +36,53 @@ PROPS_ARABIC = {
     "arch": "words(-2,2),order(1),prefix(6),suffix(6),unicodeshapes(1)",
     "learnClosedClassTags": "false",
     "minFeatureThresh": "3",
-    "rareWordMinFeatureThresh": 3,
-    "rareWordThresh": 5,
+    "rareWordMinFeatureThresh": "3",
+    "rareWordThresh": "5",
     "search": "owlqn",
-    "sgml": "false",
-    "sigmaSquared": "0.0",
-    "regL1": "0.75",
-    "veryCommonWordThresh": "250",
-    "nthreads": "8"
+    "sigmaSquared": "0.0"
+}
+
+PROPS_CHINESE = {
+    "arch": (
+        "generic,suffix(4),prefix(4),unicodeshapes(-1,1),"
+        "unicodeshapeconjunction(-1,1),words(-2,-2),words(2,2),"
+    ),
+    "closedClassTagThreshold": "40",
+    "curWordMinFeatureThresh": "1",
+    "learnClosedClassTags": "false",
+    "minFeatureThresh": "3",
+    "rareWordMinFeatureThresh": "3",
+    "rareWordThresh": "20",
+    "sigmaSquared": "0.75",
+    "tokenize": "false"
+}
+
+PROPS_SPANISH = {
+    "arch": "left3words,naacl2003unknowns,allwordshapes(-1,1)",
+    "closedClassTagThreshold": "40",
+    "curWordMinFeatureThresh": "2",
+    "learnClosedClassTags": "false",
+    "minFeatureThresh": "2",
+    "rareWordMinFeatureThresh": "10",
+    "rareWordThresh": "5",
+    "search": "owlqn2",
+    "sigmaSquared": "0.75",
+    "tokenize": "true",
+    "tokenizerOptions": "asciiQuotes"
 }
 
 PROPS = {
     "en": PROPS_ENGLISH,
-    "ar": PROPS_ARABIC
+    "ar": PROPS_ARABIC,
+    "zh": PROPS_CHINESE,
+    "es": PROPS_SPANISH
 }
 
 SHARED_PROPS = {
+    "veryCommonWordThresh": "250",
+    "nthreads": "8",
+    "regL1": "0.75",
+    "sgml": "false",
     "tagSeparator" : "\\t",
     "encoding": "UTF-8",
     "trainFile": None,
