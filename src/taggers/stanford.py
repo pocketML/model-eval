@@ -25,7 +25,7 @@ PROPS_ENGLISH = { # Copied from stanfords example model english-left3words-dists
     "curWordMinFeatureThresh": "2",
     "rareWordMinFeatureThresh": "5",
     "rareWordThresh": "5",
-    "search": "owlqn",
+    "search": "qn",
     "sigmaSquared": "0.5",
     "minFeatureThresh": "2",
     "tokenize": "true",
@@ -38,7 +38,7 @@ PROPS_ARABIC = {
     "minFeatureThresh": "3",
     "rareWordMinFeatureThresh": "3",
     "rareWordThresh": "5",
-    "search": "owlqn",
+    "search": "qn",
     "sigmaSquared": "0.0"
 }
 
@@ -65,7 +65,7 @@ PROPS_SPANISH = {
     "minFeatureThresh": "2",
     "rareWordMinFeatureThresh": "10",
     "rareWordThresh": "5",
-    "search": "owlqn2",
+    "search": "qn",
     "sigmaSquared": "0.75",
     "tokenize": "true",
     "tokenizerOptions": "asciiQuotes"
@@ -80,7 +80,7 @@ PROPS = {
 
 SHARED_PROPS = {
     "veryCommonWordThresh": "250",
-    "nthreads": "8",
+    "nthreads": "1",
     "regL1": "0.75",
     "sgml": "false",
     "tagSeparator" : "\\t",

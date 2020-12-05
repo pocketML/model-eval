@@ -21,7 +21,6 @@ TAGGERS = { # Entries are: model_name -> (module_name, class_name)
     "brill": ("nltk_brill", "Brill"),
     "crf": ("nltk_crf", "CRF"),
     "hmm": ("nltk_hmm", "HMM"),
-    "senna": ("nltk_senna", "Senna"),
     "meta_tagger": ("meta_tagger", "METATAGGER"),
     "flair": ("flair_pos", "Flair"),
     "bert_bpemb": ("bert_bpemb", "BERT_BPEMB")

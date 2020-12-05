@@ -33,6 +33,20 @@ POS_OFFSETS = {
     ]
 }
 
+PROPER_MODEL_NAMES = {
+    "bert_bpemb": "RNN w/ BERT & BPEMB",
+    "bilstm_aux": "Bi-LSTM Aux Loss",
+    "bilstm_crf": "Bi-LSTM CRF Adv",
+    "flair": "FLAIR",
+    "svmtool": "SVMTool",
+    "stanford": "Stanford Tagger",
+    "tnt": "TnT (NTLK)",
+    "hmm": "HMM (NLTK)",
+    "crf": "CRF (NLTK)",
+    "brill": "Brill (NLTK)",
+    "meta_tagger": "Meta Bi-LSTM"
+}
+
 def find_value(lines, key):
     for line in lines:
         if key in line:
@@ -101,7 +115,7 @@ def plot_data(
     for index, (model, accuracy, footprint) in enumerate(sorted_data):
         x, y = axis.transData.transform((footprint, accuracy))
 
-        text_1 = f"{model}"
+        text_1 = f"{PROPER_MODEL_NAMES[model]}" # This kinda sucks.
         if footprint >= 1000:
             text_2 = f"{footprint:.0f}MB"
         else:
