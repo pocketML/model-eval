@@ -111,6 +111,7 @@ class RequestsHandler(logging.Handler):
 class Flair(ImportedTagger):
     def __init__(self, args, model_name, load_model=False):
         super().__init__(args, model_name, load_model)
+        self.embeds_unsupported_langs = ("am", "vi")
         (data_folder, train_file, test_file, dev_file) = self.format_data("train")
         self.corpus = UniversalDependenciesCorpus(
             data_folder, train_file, test_file, dev_file, split_multiwords=False
@@ -124,8 +125,6 @@ class Flair(ImportedTagger):
                                         rnn_layers=2, use_crf=True)
         else:
             self.model.tag_dictionary = dictionary
-        
-        self.embeds_unsupported_langs = ("am", "vi")
 
     def get_embeddings(self):
         embedding_path = data_archives.get_embeddings_path(self.args.lang)
