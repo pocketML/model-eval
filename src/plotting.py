@@ -201,7 +201,7 @@ def plot_pareto(data, axis):
     points_x.append(points_x[-1])
 
     axis.grid(b=True, which="major", axis="both")
-    axis.plot(points_x, points_y, linestyle=":", linewidth=2, c="red")
+    axis.plot(points_x, points_y, linestyle=":", linewidth=4, c="red")
     return models_on_skyline
 
 def plot_results(language, acc_metric, size_metric, save_to_file):

@@ -109,7 +109,7 @@ class Stanford(SysCallTagger):
             SHARED_PROPS["lang"] = data_archives.LANGS_FULL[self.args.lang]
             SHARED_PROPS["iterations"] = self.args.iter
             SHARED_PROPS["model"] = self.model_path()
-            props_lang = PROPS["lang"]
+            props_lang = PROPS[self.args.lang]
             props_lang.update(SHARED_PROPS)
             for key in props_lang:
                 fp.write(f"{key} = {props_lang[key]}\n")
