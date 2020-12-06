@@ -82,13 +82,13 @@ class ImportedTagger(Tagger):
                                                    dataset_type)
         train_data = open(data_path, "r", encoding="utf-8").readlines()
         sentences = []
-        curr_senteces = []
+        curr_sentences = []
         for line in train_data:
             if line.strip() == "":
-                sentences.append(curr_senteces)
-                curr_senteces = []
+                sentences.append(curr_sentences)
+                curr_sentences = []
             else:
-                curr_senteces.append(tuple(line.split(None)))
+                curr_sentences.append(tuple(line.split(None)))
         return sentences
 
     def code_size(self):

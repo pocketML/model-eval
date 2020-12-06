@@ -17,10 +17,10 @@ ARROW_SOUTH = 4
 POS_OFFSETS = {
     "en_token_memory": [
         NORTH, WEST, WEST, EAST, EAST, NORTH,
-        WEST, ARROW_SOUTH, SOUTH, SOUTH, SOUTH
+        WEST, WEST, SOUTH, EAST, SOUTH
     ],
     "en_token_code": [
-        EAST, NORTH, EAST, EAST, EAST, SOUTH,
+        EAST, NORTH, EAST, EAST, SOUTH, SOUTH,
         WEST, WEST, SOUTH, SOUTH, SOUTH
     ],
     "en_token_model": [
@@ -28,15 +28,16 @@ POS_OFFSETS = {
         WEST, NORTH, SOUTH, WEST, SOUTH
     ],
     "en_token_compressed": [
-        NORTH, EAST, SOUTH, EAST, WEST, SOUTH,
-        WEST, SOUTH, SOUTH, EAST, SOUTH
+        SOUTH, EAST, NORTH, EAST, WEST, NORTH,
+        WEST, NORTH, SOUTH, EAST, SOUTH
     ]
 }
+ANNOTATE_VALUES = False
 
 PROPER_MODEL_NAMES = {
-    "bert_bpemb": "RNN w/ BERT & BPEMB",
-    "bilstm_aux": "Bi-LSTM Aux Loss",
-    "bilstm_crf": "Bi-LSTM CRF Adv",
+    "bert_bpemb": "BiLSTM (Heinzerling)",
+    "bilstm_aux": "BiLSTM (Plank)",
+    "bilstm_crf": "BiLSTM (Yasunaga)",
     "flair": "FLAIR",
     "svmtool": "SVMTool",
     "stanford": "Stanford Tagger",
@@ -44,7 +45,7 @@ PROPER_MODEL_NAMES = {
     "hmm": "HMM (NLTK)",
     "crf": "CRF (NLTK)",
     "brill": "Brill (NLTK)",
-    "meta_tagger": "Meta Bi-LSTM"
+    "meta_tagger": "Meta BiLSTM"
 }
 
 def find_value(lines, key):
@@ -115,7 +116,7 @@ def plot_data(
     for index, (model, accuracy, footprint) in enumerate(sorted_data):
         x, y = axis.transData.transform((footprint, accuracy))
 
-        text_1 = f"{PROPER_MODEL_NAMES[model]}" # This kinda sucks.
+        text_1 = f"{PROPER_MODEL_NAMES[model]}"
         if footprint >= 1000:
             text_2 = f"{footprint:.0f}MB"
         else:
@@ -124,21 +125,26 @@ def plot_data(
         text_3 = f"{accuracy:.4f}"
 
         # Define offsets.
-        text_max = max(len(text_1), len(text_2), len(text_3))
-        offset_x = (15 + int(text_max) * 1.4)
-        y_gap = 12
-        offset_y_2 = 21
-        offset_y_1 = offset_y_2 - y_gap
-        offset_y_3 = offset_y_2 + y_gap
+        if ANNOTATE_VALUES:
+            text_max = max(len(text_1), len(text_2), len(text_3))
+        else:
+            text_max = len(text_1)
+
+        y -= 8
+        pixel_per_char = 3.2
+        x -= (int(text_max) * pixel_per_char) + 1
+        offset_x = (10 + int(text_max) * pixel_per_char)
+        if model == "hmm":
+            offset_x += 10
+        y_gap = 5
+        offset_y_1 = y_gap
+        offset_y_3 = -y_gap * 3 
         xy_text = (0, 0)
         arrow_props = None
 
         # Center x and y on the data points (roughly).
-        x = x - offset_x
-        x += 8
-        y += 2.5
         y_1 = y - offset_y_1
-        y_2 = y - offset_y_2
+        y_2 = y
         y_3 = y - offset_y_3
 
         if directions[index] == SOUTH: # Write text below data points.
@@ -151,9 +157,9 @@ def plot_data(
             y_2 += y_gap
             y_3 += y_gap
         elif directions[index] == NORTH: # Write text above data points.
-            y_1 += offset_y_2 * 2
-            y_2 += offset_y_2 * 2
-            y_3 += offset_y_2 * 2
+            y_1 += offset_y_1
+            y_2 += offset_y_1
+            y_3 += offset_y_1
         elif directions[index] == EAST: # Write text to the right of data points.
             x += offset_x
             y_1 += y_gap
@@ -182,19 +188,32 @@ def plot_data(
 
         font_size = 16
 
-        axis.annotate(
-            text_2, (x_2, y_2), xytext=(0, 0), xycoords="data",
-            textcoords="offset points", fontsize=font_size, bbox=bbox
-        )
-        axis.annotate(
-            text_3, (x_3, y_3), xytext=(0, 0), xycoords="data",
-            textcoords="offset points", fontsize=font_size, bbox=bbox
-        )
-        axis.annotate(
-            text_1, (x_1, y_1), xytext=xy_text, xycoords="data",
-            textcoords="offset points", fontsize=font_size, fontweight=800,
-            arrowprops=arrow_props
-        )
+        if ANNOTATE_VALUES:
+            axis.annotate(
+                text_2, (x_2, y_2), xytext=(0, 0), xycoords="data",
+                textcoords="offset points", fontsize=font_size, bbox=bbox
+            )
+            axis.annotate(
+                text_3, (x_3, y_3), xytext=(0, 0), xycoords="data",
+                textcoords="offset points", fontsize=font_size, bbox=bbox
+            )
+            axis.annotate(
+                text_1, (x_1, y_1), xytext=xy_text, xycoords="data",
+                textcoords="offset points", fontsize=font_size, fontweight=800,
+                arrowprops=arrow_props, bbox=bbox
+            )
+        else:
+            y = y_2
+            if directions[index] == SOUTH:
+                y = y_1
+            elif directions[index] == NORTH:
+                y = y_3
+
+            axis.annotate(
+                text_1, (x_3, y), xytext=xy_text, xycoords="data",
+                textcoords="offset points", fontsize=font_size, fontweight=800,
+                arrowprops=arrow_props, bbox=bbox
+            )
 
 def plot_pareto(data, axis):
     points_x = []
@@ -235,8 +254,9 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
     if w > 1920:
         w = 1920
     manager.resize(w, h)
-    fig.set_size_inches(17, 10)
+    fig.set_size_inches(14, 8)
 
+    plt.margins(0.075)
     if save_to_file:
         filename = f"plots/{language}_{treebank}-{acc_metric}_{size_metric}.png"
         plt.savefig(filename)
