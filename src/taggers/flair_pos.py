@@ -1,7 +1,5 @@
 from functools import lru_cache
 import logging
-import flair
-from six.moves import cPickle as pickle
 from pathlib import Path
 import re
 from flair.data import Sentence
@@ -16,17 +14,14 @@ from taggers.tagger_wrapper_import import ImportedTagger
 from util import data_archives, online_monitor
 
 class PolyglotEmbeddings(TokenEmbeddings):
-    def __init__(self, embeddings_path):
+    def __init__(self, lang):
         self.embeddings = "polyglot"
         self.name = self.embeddings
         self.static_embeddings = True
         self.field = None
-        self.precomputed_word_embeddings = {}
-        content = open(embeddings_path, "rb").read()
-        words, vecs = pickle.loads(content, encoding="latin1")
-        for word, vec in zip( words, vecs):
-            self.precomputed_word_embeddings[word] = vec
-        self._embedding_length = len(vecs[0])
+        embeddings, dims = data_archives.load_embeddings(lang)
+        self.precomputed_word_embeddings = embeddings
+        self._embedding_length = dims
 
         super().__init__()
 
@@ -127,12 +122,11 @@ class Flair(ImportedTagger):
             self.model.tag_dictionary = dictionary
 
     def get_embeddings(self):
-        embedding_path = data_archives.get_embeddings_path(self.args.lang)
         if self.args.lang in self.embeds_unsupported_langs:
-            return PolyglotEmbeddings(embedding_path)
+            return PolyglotEmbeddings(self.args.lang)
 
         embeddings = [
-            PolyglotEmbeddings(embedding_path),
+            PolyglotEmbeddings(self.args.lang),
             WordEmbeddings(self.args.lang),
             CharacterEmbeddings()
         ]

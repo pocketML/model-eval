@@ -147,39 +147,43 @@ def flatten(arr):
     return flattened
 
 def save_dataset_stats():
-    for lang in SORT_ORDER_LANG:
-        print(f"===== {lang} =====")
-        treebank = data_archives.get_default_treebank(lang)
-        embed_path = data_archives.get_embeddings_path(lang)
+    with open("formatted_dataset_stats.txt", "w", encoding="utf-8") as fp:
+        for lang in SORT_ORDER_LANG:
+            treebank = data_archives.get_default_treebank(lang)
 
-        train_sentence_list = get_sentences(lang, treebank, "train")
-        train_sentences = len(train_sentence_list)
-        train_token_list = flatten(train_sentence_list)
-        train_tokens = len(train_token_list)
+            train_sentence_list = get_sentences(lang, treebank, "train")
+            train_sentences = len(train_sentence_list)
+            train_token_list = flatten(train_sentence_list)
+            train_tokens = len(train_token_list)
 
-        test_sentence_list = get_sentences(lang, treebank, "test")
-        test_sentences = len(test_sentence_list)
-        test_token_list = flatten(test_sentence_list)
-        test_tokens = len(test_token_list)
+            test_sentence_list = get_sentences(lang, treebank, "test")
+            test_sentences = len(test_sentence_list)
+            test_token_list = flatten(test_sentence_list)
+            test_tokens = len(test_token_list)
 
-        dev_sentence_list = get_sentences(lang, treebank, "dev")
-        dev_sentences = len(dev_sentence_list)
-        dev_token_list = flatten(dev_sentence_list)
-        dev_tokens = len(dev_token_list)
+            dev_sentence_list = get_sentences(lang, treebank, "dev")
+            dev_sentences = len(dev_sentence_list)
+            dev_token_list = flatten(dev_sentence_list)
+            dev_tokens = len(dev_token_list)
 
-        total_sentences = train_sentences + test_sentences + dev_sentences
-        total_tokens = train_tokens + test_tokens + dev_tokens
+            total_sentences = train_sentences + test_sentences + dev_sentences
+            total_tokens = train_tokens + test_tokens + dev_tokens
 
-        test_not_in_train = len(set(test_token_list) - set(train_token_list))
-        dev_not_in_train = len(set(dev_token_list) - set(train_token_list))
+            #test_not_in_train = len(set(test_token_list) - set(train_token_list))
+            #dev_not_in_train = len(set(dev_token_list) - set(train_token_list))
 
-        test_not_in_train_ratio = test_not_in_train / train_tokens
-        dev_not_in_train_ratio = dev_not_in_train / train_tokens
+            # test_not_in_train_ratio = test_not_in_train / train_tokens
+            # dev_not_in_train_ratio = dev_not_in_train / train_tokens
+            embeddings, dims = data_archives.load_embeddings(lang)
+            train_not_in_emb = (len(set(train_token_list) - set(embeddings)) / train_tokens) * 100
+            test_not_in_emb = (len(set(test_token_list) - set(embeddings)) / test_tokens) * 100
+            dev_not_in_emb = (len(set(dev_token_list) - set(embeddings)) / dev_tokens) * 100
 
-        print(f"Sentences : {total_sentences}")
-        print(f"Tokens: {total_tokens}")
-        print(f"Test words not in train: {(test_not_in_train_ratio * 100):.2f}%")
-        print(f"Dev words not in train: {(dev_not_in_train_ratio * 100):.2f}%")
+            line = (
+                f"{total_tokens}\t{total_sentences}\t{len(embeddings)}\t{dims}\t"
+                f"{train_not_in_emb:.2f}\t{test_not_in_emb:.2f}\t{dev_not_in_emb:.2f}\n"
+            )
+            fp.write(line)
 
 if __name__ == "__main__":
     save_dataset_stats()

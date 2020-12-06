@@ -1,4 +1,5 @@
 from glob import glob
+from six.moves import cPickle as pickle
 from os import unlink, path, mkdir, rename, walk
 from shutil import unpack_archive
 import requests
@@ -137,6 +138,14 @@ def tagset_mapping(lang, treebank, dataset_type, from_complex=True):
 def get_embeddings_path(lang):
     language = LANGS_FULL[lang]
     return f"data/{language}/embeddings/polyglot-{lang}.pkl"
+
+def load_embeddings(lang):
+    content = open(get_embeddings_path(lang), "rb").read()
+    words, vecs = pickle.loads(content, encoding="latin1")
+    emb_dict = {}
+    for word, vec in zip(words, vecs):
+        emb_dict[word] = vec
+    return emb_dict, len(vecs[0])
 
 def transform_data(dataset):
     tags_train_in = glob(f"{dataset}/*ud-train.conllu")[0]
