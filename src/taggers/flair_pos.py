@@ -106,7 +106,7 @@ class RequestsHandler(logging.Handler):
 class Flair(ImportedTagger):
     def __init__(self, args, model_name, load_model=False):
         super().__init__(args, model_name, load_model)
-        self.embeds_unsupported_langs = ("am", "vi", "tr")
+        self.embeds_unsupported_langs = ("am", "vi")
         (data_folder, train_file, test_file, dev_file) = self.format_data("train")
         self.corpus = UniversalDependenciesCorpus(
             data_folder, train_file, test_file, dev_file, split_multiwords=False

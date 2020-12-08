@@ -84,11 +84,12 @@ class ImportedTagger(Tagger):
         sentences = []
         curr_sentences = []
         for line in train_data:
-            if line.strip() == "":
+            stripped = line.strip()
+            if stripped == "":
                 sentences.append(curr_sentences)
                 curr_sentences = []
             else:
-                curr_sentences.append(tuple(line.split("\t")))
+                curr_sentences.append(tuple(stripped.split("\t")))
         return sentences
 
     def code_size(self):

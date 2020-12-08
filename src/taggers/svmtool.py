@@ -55,13 +55,13 @@ class SVMT(SysCallTagger):
 
     def train_string(self):
         return (
-            "bash -c \"perl [script_path_train] -V 1 models/svmtool/bin/config.svmt\""
+            "perl [script_path_train] -V 1 models/svmtool/bin/config.svmt"
         )
 
     def predict_string(self):
         return (
-            f"bash -c \"perl [script_path_test] [model_path] < "
-            f"[dataset_test] [stdout] [pred_path]\""
+            f"perl [script_path_test] [model_path] < "
+            f"[dataset_test] > [pred_path]"
         )
 
     def code_size(self):
