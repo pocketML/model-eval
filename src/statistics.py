@@ -1,5 +1,6 @@
 from glob import glob
 from os import path
+import math
 from util import data_archives
 
 def find_value(lines, key):
@@ -69,12 +70,7 @@ def format_size(size):
             num = num / 1000
             unit = "GB"
 
-    if num > 99:
-        formatted = f"{num:.1f}"
-    elif num > 9:
-        formatted = f"{num:.2f} "
-    else:
-        formatted = f"{num:.3f}"
+    formatted = f"{num:.4}"
     if len(formatted) != 5:
         formatted = formatted + ("0" * (5 - len(formatted)))
     return formatted + " " + unit
@@ -116,7 +112,10 @@ def save_size_measurements():
         for metric_data in model_sizes:
             for model_data in metric_data:
                 if model_name == model_data:
-                    avg = sum(metric_data[model_data]) / len(metric_data[model_data])
+                    sum_data = sum(metric_data[model_data])
+                    len_data = len(metric_data[model_data])
+                    avg = sum_data / len_data
+                    std_dev = math.sqrt((1 / (len_data - 1)) * sum((x - avg) ** 2 for x in metric_data[model_data]))
                     formatted = format_size(avg)
                     model_list.append(formatted)
         reformatted.append(model_list)
@@ -137,7 +136,7 @@ def get_sentences(lang, treebank, dataset_type):
                 sentences.append(curr_sentences)
                 curr_sentences = []
             else:
-                curr_sentences.append(line.split(None)[0])
+                curr_sentences.append(line.split("\t")[0])
         return sentences
 
 def flatten(arr):
@@ -155,29 +154,36 @@ def save_dataset_stats():
             train_sentences = len(train_sentence_list)
             train_token_list = flatten(train_sentence_list)
             train_tokens = len(train_token_list)
+            unique_train_tokens = len(set(train_token_list))
 
             test_sentence_list = get_sentences(lang, treebank, "test")
             test_sentences = len(test_sentence_list)
             test_token_list = flatten(test_sentence_list)
             test_tokens = len(test_token_list)
+            unique_test_tokens = len(set(test_token_list))
 
             dev_sentence_list = get_sentences(lang, treebank, "dev")
             dev_sentences = len(dev_sentence_list)
             dev_token_list = flatten(dev_sentence_list)
             dev_tokens = len(dev_token_list)
+            unique_dev_tokens = len(set(dev_token_list))
 
             total_sentences = train_sentences + test_sentences + dev_sentences
             total_tokens = train_tokens + test_tokens + dev_tokens
 
+            train_set = set(train_token_list)
+            test_set = set(test_token_list)
+            test_not_in_train = len(list(filter(lambda x: x in train_set, test_token_list))) / len(test_token_list)
+            print(test_not_in_train)
             #test_not_in_train = len(set(test_token_list) - set(train_token_list))
             #dev_not_in_train = len(set(dev_token_list) - set(train_token_list))
 
             # test_not_in_train_ratio = test_not_in_train / train_tokens
             # dev_not_in_train_ratio = dev_not_in_train / train_tokens
             embeddings, dims = data_archives.load_embeddings(lang)
-            train_not_in_emb = (len(set(train_token_list) - set(embeddings)) / train_tokens) * 100
-            test_not_in_emb = (len(set(test_token_list) - set(embeddings)) / test_tokens) * 100
-            dev_not_in_emb = (len(set(dev_token_list) - set(embeddings)) / dev_tokens) * 100
+            train_not_in_emb = (len(set(train_token_list) - set(embeddings)) / unique_train_tokens) * 100
+            test_not_in_emb = (len(set(test_token_list) - set(embeddings)) / unique_test_tokens) * 100
+            dev_not_in_emb = (len(set(dev_token_list) - set(embeddings)) / unique_dev_tokens) * 100
 
             line = (
                 f"{total_tokens}\t{total_sentences}\t{len(embeddings)}\t{dims}\t"
@@ -186,4 +192,4 @@ def save_dataset_stats():
             fp.write(line)
 
 if __name__ == "__main__":
-    save_dataset_stats()
+    save_size_measurements()

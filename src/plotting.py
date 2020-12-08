@@ -21,7 +21,7 @@ POS_OFFSETS = {
     ],
     "en_token_code": [
         EAST, NORTH, EAST, EAST, SOUTH, SOUTH,
-        WEST, WEST, SOUTH, SOUTH, SOUTH
+        NORTH, WEST, SOUTH, SOUTH, SOUTH
     ],
     "en_token_model": [
         NORTH, EAST, NORTH, EAST, WEST, SOUTH,
@@ -32,13 +32,15 @@ POS_OFFSETS = {
         WEST, NORTH, SOUTH, EAST, SOUTH
     ]
 }
+
 ANNOTATE_VALUES = False
+SHARED_PLOT = False
 
 PROPER_MODEL_NAMES = {
     "bert_bpemb": "BiLSTM (Heinzerling)",
     "bilstm_aux": "BiLSTM (Plank)",
     "bilstm_crf": "BiLSTM (Yasunaga)",
-    "flair": "FLAIR",
+    "flair": "Flair",
     "svmtool": "SVMTool",
     "stanford": "Stanford Tagger",
     "tnt": "TnT (NTLK)",
@@ -130,13 +132,13 @@ def plot_data(
         else:
             text_max = len(text_1)
 
-        y -= 8
-        pixel_per_char = 3.2
+        y -= 10
+        pixel_per_char = 3.8
         x -= (int(text_max) * pixel_per_char) + 1
-        offset_x = (10 + int(text_max) * pixel_per_char)
+        offset_x = (11 + int(text_max) * pixel_per_char)
         if model == "hmm":
             offset_x += 10
-        y_gap = 5
+        y_gap = 6
         offset_y_1 = y_gap
         offset_y_3 = -y_gap * 3 
         xy_text = (0, 0)
@@ -169,6 +171,9 @@ def plot_data(
         x_1, y_1 = axis.transData.inverted().transform((x, y_1))
         x_2, y_2 = axis.transData.inverted().transform((x, y_2))
         x_3, y_3 = axis.transData.inverted().transform((x, y_3))
+
+        if x_3 < axis.get_xlim()[0]:
+            x_3 = axis.get_xlim()[0] + 0.1
 
         if directions[index] == ARROW_SOUTH:
             # Our text wont fit. Draw text elsewhere and draw an arrow pointing to it.
@@ -240,23 +245,35 @@ def plot_pareto(data, axis):
 def plot_results(language, acc_metric, size_metric, save_to_file):
     results = load_results()
     treebank = get_default_treebank(language)
-    fig, ax = plt.subplots()
-    ax.set_title(f"{LANGS_FULL[language].capitalize()} ({treebank.upper()} Treebank)")
-    ax.set_xscale("log")
+    fig, axes = plt.subplots(2, 2, sharey=True) if SHARED_PLOT else plt.subplots()
+    if not SHARED_PLOT:
+        axes = [axes]
+    else:
+        axes = axes.ravel()
 
-    directions = POS_OFFSETS[f"{language}_{acc_metric}_{size_metric}"]
-    sorted_data = sort_data_by_size(results[language], acc_metric, size_metric)
-    models_on_skyline = plot_pareto(sorted_data, ax)
-    plot_data(sorted_data, models_on_skyline, ax, directions, acc_metric, size_metric)
+    title = f'{LANGS_FULL[language].capitalize()} ({treebank.upper()} Treebank)'
+
+    fig.suptitle(title)
+
+    for ax in axes:
+        #ax.set_title(f"{LANGS_FULL[language].capitalize()} ({treebank.upper()} Treebank)")
+        ax.set_xscale("log")
+
+        directions = POS_OFFSETS[f"{language}_{acc_metric}_{size_metric}"]
+        sorted_data = sort_data_by_size(results[language], acc_metric, size_metric)
+        models_on_skyline = plot_pareto(sorted_data, ax)
+        plot_data(sorted_data, models_on_skyline, ax, directions, acc_metric, size_metric)
 
     manager = plt.get_current_fig_manager()
     w, h = manager.window.maxsize()
     if w > 1920:
         w = 1920
     manager.resize(w, h)
-    fig.set_size_inches(14, 8)
 
-    plt.margins(0.075)
+    fig_w, fig_h = 12, 7
+    fig.set_size_inches(fig_w, fig_h)
+
+    plt.margins(0.085)
     if save_to_file:
         filename = f"plots/{language}_{treebank}-{acc_metric}_{size_metric}.png"
         plt.savefig(filename)

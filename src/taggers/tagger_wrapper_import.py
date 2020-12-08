@@ -88,7 +88,7 @@ class ImportedTagger(Tagger):
                 sentences.append(curr_sentences)
                 curr_sentences = []
             else:
-                curr_sentences.append(tuple(line.split(None)))
+                curr_sentences.append(tuple(line.split("\t")))
         return sentences
 
     def code_size(self):
