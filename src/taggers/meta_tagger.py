@@ -51,8 +51,8 @@ class METATAGGER(SysCallTagger):
                             line_data = lines_data[index_data]
                         total += 1
                         curr_sent_count += 1
-                        split_pred = line_pred.split(None)
-                        split_data = line_data.split(None)
+                        split_pred = line_pred.split('\t')
+                        split_data = line_data.split('\t')
                         predicted = split_pred[3]
                         actual = split_data[3]
                         if predicted == actual:

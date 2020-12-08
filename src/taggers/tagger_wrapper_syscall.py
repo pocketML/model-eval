@@ -42,8 +42,8 @@ class SysCallTagger(Tagger):
                 total += 1
                 curr_sent_count += 1
                 split = line.split(None)
-                predicted = split[1]
-                actual = split[2]
+                predicted = split[-1]
+                actual = split[-2]
                 if predicted == actual:
                     correct += 1
                     curr_sent_correct += 1
