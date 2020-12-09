@@ -30,6 +30,22 @@ POS_OFFSETS = {
     "en_token_compressed": [
         SOUTH, EAST, NORTH, EAST, WEST, NORTH,
         WEST, NORTH, SOUTH, EAST, SOUTH
+    ],
+    "avg_token_memory": [
+        NORTH, EAST, EAST, NORTH, EAST, NORTH,
+        SOUTH, SOUTH, SOUTH, NORTH, SOUTH
+    ],
+    "avg_token_code": [
+        EAST, NORTH, EAST, EAST, SOUTH, SOUTH,
+        NORTH, WEST, SOUTH, SOUTH, SOUTH
+    ],
+    "avg_token_model": [
+        NORTH, EAST, NORTH, EAST, WEST, SOUTH,
+        WEST, NORTH, SOUTH, WEST, SOUTH
+    ],
+    "avg_token_compressed": [
+        SOUTH, EAST, NORTH, EAST, WEST, NORTH,
+        WEST, NORTH, SOUTH, EAST, SOUTH
     ]
 }
 
@@ -84,6 +100,30 @@ def load_results():
                 }
 
     return mapped_data
+
+def get_data_for_language(data, lang, acc_metric, size_metric):
+    if lang != "avg":
+        return data[lang]
+
+    languages = set(LANGS_ISO.values())
+
+    averaged_acc = {m: [] for m in data["en"]}
+    averaged_size = {m: [] for m in data["en"]}
+    for lang in languages:
+        for model_name in data[lang]:
+            averaged_acc[model_name].append(float(data[lang][model_name][acc_metric]))
+            averaged_size[model_name].append(float(data[lang][model_name][size_metric]))
+
+    for model_name in averaged_acc:
+        averaged_acc[model_name] = sum(averaged_acc[model_name]) / len(averaged_acc[model_name])
+        averaged_size[model_name] = sum(averaged_size[model_name]) / len(averaged_size[model_name])
+
+    return {
+        model: {
+            acc_metric: averaged_acc[model],
+            size_metric: averaged_size[model]
+        } for model in averaged_acc
+    }
 
 def sort_data_by_size(data, acc_metric, size_metric):
     sorted_data = []
@@ -244,14 +284,18 @@ def plot_pareto(data, axis):
 
 def plot_results(language, acc_metric, size_metric, save_to_file):
     results = load_results()
-    treebank = get_default_treebank(language)
     fig, axes = plt.subplots(2, 2, sharey=True) if SHARED_PLOT else plt.subplots()
     if not SHARED_PLOT:
         axes = [axes]
     else:
         axes = axes.ravel()
 
-    title = f'{LANGS_FULL[language].capitalize()} ({treebank.upper()} Treebank)'
+    treebank = None
+    if language != "avg":
+        treebank = get_default_treebank(language)
+        title = f'{LANGS_FULL[language].capitalize()} ({treebank.upper()} Treebank)'
+    else:
+        title = f"Avg All Languages"
 
     fig.suptitle(title)
 
@@ -260,7 +304,8 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
         ax.set_xscale("log")
 
         directions = POS_OFFSETS[f"{language}_{acc_metric}_{size_metric}"]
-        sorted_data = sort_data_by_size(results[language], acc_metric, size_metric)
+        data_for_lang = get_data_for_language(results, language, acc_metric, size_metric)
+        sorted_data = sort_data_by_size(data_for_lang, acc_metric, size_metric)
         models_on_skyline = plot_pareto(sorted_data, ax)
         plot_data(sorted_data, models_on_skyline, ax, directions, acc_metric, size_metric)
 
@@ -275,16 +320,18 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
 
     plt.margins(0.085)
     if save_to_file:
-        filename = f"plots/{language}_{treebank}-{acc_metric}_{size_metric}.png"
+        lang_desc = language if treebank is None else f"{language}_{treebank}"
+        filename = f"plots/{lang_desc}-{acc_metric}_{size_metric}.png"
         plt.savefig(filename)
         print(f"Saved image of plot to {filename}.")
     else:
         plt.show()
-    
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plot skyline/pareto curve of accuracy vs. size of POS taggers")
 
-    choices_langs = LANGS_FULL.keys()
+    choices_langs = list(LANGS_FULL.keys())
+    choices_langs.append("avg")
     parser.add_argument("language", type=str, choices=choices_langs, help="language to plot data for")
     parser.add_argument(
         "-am", "--accuracy-metric",
@@ -302,4 +349,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    plot_results(LANGS_ISO[args.language], args.accuracy_metric, args.size_metric, args.save)
+    plot_results(LANGS_ISO.get(args.language, "avg"), args.accuracy_metric, args.size_metric, args.save)

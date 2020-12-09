@@ -9,6 +9,8 @@ models/*
 results/*
 results_local
 config*
+plot_data/*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

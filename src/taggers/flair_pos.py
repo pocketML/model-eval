@@ -5,7 +5,7 @@ import re
 from flair.data import Sentence
 from flair.models import SequenceTagger
 from flair.embeddings import TokenEmbeddings, CharacterEmbeddings, StackedEmbeddings, WordEmbeddings
-from flair.datasets import UniversalDependenciesCorpus
+from flair.datasets import UniversalDependenciesCorpus, DataLoader
 from flair.trainers import ModelTrainer
 from flair import device
 import torch
@@ -115,9 +115,9 @@ class Flair(ImportedTagger):
         if not load_model:
             embeddings = self.get_embeddings()
 
-            self.model = SequenceTagger(hidden_size=256, embeddings=embeddings,
+            self.model = SequenceTagger(hidden_size=128, embeddings=embeddings,
                                         tag_dictionary=dictionary, tag_type="upos",
-                                        rnn_layers=2, use_crf=True)
+                                        rnn_layers=1, use_crf=True)
         else:
             self.model.tag_dictionary = dictionary
 
@@ -132,6 +132,11 @@ class Flair(ImportedTagger):
         ]
         return StackedEmbeddings(embeddings=embeddings)
 
+    # def evaluate(self, test_data, pipe):
+    #     result = self.model.evaluate(test_data.test)[0]
+    #     print(result.detailed_results)
+    #     pipe.send((0, 0))
+
     def train(self, train_data):
         flair_logger = logging.getLogger("flair")
         handler = RequestsHandler()
@@ -143,7 +148,7 @@ class Flair(ImportedTagger):
         trainer = ModelTrainer(self.model, self.corpus)
 
         trainer.train(self.model_base_path(),
-                        learning_rate=0.1, mini_batch_size=32,
+                        learning_rate=0.05, mini_batch_size=16,
                         max_epochs=self.args.iter if self.args.max_iter else 100,
                         train_with_dev=True, monitor_test=True, embeddings_storage_mode="gpu")
 
@@ -158,16 +163,24 @@ class Flair(ImportedTagger):
             dev_file = data_paths[2].split("/")[-1]
             return (path_only, train_file, test_file, dev_file)
         else: # Return actual data (not paths to data) when evaluating.
-            return super().format_data(dataset_type)
+            sentences = []
+            for batch in DataLoader(self.corpus.test, 32, 8):
+                for sentence in batch:
+                    curr_sentence = []
+                    for token in sentence:
+                        true_tag = token.get_tag("upos").value
+                        curr_sentence.append((token.text, true_tag))
+                    sentences.append(curr_sentence)
+            return sentences
 
     def predict(self, sentence):
         flair_sentence = Sentence()
         for word in sentence:
             flair_sentence.add_token(word)
-        self.model.predict(flair_sentence)
+        self.model.predict(flair_sentence, label_name="predicted")
         predictions = []
-        for span in flair_sentence.get_spans():
-            predictions.append((span.text, span.tag))
+        for token in flair_sentence:
+            predictions.append((token.get_tag("upos").value, token.get_tag("predicted").value))
         return predictions
 
     def necessary_model_files(self):

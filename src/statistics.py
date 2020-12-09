@@ -1,6 +1,5 @@
 from glob import glob
 from os import path
-import math
 from util import data_archives
 
 def find_value(lines, key):
@@ -11,7 +10,7 @@ def find_value(lines, key):
     return None
 
 SORT_ORDER_MODEL = [
-    "brill", "tnt", "crf", "hmm", "stanford", "svmtool",
+    "brill", "tnt", "svmtool", "stanford", "hmm", "crf",
     "bilstm_aux", "bilstm_crf", "flair", "meta_tagger", "bert_bpemb"
 ]
 
@@ -75,28 +74,60 @@ def format_size(size):
         formatted = formatted + ("0" * (5 - len(formatted)))
     return formatted + " " + unit
 
-def save_size_measurements():
-    data = load_results()
-
-    langs = []
+def reshape_data(data):
+    reshaped = []
     for lang in SORT_ORDER_LANG:
         lang_data = []
         for model, model_data in data:
             for lang_, data_dict in model_data:
                 if lang_ == lang:
                     lang_data.append((model, data_dict))
-        langs.append((lang, lang_data))
+        reshaped.append((lang, lang_data))
+    return reshaped
+
+def save_acc_measurements():
+    data = load_results()
+    
+    langs = reshape_data(data)
+
+    for key in ("token", "sentence"):
+        accuracies = {m: [] for m in SORT_ORDER_MODEL}
+        with open(f"plot_data/formatted_accuracy_{key}.txt", "w", encoding="utf-8") as fp:
+            for lang, model_data in langs:
+                for model, data_dict in model_data:
+                    acc = data_dict[key]
+                    formatted = acc
+                    if formatted != "?": # Missing data.
+                        num = float(acc) * 100.0
+                        formatted = f"{num:.2f}%"
+                        accuracies[model].append(num)
+                    line = f"{formatted}\t"
+                    fp.write(line)
+                fp.write("\n")
+
+            for model in accuracies:
+                formatted = accuracies[model]
+                if accuracies[model] != "?":
+                    avg = sum(accuracies[model]) / len(accuracies[model])
+                    formatted = f"{avg:.2f}%"
+                line = f"{formatted}\t"
+                fp.write(line)
+
+def save_size_measurements():
+    data = load_results()
+
+    langs = reshape_data(data)
 
     model_sizes = []
     for key in ("memory", "code", "model", "compressed"):
         model_size = {m: [] for m in SORT_ORDER_MODEL}
 
-        with open(f"formatted_results_{key}.txt", "w", encoding="utf-8") as fp:
+        with open(f"plot_data/formatted_size_{key}.txt", "w", encoding="utf-8") as fp:
             for lang, model_data in langs:
                 for model, data_dict in model_data:
                     size = data_dict[key]
                     formatted = size
-                    if size != "?":
+                    if size != "?": # Missing data.
                         model_size[model].append(float(size))
                         formatted = format_size(size)
 
@@ -115,12 +146,12 @@ def save_size_measurements():
                     sum_data = sum(metric_data[model_data])
                     len_data = len(metric_data[model_data])
                     avg = sum_data / len_data
-                    std_dev = math.sqrt((1 / (len_data - 1)) * sum((x - avg) ** 2 for x in metric_data[model_data]))
+                    #std_dev = math.sqrt((1 / (len_data - 1)) * sum((x - avg) ** 2 for x in metric_data[model_data]))
                     formatted = format_size(avg)
                     model_list.append(formatted)
         reformatted.append(model_list)
 
-    with open(f"formatted_results_avg.txt", "w", encoding="utf-8") as fp:
+    with open(f"plot_data/formatted_size_avg.txt", "w", encoding="utf-8") as fp:
         for model_data in reformatted:
             for metric_data in model_data:
                 fp.write(f"{metric_data}\t")
@@ -146,7 +177,7 @@ def flatten(arr):
     return flattened
 
 def save_dataset_stats():
-    with open("formatted_dataset_stats.txt", "w", encoding="utf-8") as fp:
+    with open("plot_data/formatted_dataset_stats.txt", "w", encoding="utf-8") as fp:
         for lang in SORT_ORDER_LANG:
             treebank = data_archives.get_default_treebank(lang)
 
@@ -193,3 +224,4 @@ def save_dataset_stats():
 
 if __name__ == "__main__":
     save_size_measurements()
+    save_acc_measurements()
