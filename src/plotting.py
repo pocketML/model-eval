@@ -70,17 +70,17 @@ SHARED_PLOT = False
 INCLUDE_STANFORD = False
 
 PROPER_MODEL_NAMES = {
-    "bert_bpemb": "BERT BPemb",
+    "bert_bpemb": "BERT-BPEmb",
     "bilstm_aux": "BiLSTM (Plank)",
     "bilstm_crf": "BiLSTM (Yasunaga)",
     "flair": "Flair",
     "svmtool": "SVMTool",
     "stanford": "Stanford Tagger",
-    "tnt": "TnT (NTLK)",
-    "hmm": "HMM (NLTK)",
-    "crf": "CRF (NLTK)",
-    "brill": "Brill (NLTK)",
-    "meta_tagger": "Meta BiLSTM"
+    "tnt": "TnT",
+    "hmm": "HMM",
+    "crf": "CRF",
+    "brill": "Brill",
+    "meta_tagger": "Meta-BiLSTM"
 }
 
 def find_value(lines, key):
@@ -169,12 +169,26 @@ def plot_data(
     axis.set_xlabel(f"{legend_text[size_metric]} (MB)", fontsize="medium")
     axis.set_ylabel(legend_text[acc_metric], fontsize="medium")
 
-    for model, accuracy, footprint in sorted_data:
+    colors = [
+        "#4b6238",
+        "#7349c0",
+        "#91d352",
+        "#c74a9f",
+        "#8dd0a6",
+        "#c4483d",
+        "#6ba3bf",
+        "#cba748",
+        "#4b2e4a",
+        "#ae7b66",
+        "#b593c7"
+    ]
+
+    for index, (model, accuracy, footprint) in enumerate(sorted_data):
         edge_color, line_width = (("red", 2) if model in models_on_skyline
                                   else ("black", 1))
         axis.scatter(
             footprint, accuracy, label=model, s=150, zorder=5,
-            edgecolors=edge_color, linewidths=line_width
+            edgecolors=edge_color, linewidths=line_width, color=colors[index]
         )
 
     for index, (model, accuracy, footprint) in enumerate(sorted_data):
@@ -251,7 +265,7 @@ def plot_data(
 
         bbox = dict(boxstyle="square", fc="1", linewidth=0, pad=0)
 
-        font_size = 18
+        font_size = 19
 
         if ANNOTATE_VALUES:
             axis.annotate(
@@ -276,7 +290,7 @@ def plot_data(
 
             axis.annotate(
                 text_1, (x_3, y), xytext=xy_text, xycoords="data",
-                textcoords="offset points", fontsize=font_size, fontweight=800,
+                textcoords="offset points", fontsize=font_size,
                 arrowprops=arrow_props, bbox=bbox
             )
 
@@ -299,28 +313,38 @@ def plot_pareto(data, axis):
     points_x.append(points_x[-1])
 
     axis.grid(b=True, which="major", axis="both")
-    axis.plot(points_x, points_y, linestyle=":", linewidth=4, c="red")
-    return models_on_skyline
+    axis.plot(points_x, points_y, linestyle=":", linewidth=3, c="red")
+    return models_on_skyline, (points_x[0], points_y[0]), (points_x[-1], points_y[-1])
+
+def add_margins(axis, margin):
+    x_limits = axis.get_xlim()
+    y_limits = axis.get_ylim()
+
+    x_min_pixel, y_min_pixel = axis.transData.transform((x_limits[0], y_limits[0]))
+    x_max_pixel, y_max_pixel = axis.transData.transform((x_limits[1], y_limits[1]))
+
+    x_min_pixel -= margin
+    y_min_pixel -= margin
+    x_max_pixel += margin
+    y_max_pixel += margin
+
+    min_x, min_y = axis.transData.inverted().transform((x_min_pixel, y_min_pixel))
+    max_x, max_y = axis.transData.inverted().transform((x_max_pixel, y_max_pixel))
+
+    axis.set_xlim(min_x, max_x)
+    axis.set_ylim(min_y, max_y)
 
 def plot_results(language, acc_metric, size_metric, save_to_file):
     results = load_results()
     fig, axes = plt.subplots(2, 2, sharey=True) if SHARED_PLOT else plt.subplots()
+    plt.margins(0)
+
     if not SHARED_PLOT:
         axes = [axes]
     else:
         axes = axes.ravel()
 
-    treebank = None
-    if language != "avg":
-        treebank = get_default_treebank(language)
-        title = f'{LANGS_FULL[language].capitalize()} ({treebank.upper()} Treebank)'
-    else:
-        title = F"Avg. Four Languages" if INCLUDE_STANFORD else f"Avg. All Languages"
-
-    fig.suptitle(title, fontdict={'fontsize': 28})
-
     for ax in axes:
-        #ax.set_title(f"{LANGS_FULL[language].capitalize()} ({treebank.upper()} Treebank)")
         ax.set_xscale("log")
 
         lang_desc = f"{language}_stanford" if INCLUDE_STANFORD else language 
@@ -328,8 +352,11 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
         directions = POS_OFFSETS[f"{lang_desc}_{acc_metric}_{size_metric}"]
         data_for_lang = get_data_for_language(results, language, acc_metric, size_metric)
         sorted_data = sort_data_by_size(data_for_lang, acc_metric, size_metric)
-        models_on_skyline = plot_pareto(sorted_data, ax)
+        models_on_skyline, start, end = plot_pareto(sorted_data, ax)
         plot_data(sorted_data, models_on_skyline, ax, directions, acc_metric, size_metric)
+        add_margins(ax, 40)
+        ax.plot([start[0], start[0]], [start[1], ax.get_ylim()[0]], linestyle=":", linewidth=3, c="red")
+        ax.plot([end[0], ax.get_xlim()[1]], [end[1], end[1]], linestyle=":", linewidth=3, c="red")
 
     manager = plt.get_current_fig_manager()
     w, h = manager.window.maxsize()
@@ -340,9 +367,8 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
     fig_w, fig_h = 12, 7
     fig.set_size_inches(fig_w, fig_h)
 
-    plt.margins(0.085)
     if save_to_file:
-        lang_desc = language if treebank is None else f"{language}_{treebank}"
+        lang_desc = language
         avg_desc = ""
         if language == "avg":
             avg_desc = "_with_stanford" if INCLUDE_STANFORD else "_all"
