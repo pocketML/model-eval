@@ -201,7 +201,7 @@ def create_simplified_eos(dataset):
 
                     # Check if need an artificial sentence-end
                     if stripped == "" and (prev_token not in ".!?"):
-                        line_out = ".\tPUNCT"
+                        line_out = ".\tPUNCT\n"
                     else:
                         line_out = stripped
 
