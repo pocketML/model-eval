@@ -4,7 +4,7 @@ from sys import argv
 import argparse
 import math
 import matplotlib.pyplot as plt
-font = {'size': 20}
+font = {'size': 24}
 
 plt.rc('font', **font)
 from util.data_archives import LANGS_FULL, LANGS_ISO, get_default_treebank
@@ -33,27 +33,44 @@ POS_OFFSETS = {
     ],
     "avg_token_memory": [
         NORTH, EAST, EAST, NORTH, EAST, NORTH,
-        SOUTH, SOUTH, SOUTH, NORTH, SOUTH
+        SOUTH, NORTH, SOUTH, NORTH
     ],
     "avg_token_code": [
-        EAST, NORTH, EAST, EAST, SOUTH, SOUTH,
-        NORTH, WEST, SOUTH, SOUTH, SOUTH
+        EAST, NORTH, EAST, EAST, SOUTH, NORTH,
+        SOUTH, SOUTH, NORTH, SOUTH
     ],
     "avg_token_model": [
-        NORTH, EAST, NORTH, EAST, WEST, SOUTH,
-        WEST, NORTH, SOUTH, WEST, SOUTH
+        NORTH, EAST, SOUTH, EAST, NORTH, WEST,
+        NORTH, SOUTH, SOUTH, NORTH
     ],
     "avg_token_compressed": [
-        SOUTH, EAST, NORTH, EAST, WEST, NORTH,
-        WEST, NORTH, SOUTH, EAST, SOUTH
+        SOUTH, EAST, NORTH, EAST, NORTH,
+        WEST, NORTH, SOUTH, SOUTH, NORTH
+    ],
+    "avg_stanford_token_memory": [
+        NORTH, EAST, EAST, NORTH, EAST, NORTH,
+        SOUTH, SOUTH, NORTH, SOUTH, NORTH
+    ],
+    "avg_stanford_token_code": [
+        EAST, NORTH, NORTH, NORTH, EAST, EAST,
+        SOUTH, SOUTH, NORTH, SOUTH, SOUTH
+    ],
+    "avg_stanford_token_model": [
+        NORTH, SOUTH, SOUTH, EAST, WEST, WEST,
+        WEST, NORTH, SOUTH, NORTH, SOUTH
+    ],
+    "avg_stanford_token_compressed": [
+        SOUTH, SOUTH, NORTH, EAST, WEST, WEST,
+        NORTH, WEST, SOUTH, NORTH, EAST
     ]
 }
 
 ANNOTATE_VALUES = False
 SHARED_PLOT = False
+INCLUDE_STANFORD = False
 
 PROPER_MODEL_NAMES = {
-    "bert_bpemb": "BiLSTM (Heinzerling)",
+    "bert_bpemb": "BERT BPemb",
     "bilstm_aux": "BiLSTM (Plank)",
     "bilstm_crf": "BiLSTM (Yasunaga)",
     "flair": "Flair",
@@ -107,12 +124,17 @@ def get_data_for_language(data, lang, acc_metric, size_metric):
 
     languages = set(LANGS_ISO.values())
 
-    averaged_acc = {m: [] for m in data["en"]}
-    averaged_size = {m: [] for m in data["en"]}
+    averaged_acc = {m: [] for m in (data["en"] if INCLUDE_STANFORD else data["vi"])}
+    averaged_size = {m: [] for m in (data["en"] if INCLUDE_STANFORD else data["vi"])}
+
     for lang in languages:
+        if INCLUDE_STANFORD and not "stanford" in data[lang].keys():
+            continue # Only include the 4 languages where Stanford Tagger can be used.
+
         for model_name in data[lang]:
-            averaged_acc[model_name].append(float(data[lang][model_name][acc_metric]))
-            averaged_size[model_name].append(float(data[lang][model_name][size_metric]))
+            if INCLUDE_STANFORD or model_name != "stanford":
+                averaged_acc[model_name].append(float(data[lang][model_name][acc_metric]))
+                averaged_size[model_name].append(float(data[lang][model_name][size_metric]))
 
     for model_name in averaged_acc:
         averaged_acc[model_name] = sum(averaged_acc[model_name]) / len(averaged_acc[model_name])
@@ -144,8 +166,8 @@ def plot_data(
         "memory": "Memory Footprint", "code": "Code Size",
         "model": "Uncompresse Model Size", "compressed": "Compressed Model Size"
     }
-    axis.set_xlabel(f"{legend_text[size_metric]} (MB)")
-    axis.set_ylabel(legend_text[acc_metric])
+    axis.set_xlabel(f"{legend_text[size_metric]} (MB)", fontsize="medium")
+    axis.set_ylabel(legend_text[acc_metric], fontsize="medium")
 
     for model, accuracy, footprint in sorted_data:
         edge_color, line_width = (("red", 2) if model in models_on_skyline
@@ -176,8 +198,6 @@ def plot_data(
         pixel_per_char = 3.8
         x -= (int(text_max) * pixel_per_char) + 1
         offset_x = (11 + int(text_max) * pixel_per_char)
-        if model == "hmm":
-            offset_x += 10
         y_gap = 6
         offset_y_1 = y_gap
         offset_y_3 = -y_gap * 3 
@@ -213,7 +233,7 @@ def plot_data(
         x_3, y_3 = axis.transData.inverted().transform((x, y_3))
 
         if x_3 < axis.get_xlim()[0]:
-            x_3 = axis.get_xlim()[0] + 0.1
+            x_3 = axis.get_xlim()[0]
 
         if directions[index] == ARROW_SOUTH:
             # Our text wont fit. Draw text elsewhere and draw an arrow pointing to it.
@@ -231,7 +251,7 @@ def plot_data(
 
         bbox = dict(boxstyle="square", fc="1", linewidth=0, pad=0)
 
-        font_size = 16
+        font_size = 18
 
         if ANNOTATE_VALUES:
             axis.annotate(
@@ -295,15 +315,17 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
         treebank = get_default_treebank(language)
         title = f'{LANGS_FULL[language].capitalize()} ({treebank.upper()} Treebank)'
     else:
-        title = f"Avg All Languages"
+        title = F"Avg. Four Languages" if INCLUDE_STANFORD else f"Avg. All Languages"
 
-    fig.suptitle(title)
+    fig.suptitle(title, fontdict={'fontsize': 28})
 
     for ax in axes:
         #ax.set_title(f"{LANGS_FULL[language].capitalize()} ({treebank.upper()} Treebank)")
         ax.set_xscale("log")
 
-        directions = POS_OFFSETS[f"{language}_{acc_metric}_{size_metric}"]
+        lang_desc = f"{language}_stanford" if INCLUDE_STANFORD else language 
+
+        directions = POS_OFFSETS[f"{lang_desc}_{acc_metric}_{size_metric}"]
         data_for_lang = get_data_for_language(results, language, acc_metric, size_metric)
         sorted_data = sort_data_by_size(data_for_lang, acc_metric, size_metric)
         models_on_skyline = plot_pareto(sorted_data, ax)
@@ -321,7 +343,10 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
     plt.margins(0.085)
     if save_to_file:
         lang_desc = language if treebank is None else f"{language}_{treebank}"
-        filename = f"plots/{lang_desc}-{acc_metric}_{size_metric}.png"
+        avg_desc = ""
+        if language == "avg":
+            avg_desc = "_with_stanford" if INCLUDE_STANFORD else "_all"
+        filename = f"plots/{lang_desc}-{acc_metric}_{size_metric}{avg_desc}.png"
         plt.savefig(filename)
         print(f"Saved image of plot to {filename}.")
     else:
@@ -346,7 +371,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "-s", "--save", action="store_true", help="Save picture of plot to file"
     )
+    parser.add_argument(
+        "-is", "--include_stanford", action="store_true",
+        help="Whether to include plots for Stanford (only relevant when plotting for 'avg' across languages)"
+    )
 
     args = parser.parse_args()
+    INCLUDE_STANFORD = args.include_stanford
 
     plot_results(LANGS_ISO.get(args.language, "avg"), args.accuracy_metric, args.size_metric, args.save)

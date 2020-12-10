@@ -10,6 +10,7 @@ results/*
 results_local
 config*
 plot_data/*
+plots/*
 
 
 # Byte-compiled / optimized / DLL files
