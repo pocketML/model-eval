@@ -62,6 +62,38 @@ POS_OFFSETS = {
     "avg_stanford_token_compressed": [
         SOUTH, SOUTH, NORTH, EAST, WEST, WEST,
         NORTH, WEST, SOUTH, NORTH, EAST
+    ],
+    "avg_sentence_memory": [
+        NORTH, EAST, EAST, NORTH, EAST, NORTH,
+        NORTH, SOUTH, EAST, NORTH
+    ],
+    "avg_sentence_code": [
+        EAST, SOUTH, EAST, EAST, EAST, EAST,
+        NORTH, NORTH, SOUTH, SOUTH
+    ],
+    "avg_sentence_model": [
+        NORTH, EAST, NORTH, NORTH, EAST, WEST,
+        NORTH, SOUTH, NORTH, SOUTH
+    ],
+    "avg_sentence_compressed": [
+        SOUTH, EAST, NORTH, SOUTH, NORTH,
+        WEST, NORTH, SOUTH, NORTH, SOUTH
+    ],
+    "avg_stanford_sentence_memory": [
+        NORTH, EAST, EAST, NORTH, EAST, NORTH,
+        NORTH, NORTH, SOUTH, SOUTH, SOUTH
+    ],
+    "avg_stanford_sentence_code": [
+        EAST, SOUTH, NORTH, NORTH, EAST, EAST,
+        NORTH, NORTH, SOUTH, SOUTH, SOUTH
+    ],
+    "avg_stanford_sentence_model": [
+        NORTH, EAST, NORTH, EAST, EAST, WEST,
+        WEST, NORTH, SOUTH, SOUTH, NORTH
+    ],
+    "avg_stanford_sentence_compressed": [
+        SOUTH, SOUTH, NORTH, EAST, EAST, WEST,
+        WEST, NORTH, SOUTH, NORTH, EAST
     ]
 }
 
@@ -208,11 +240,11 @@ def plot_data(
         else:
             text_max = len(text_1)
 
-        y -= 10
-        pixel_per_char = 3.8
+        y -= 14
+        pixel_per_char = 4.5
         x -= (int(text_max) * pixel_per_char) + 1
         offset_x = (11 + int(text_max) * pixel_per_char)
-        y_gap = 6
+        y_gap = 7
         offset_y_1 = y_gap
         offset_y_3 = -y_gap * 3 
         xy_text = (0, 0)
