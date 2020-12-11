@@ -103,7 +103,7 @@ def get_dataset_path(lang, treebank, dataset_type=None, simplified=True, eos=Fal
     if paths == []:
         dataset_name = "" if dataset_type is None else f"'{dataset_type.capitalize()}'"
         raise FileNotFoundError(
-            f"{dataset_name}Dataset for '{LANGS_FULL[lang].capitalize()}' " +
+            f"{dataset_name} dataset for '{LANGS_FULL[lang].capitalize()}' " +
             f"using '{treebank}' treebank was not found."
         )
 
@@ -215,10 +215,28 @@ def create_simplified_eos(dataset):
 
                     file_out.write(line_out + "\n")
 
+# removes all multitoken lines, of the form 1-2	Tirarla	_	_	_	_	_	_	_
+# since no taggers expects the UD inquisition
+def remove_multitoken(folder):
+    paths = glob(f'{folder}/*.conllu')
+    for f in paths:
+        newlines = []
+        with open(f, "r", encoding="utf-8") as content:
+            lines = content.readlines()
+            for line in lines:
+                if len(line.split(None)) > 1 and '-' in line.split(None)[0]:
+                    continue
+                newlines.append(line)
+        with open(f, "w", encoding="utf-8") as content:
+            for newline in newlines:
+                content.write(newline)
+
 def transform_dataset(language):
     treebanks = glob(f"data/{language}/ud_*")
     for folder in treebanks:
         print(f"Transforming {folder}")
+        # removing all multitoken lines, of the form 1-2	Tirarla	_	_	_	_	_	_	_
+        remove_multitoken(folder)
         transform_data(folder)
         create_simplified_eos(folder)
 

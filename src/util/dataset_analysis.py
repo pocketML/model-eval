@@ -25,23 +25,27 @@ def check_avg_sentence_length():
     for (k,v) in sent_by_language.items():
         print(f'{k}: {(tok_by_language[k] / v):.2f} ({tok_by_language[k]} / {v})')
 
-# checks for multiword like don't
-def check_multiword():
+# checks for multitoken words like "don't"
+def check_multitoken_words():
     multiword_by_language = {}
+    tok_by_language = {}
     file_paths = glob('../../data/**/ud_*/*.conllu')
     for file_path in file_paths:
         lang = file_path.split('\\')[-1].split('_')[0]
         multiword_by_language[lang] = multiword_by_language.get(lang, 0)
+        tok_by_language[lang] = tok_by_language.get(lang, 0)
         with open(file_path, "r", encoding="utf-8") as file_content:
             for line in file_content.readlines():
                 if line.strip() == "":
                     continue
+                tok_by_language[lang] += 1
                 if len(line.split(None)) > 1 and '-' in line.split(None)[0]:
                     multiword_by_language[lang] += 1
 
     print('Multiword tokens by language *****')
     for (k,v) in multiword_by_language.items():
-        print(f'{k}: {v}')
+        percent = v / tok_by_language[k]
+        print(f'{k}: {v} ({percent:.2f}% of all tokens ({tok_by_language[k]}))')
 
 def check_eof():
     p = re.compile('[\\.\\?\\!]')
