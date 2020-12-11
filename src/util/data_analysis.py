@@ -6,7 +6,7 @@ import re
 def check_avg_sentence_length():
     sent_by_language = {}
     tok_by_language = {}
-    file_paths = glob('../../data/**/ud_*/simplified/*.conllu', recursive=True)
+    file_paths = glob('../../data/**/ud_*/simplified/*.conllu')
     for file_path in file_paths:
         lang = file_path.split('\\')[-1].split('_')[0]
         print(lang)
@@ -24,6 +24,24 @@ def check_avg_sentence_length():
     print('Average sentence length by language *****')
     for (k,v) in sent_by_language.items():
         print(f'{k}: {(tok_by_language[k] / v):.2f} ({tok_by_language[k]} / {v})')
+
+# checks for multiword like don't
+def check_multiword():
+    multiword_by_language = {}
+    file_paths = glob('../../data/**/ud_*/*.conllu')
+    for file_path in file_paths:
+        lang = file_path.split('\\')[-1].split('_')[0]
+        multiword_by_language[lang] = multiword_by_language.get(lang, 0)
+        with open(file_path, "r", encoding="utf-8") as file_content:
+            for line in file_content.readlines():
+                if line.strip() == "":
+                    continue
+                if len(line.split(None)) > 1 and '-' in line.split(None)[0]:
+                    multiword_by_language[lang] += 1
+
+    print('Multiword tokens by language *****')
+    for (k,v) in multiword_by_language.items():
+        print(f'{k}: {v}')
 
 def check_eof():
     p = re.compile('[\\.\\?\\!]')
