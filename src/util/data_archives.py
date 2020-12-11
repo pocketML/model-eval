@@ -179,8 +179,11 @@ def transform_data(dataset):
 
                     file_out.write(line_out + "\n")
 
-# expects the existence of simplified files
-# this fix is for 
+# SVMTool does not like tabs as separators, or sentences that don't end with either . ! or ?
+# so we:
+# -- replace " " with "_" for the multiword tokens (in Vietnamese)
+# -- replace "\t" with " "
+# -- adds ". PUNCT" to the end of each sentence, if it doesn't have . ! or ?
 def create_simplified_eos(dataset):
     tags_train_in = glob(f"{dataset}/simplified/*ud-train.conllu")[0]
     tags_test_in = glob(f"{dataset}/simplified/*ud-test.conllu")[0]
@@ -197,26 +200,28 @@ def create_simplified_eos(dataset):
             with open(tags, "r", encoding="utf-8") as file_in:
                 prev_token = ""
                 for line in file_in.readlines():
-                    stripped = line.strip()         
-
-                    # Check if need an artificial sentence-end
-                    if stripped == "" and (prev_token not in ".!?"):
-                        line_out = ".\tPUNCT\n"
-                    else:
-                        line_out = stripped
+                    line_out = line.strip()         
 
                     if " " in line_out:
                         line_out = line_out.replace(" ", "_")
 
+                    line_out = line_out.replace("\t", " ")
+
+                    # Check if need an artificial sentence-end
+                    if line_out == "" and (prev_token not in ".!?"):
+                        line_out = ". PUNCT\n"
+
                     if line_out != "":
-                        prev_token = line_out.split("\t")[0]
+                        prev_token = line_out.split(" ")[0]
                     else:
                         prev_token = line_out
 
                     file_out.write(line_out + "\n")
 
-# removes all multitoken lines, of the form 1-2	Tirarla	_	_	_	_	_	_	_
-# since no taggers expects the UD inquisition
+# UD2 has this really nice feature, where there are non-tag multitoken words in the text
+# most of our taggers do not like this
+# so we just remove them from the conllu files
+# fight me!
 def remove_multitoken(folder):
     paths = glob(f'{folder}/*.conllu')
     for f in paths:
