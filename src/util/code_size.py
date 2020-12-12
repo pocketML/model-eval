@@ -7,6 +7,7 @@ JAVA_JRE_SIZE = 170e6 # 170 MB
 
 def get_file_size(module):
     if hasattr(module, "__file__"):
+        print(f"{module} - {getsize(module.__file__)}")
         return getsize(module.__file__)
     spec = module.__spec__
     if spec is not None and spec.origin is not None and spec.origin not in ("built-in", "frozen"):
@@ -49,3 +50,7 @@ def pretty_print(result_dict):
     print(f"Size of imports:    {result_dict['imports_size'] / 1000:.2f} KB")
     print(f"Size of std lib:    {result_dict['stdlib_size'] / 1000:.2f} KB")
     print(f"Total size of code: {result_dict['total_size'] / 1000:.2f} KB")
+
+def test():
+    results = get_code_size("taggers.flair_pos")
+    pretty_print(results)

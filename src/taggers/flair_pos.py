@@ -183,6 +183,10 @@ class Flair(ImportedTagger):
             predictions.append((token.get_tag("upos").value, token.get_tag("predicted").value))
         return predictions
 
+    def code_size(self):
+        torch_lib_size = 999081514 # 1.91 GB
+        return super().code_size() + torch_lib_size
+
     def necessary_model_files(self):
         necessary_files = [data_archives.get_embeddings_path(self.args.lang)]
 

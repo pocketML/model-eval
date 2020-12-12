@@ -79,11 +79,22 @@ class BERT_BPEMB(SysCallTagger):
         )
 
     def code_size(self):
+        torch__depend_size = 2088349659 # 1.94 GB
+        boltons_depend_size = 1.03e6 # 1.03 MB
+        bpemb_depend_size = 87.9e3 # 87.9 KB
+        pandas_depend_size = 38.2e6 # 38.2 MB
+        transformers_depend_size=  9.35e6 # 9.35 MB
+        joblib_depend_size = 1.42e6 # 1.42 MB
+
         base = "models/bert_bpemb"
         code_files = [
             f"{base}/*.py",
         ]
-        total_size = PYTHON_STDLIB_SIZE
+        total_size = (
+            PYTHON_STDLIB_SIZE + torch__depend_size + boltons_depend_size +
+            bpemb_depend_size + pandas_depend_size +
+            transformers_depend_size + joblib_depend_size
+        )
         for glob_str in code_files:
             files = glob(glob_str)
             for file in files:

@@ -25,7 +25,7 @@ Requirements for the various models:
 * stanford tagger
 ** java 8+
 
-* FLAIR
+* Flair
 ** conda install pytorch torchvision torchaudio cudatoolkit=10.1 -c pytorch
 ** pip install flair
 

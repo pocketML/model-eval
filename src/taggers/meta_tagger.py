@@ -103,13 +103,14 @@ class METATAGGER(SysCallTagger):
         )
 
     def code_size(self):
-        depend_tensorflow_size = 373629600 # 373 MB
+        depend_tensorflow_size = 999081514 # 952 MB
+        depend_tensorboard_size = 29.2e6 # 29.2 MB
         base = "models/meta_tagger"
         code_files = [
             f"{base}/*.py",
         ]
         embeddings_size = data_archives.get_embeddings_size(self.args.lang)
-        total_size = PYTHON_STDLIB_SIZE + embeddings_size + depend_tensorflow_size
+        total_size = PYTHON_STDLIB_SIZE + embeddings_size + depend_tensorflow_size + depend_tensorboard_size
         for glob_str in code_files:
             files = glob(glob_str)
             for file in files:
