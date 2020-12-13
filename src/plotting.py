@@ -40,7 +40,7 @@ POS_OFFSETS = {
         SOUTH, SOUTH, NORTH, SOUTH
     ],
     "avg_token_model": [
-        NORTH, EAST, SOUTH, EAST, NORTH, WEST,
+        NORTH, EAST, SOUTH, EAST, SOUTH, WEST,
         NORTH, SOUTH, SOUTH, NORTH
     ],
     "avg_token_compressed": [
@@ -48,19 +48,19 @@ POS_OFFSETS = {
         WEST, NORTH, SOUTH, SOUTH, NORTH
     ],
     "avg_stanford_token_memory": [
-        NORTH, EAST, EAST, NORTH, EAST, NORTH,
-        SOUTH, SOUTH, NORTH, SOUTH, NORTH
+        NORTH, EAST, EAST, NORTH, NORTH, SOUTH,
+        NORTH, NORTH, SOUTH, NORTH, SOUTH
     ],
     "avg_stanford_token_code": [
-        EAST, NORTH, NORTH, NORTH, EAST, EAST,
-        SOUTH, SOUTH, NORTH, SOUTH, SOUTH
+        EAST, NORTH, NORTH, NORTH, SOUTH, NORTH,
+        EAST, SOUTH, NORTH, SOUTH, EAST
     ],
     "avg_stanford_token_model": [
-        NORTH, SOUTH, SOUTH, EAST, WEST, WEST,
+        NORTH, SOUTH, SOUTH, EAST, WEST, SOUTH,
         WEST, NORTH, SOUTH, NORTH, SOUTH
     ],
     "avg_stanford_token_compressed": [
-        SOUTH, SOUTH, NORTH, EAST, WEST, WEST,
+        SOUTH, SOUTH, NORTH, EAST, NORTH, SOUTH,
         NORTH, WEST, SOUTH, NORTH, EAST
     ],
     "avg_sentence_memory": [
@@ -68,32 +68,32 @@ POS_OFFSETS = {
         NORTH, SOUTH, EAST, NORTH
     ],
     "avg_sentence_code": [
-        EAST, SOUTH, EAST, EAST, EAST, EAST,
-        NORTH, NORTH, SOUTH, SOUTH
+        EAST, SOUTH, EAST, EAST, EAST, NORTH,
+        EAST, WEST, SOUTH, NORTH
     ],
     "avg_sentence_model": [
-        NORTH, EAST, NORTH, NORTH, EAST, WEST,
-        NORTH, SOUTH, NORTH, SOUTH
+        NORTH, EAST, NORTH, NORTH, WEST, WEST,
+        NORTH, SOUTH, SOUTH, NORTH
     ],
     "avg_sentence_compressed": [
         SOUTH, EAST, NORTH, SOUTH, NORTH,
-        WEST, NORTH, SOUTH, NORTH, SOUTH
+        WEST, NORTH, SOUTH, EAST, NORTH
     ],
     "avg_stanford_sentence_memory": [
         NORTH, EAST, EAST, NORTH, EAST, NORTH,
-        NORTH, NORTH, SOUTH, SOUTH, SOUTH
+        NORTH, NORTH, EAST, SOUTH, NORTH
     ],
     "avg_stanford_sentence_code": [
-        EAST, SOUTH, NORTH, NORTH, EAST, EAST,
-        NORTH, NORTH, SOUTH, SOUTH, SOUTH
+        EAST, SOUTH, NORTH, NORTH, EAST, NORTH,
+        SOUTH, SOUTH, SOUTH, NORTH, SOUTH
     ],
     "avg_stanford_sentence_model": [
         NORTH, EAST, NORTH, EAST, EAST, WEST,
-        WEST, NORTH, SOUTH, SOUTH, NORTH
+        WEST, NORTH, SOUTH, NORTH, SOUTH
     ],
     "avg_stanford_sentence_compressed": [
         SOUTH, SOUTH, NORTH, EAST, EAST, WEST,
-        WEST, NORTH, SOUTH, NORTH, EAST
+        WEST, NORTH, SOUTH, WEST, NORTH
     ]
 }
 
@@ -280,6 +280,7 @@ def plot_data(
 
         if x_3 < axis.get_xlim()[0]:
             x_3 = axis.get_xlim()[0]
+
 
         if directions[index] == ARROW_SOUTH:
             # Our text wont fit. Draw text elsewhere and draw an arrow pointing to it.
