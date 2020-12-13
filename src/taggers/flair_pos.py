@@ -115,9 +115,9 @@ class Flair(ImportedTagger):
         if not load_model:
             embeddings = self.get_embeddings()
 
-            self.model = SequenceTagger(hidden_size=128, embeddings=embeddings,
+            self.model = SequenceTagger(hidden_size=256, embeddings=embeddings,
                                         tag_dictionary=dictionary, tag_type="upos",
-                                        rnn_layers=1, use_crf=True)
+                                        rnn_layers=2, use_crf=True)
         else:
             self.model.tag_dictionary = dictionary
 
@@ -132,11 +132,6 @@ class Flair(ImportedTagger):
         ]
         return StackedEmbeddings(embeddings=embeddings)
 
-    # def evaluate(self, test_data, pipe):
-    #     result = self.model.evaluate(test_data.test)[0]
-    #     print(result.detailed_results)
-    #     pipe.send((0, 0))
-
     def train(self, train_data):
         flair_logger = logging.getLogger("flair")
         handler = RequestsHandler()
@@ -148,7 +143,7 @@ class Flair(ImportedTagger):
         trainer = ModelTrainer(self.model, self.corpus)
 
         trainer.train(self.model_base_path(),
-                        learning_rate=0.05, mini_batch_size=16,
+                        learning_rate=0.1, mini_batch_size=32,
                         max_epochs=self.args.iter if self.args.max_iter else 100,
                         train_with_dev=True, monitor_test=True, embeddings_storage_mode="gpu")
 
