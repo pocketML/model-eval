@@ -1,7 +1,6 @@
 from subprocess import Popen, PIPE
 import platform
 from asyncio import sleep
-from util import online_monitor
 from loadbar import Loadbar
 
 async def monitor_training(monitor, process, args, model_name, file_pointer=None):
@@ -25,9 +24,6 @@ async def monitor_training(monitor, process, args, model_name, file_pointer=None
             final_acc = test_acc
             if file_pointer is not None:
                 file_pointer.write(f"acc_iter_{monitor.epoch}: {final_acc}\n")
-
-        if args.online_monitor:
-            online_monitor.send_train_status(monitor.epoch, test_acc)
 
         if args.max_iter and monitor.epoch == args.iter:
             print("Stopping process.")

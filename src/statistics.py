@@ -146,7 +146,6 @@ def save_size_measurements():
                     sum_data = sum(metric_data[model_data])
                     len_data = len(metric_data[model_data])
                     avg = sum_data / len_data
-                    #std_dev = math.sqrt((1 / (len_data - 1)) * sum((x - avg) ** 2 for x in metric_data[model_data]))
                     formatted = format_size(avg)
                     model_list.append(formatted)
         reformatted.append(model_list)
@@ -203,14 +202,7 @@ def save_dataset_stats():
             total_tokens = train_tokens + test_tokens + dev_tokens
 
             train_set = set(train_token_list)
-            test_set = set(test_token_list)
-            test_not_in_train = len(list(filter(lambda x: x in train_set, test_token_list))) / len(test_token_list)
-            print(test_not_in_train)
-            #test_not_in_train = len(set(test_token_list) - set(train_token_list))
-            #dev_not_in_train = len(set(dev_token_list) - set(train_token_list))
 
-            # test_not_in_train_ratio = test_not_in_train / train_tokens
-            # dev_not_in_train_ratio = dev_not_in_train / train_tokens
             embeddings, dims = data_archives.load_embeddings(lang)
             train_not_in_emb = (len(set(train_token_list) - set(embeddings)) / unique_train_tokens) * 100
             test_not_in_emb = (len(set(test_token_list) - set(embeddings)) / unique_test_tokens) * 100

@@ -7,10 +7,11 @@ models/*
 !models/get_model.py
 .vscode/
 results/*
-results_local
+results_backup/*
 config*
 plot_data/*
 plots/*
+plots_backup/*
 
 
 # Byte-compiled / optimized / DLL files

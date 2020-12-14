@@ -1,6 +1,5 @@
 from glob import glob
 from os import path
-from sys import argv
 import argparse
 import math
 import matplotlib.pyplot as plt
@@ -32,23 +31,23 @@ POS_OFFSETS = {
         WEST, NORTH, SOUTH, EAST, SOUTH
     ],
     "avg_token_memory": [
-        NORTH, EAST, EAST, NORTH, EAST, NORTH,
-        SOUTH, NORTH, NORTH, SOUTH
+        WEST, SOUTH, NORTH, EAST, WEST,
+        NORTH, SOUTH, SOUTH, NORTH
     ],
     "avg_token_code": [
         EAST, NORTH, EAST, EAST, SOUTH, NORTH,
         SOUTH, NORTH, SOUTH, EAST
     ],
     "avg_token_model": [
-        NORTH, EAST, SOUTH, EAST, SOUTH, WEST,
+        NORTH, EAST, EAST, SOUTH, WEST,
         NORTH, SOUTH, NORTH, EAST
     ],
     "avg_token_compressed": [
-        SOUTH, EAST, NORTH, EAST, NORTH,
+        WEST, EAST, NORTH, WEST,
         WEST, NORTH, SOUTH, NORTH, EAST
     ],
     "avg_stanford_token_memory": [
-        NORTH, EAST, EAST, NORTH, NORTH, SOUTH,
+        NORTH, SOUTH, NORTH, NORTH, SOUTH,
         NORTH, SOUTH, NORTH, NORTH, SOUTH
     ],
     "avg_stanford_token_code": [
@@ -64,7 +63,7 @@ POS_OFFSETS = {
         NORTH, WEST, SOUTH, NORTH, EAST
     ],
     "avg_sentence_memory": [
-        NORTH, EAST, EAST, NORTH, EAST, NORTH,
+        NORTH, SOUTH, NORTH, EAST, NORTH,
         SOUTH, NORTH, EAST, NORTH
     ],
     "avg_sentence_code": [
@@ -76,7 +75,7 @@ POS_OFFSETS = {
         NORTH, SOUTH, SOUTH, NORTH
     ],
     "avg_sentence_compressed": [
-        SOUTH, EAST, NORTH, SOUTH, NORTH,
+        WEST, EAST, NORTH, NORTH,
         WEST, NORTH, SOUTH, NORTH, SOUTH
     ],
     "avg_stanford_sentence_memory": [
@@ -110,7 +109,6 @@ PROPER_MODEL_NAMES = {
     "stanford": "Stanford Tagger",
     "tnt": "TnT",
     "hmm": "HMM",
-    "crf": "CRF",
     "brill": "Brill",
     "meta_tagger": "Meta-BiLSTM"
 }
@@ -183,14 +181,35 @@ def sort_data_by_size(data, acc_metric, size_metric):
     sorted_data = []
     for model in data:
         model_data = data[model]
-        accuracy = float(model_data[acc_metric])
-        footprint = int(model_data[size_metric]) / 1000
+        accuracy = float(f"{model_data[acc_metric]:.2f}")
+        footprint = int(model_data[size_metric])
         sorted_data.append((model, accuracy, footprint))
 
     return sorted(sorted_data, key=lambda x: x[2])
 
+def add_margins(axis, margin, acc_metric):
+    x_limits = axis.get_xlim()
+    y_limits = axis.get_ylim()
+
+    x_min_pixel, y_min_pixel = axis.transData.transform((x_limits[0], y_limits[0]))
+    x_max_pixel, y_max_pixel = axis.transData.transform((x_limits[1], y_limits[1]))
+
+    x_min_pixel -= margin
+    digits = math.log(x_limits[0], 10)
+    x_limit = 10 ** (digits - 1)
+    y_min_pixel -= margin
+    x_max_pixel += margin
+    y_max_pixel += margin
+
+    _, min_y = axis.transData.inverted().transform((x_min_pixel, y_min_pixel))
+    max_x, _ = axis.transData.inverted().transform((x_max_pixel, y_max_pixel))
+
+    axis.set_xlim(x_limit, max_x)
+    max_y = 1 if acc_metric == "token" else 0.6
+    axis.set_ylim(min_y, max_y)
+
 def plot_data(
-        sorted_data, models_on_skyline, axis, directions,
+        sorted_data, models_on_skyline, axis, plot_id,
         acc_metric="token", size_metric="memory"
 ):
     legend_text = {
@@ -198,39 +217,43 @@ def plot_data(
         "memory": "Memory Footprint", "code": "Code Size",
         "model": "Size of Uncompressed Model Files", "compressed": "Size of Compressed Model Files"
     }
-    axis.set_xlabel(f"{legend_text[size_metric]} (MB)", fontsize="medium")
+    axis.set_xlabel(f"{legend_text[size_metric]} (KB)", fontsize="medium")
     axis.set_ylabel(legend_text[acc_metric], fontsize="medium")
 
-    colors = [
-        "#4b6238",
-        "#7349c0",
-        "#91d352",
-        "#c74a9f",
-        "#8dd0a6",
-        "#c4483d",
-        "#6ba3bf",
-        "#cba748",
-        "#4b2e4a",
-        "#ae7b66",
-        "#b593c7"
-    ]
+    colors = {
+        "tnt": "#4b6238",
+        "brill": "#7349c0",
+        "crf": "#91d352",
+        "hmm": "#c74a9f",
+        "svmtool": "#8dd0a6",
+        "stanford": "#c4483d",
+        "bilstm_crf": "#6ba3bf",
+        "bilstm_aux": "#cba748",
+        "flair": "#4b2e4a",
+        "meta_tagger": "#ae7b66",
+        "bert_bpemb": "#b593c7"
+    }
 
     for index, (model, accuracy, footprint) in enumerate(sorted_data):
         edge_color, line_width = (("red", 2) if model in models_on_skyline
                                   else ("black", 1))
         axis.scatter(
             footprint, accuracy, label=model, s=150, zorder=5,
-            edgecolors=edge_color, linewidths=line_width, color=colors[index]
+            edgecolors=edge_color, linewidths=line_width, color=colors[model]
         )
+
+    add_margins(axis, 30, acc_metric)
+
+    directions = POS_OFFSETS[plot_id]
 
     for index, (model, accuracy, footprint) in enumerate(sorted_data):
         x, y = axis.transData.transform((footprint, accuracy))
 
         text_1 = f"{PROPER_MODEL_NAMES[model]}"
         if footprint >= 1000:
-            text_2 = f"{footprint:.0f}MB"
+            text_2 = f"{footprint:.0f}KB"
         else:
-            text_2 = f"{footprint:.2f}MB"
+            text_2 = f"{footprint:.2f}KB"
 
         text_3 = f"{accuracy:.4f}"
 
@@ -240,11 +263,11 @@ def plot_data(
         else:
             text_max = len(text_1)
 
-        y -= 14
-        pixel_per_char = 4.5
+        y -= 16
+        pixel_per_char = 4
         x -= (int(text_max) * pixel_per_char) + 1
-        offset_x = (11 + int(text_max) * pixel_per_char)
-        y_gap = 7
+        offset_x = (10 + int(text_max) * pixel_per_char)
+        y_gap = 8
         offset_y_1 = y_gap
         offset_y_3 = -y_gap * 3 
         xy_text = (0, 0)
@@ -279,6 +302,48 @@ def plot_data(
         if len(model) == 5:
             x += 6
 
+        # Nasty plot- and model-specific exceptions to make things look neat.
+        if plot_id == "avg_token_memory" and model == "flair":
+            bbox = None
+
+        elif plot_id == "avg_token_code" and model == "bilstm_crf":
+            bbox = None
+
+        elif plot_id == "avg_token_model":
+            if model == "flair":
+                bbox = None
+            elif model == "bilstm_crf":
+                x -= 4
+
+        elif plot_id == "avg_stanford_token_model":
+            if model == "bilstm_crf":
+                bbox = None
+                x += 10
+            elif model == "crf":
+                bbox = None
+
+        elif plot_id == "avg_token_compressed":
+            if model == "flair":
+                bbox = None
+            elif model in ("bilstm_crf", "svmtool"):
+                x -= 6
+
+        elif plot_id == "avg_sentence_model":
+            if model == "bilstm_crf":
+                x += 10
+
+        elif plot_id == "avg_stanford_sentence_model":
+            if model in ("bilstm_crf", "stanford"):
+                x += 10
+
+        elif plot_id == "avg_sentence_compressed":
+            if model == "bilstm_crf":
+                x += 10
+
+        elif plot_id == "avg_stanford_sentence_compressed":
+            if model in ("bilstm_crf", "stanford"):
+                x += 12
+
         x_1, y_1 = axis.transData.inverted().transform((x, y_1))
         x_2, y_2 = axis.transData.inverted().transform((x, y_2))
         x_3, y_3 = axis.transData.inverted().transform((x, y_3))
@@ -299,7 +364,6 @@ def plot_data(
             x_3 = shift_x
             y_2 = shift_y_2
             y_3 = shift_y_3
-
 
         font_size = 19
 
@@ -352,24 +416,6 @@ def plot_pareto(data, axis):
     axis.plot(points_x, points_y, linestyle=":", linewidth=3, c="red")
     return models_on_skyline, (points_x[0], points_y[0]), (points_x[-1], points_y[-1])
 
-def add_margins(axis, margin):
-    x_limits = axis.get_xlim()
-    y_limits = axis.get_ylim()
-
-    x_min_pixel, y_min_pixel = axis.transData.transform((x_limits[0], y_limits[0]))
-    x_max_pixel, y_max_pixel = axis.transData.transform((x_limits[1], y_limits[1]))
-
-    x_min_pixel -= margin
-    y_min_pixel -= margin
-    x_max_pixel += margin
-    y_max_pixel += margin
-
-    min_x, min_y = axis.transData.inverted().transform((x_min_pixel, y_min_pixel))
-    max_x, max_y = axis.transData.inverted().transform((x_max_pixel, y_max_pixel))
-
-    axis.set_xlim(min_x, max_x)
-    axis.set_ylim(min_y, max_y)
-
 def plot_results(language, acc_metric, size_metric, save_to_file):
     results = load_results()
     fig, axes = plt.subplots(2, 2, sharey=True) if SHARED_PLOT else plt.subplots()
@@ -385,12 +431,11 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
 
         lang_desc = f"{language}_stanford" if INCLUDE_STANFORD else language 
 
-        directions = POS_OFFSETS[f"{lang_desc}_{acc_metric}_{size_metric}"]
+        plot_id = f"{lang_desc}_{acc_metric}_{size_metric}"
         data_for_lang = get_data_for_language(results, language, acc_metric, size_metric)
         sorted_data = sort_data_by_size(data_for_lang, acc_metric, size_metric)
         models_on_skyline, start, end = plot_pareto(sorted_data, ax)
-        plot_data(sorted_data, models_on_skyline, ax, directions, acc_metric, size_metric)
-        add_margins(ax, 40)
+        plot_data(sorted_data, models_on_skyline, ax, plot_id, acc_metric, size_metric)
         ax.plot([start[0], start[0]], [start[1], ax.get_ylim()[0]], linestyle=":", linewidth=3, c="red")
         ax.plot([end[0], ax.get_xlim()[1]], [end[1], end[1]], linestyle=":", linewidth=3, c="red")
 

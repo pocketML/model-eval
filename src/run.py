@@ -7,7 +7,7 @@ from sys import argv
 import platform
 import argparse
 import importlib
-from util import data_archives, online_monitor
+from util import data_archives
 from inference import monitor_inference
 from training import monitor_training, train_imported_model
 
@@ -202,10 +202,6 @@ async def main(args):
                 file_name = f"{language_dir}/{formatted_date}.out"
                 file_pointer = open(file_name, "w")
 
-            if args.online_monitor:
-                total_epochs = args.iter if args.max_iter else None
-                online_monitor.send_train_start(model_name, data_archives.LANGS_FULL[lang], total_epochs)
-
             # Load model immediately if we are only evaluating, or if we are continuing training.
             load_model = (args.eval and not args.train) or (args.reload and args.train)
             tagger = TAGGERS[model_name](args, model_name, load_model)
@@ -290,7 +286,6 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--eval", help="whether to predict & evaluate accuracy using the given model", action="store_true")
     parser.add_argument("-m", "--max-iter", help="where to stop when 'iter' iterations has been run during training", action="store_true")
     parser.add_argument("-g", "--gpu", help="use GPU where possible", action="store_true")
-    parser.add_argument("-om", "--online-monitor", help="send status updates about training to a website", action="store_true")
     parser.add_argument("-c", "--config", type=str, help="path to a config file from which to read in arguments")
 
     args_from_file = None

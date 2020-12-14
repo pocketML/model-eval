@@ -11,7 +11,7 @@ from flair import device
 import torch
 import numpy as np
 from taggers.tagger_wrapper_import import ImportedTagger
-from util import data_archives, online_monitor
+from util import data_archives
 
 class PolyglotEmbeddings(TokenEmbeddings):
     def __init__(self, lang):
@@ -92,8 +92,6 @@ class ListenFilter(logging.Filter):
         elif text.startswith("TEST"):
             split = text.split("score ")
             acc = float(split[1])
-            if self.args.online_monitor:
-                online_monitor.send_train_status(self.curr_epoch, acc)
 
         if self.args.verbose:
             return True
