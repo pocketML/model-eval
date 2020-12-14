@@ -33,26 +33,26 @@ POS_OFFSETS = {
     ],
     "avg_token_memory": [
         NORTH, EAST, EAST, NORTH, EAST, NORTH,
-        SOUTH, NORTH, SOUTH, NORTH
+        SOUTH, NORTH, NORTH, SOUTH
     ],
     "avg_token_code": [
         EAST, NORTH, EAST, EAST, SOUTH, NORTH,
-        SOUTH, SOUTH, NORTH, SOUTH
+        SOUTH, NORTH, SOUTH, EAST
     ],
     "avg_token_model": [
         NORTH, EAST, SOUTH, EAST, SOUTH, WEST,
-        NORTH, SOUTH, SOUTH, NORTH
+        NORTH, SOUTH, NORTH, EAST
     ],
     "avg_token_compressed": [
         SOUTH, EAST, NORTH, EAST, NORTH,
-        WEST, NORTH, SOUTH, SOUTH, NORTH
+        WEST, NORTH, SOUTH, NORTH, EAST
     ],
     "avg_stanford_token_memory": [
         NORTH, EAST, EAST, NORTH, NORTH, SOUTH,
-        NORTH, NORTH, SOUTH, NORTH, SOUTH
+        NORTH, SOUTH, NORTH, NORTH, SOUTH
     ],
     "avg_stanford_token_code": [
-        EAST, NORTH, NORTH, NORTH, SOUTH, NORTH,
+        EAST, NORTH, EAST, EAST, SOUTH, NORTH,
         EAST, SOUTH, NORTH, SOUTH, EAST
     ],
     "avg_stanford_token_model": [
@@ -65,11 +65,11 @@ POS_OFFSETS = {
     ],
     "avg_sentence_memory": [
         NORTH, EAST, EAST, NORTH, EAST, NORTH,
-        NORTH, SOUTH, EAST, NORTH
+        SOUTH, NORTH, EAST, NORTH
     ],
     "avg_sentence_code": [
-        EAST, SOUTH, EAST, EAST, EAST, NORTH,
-        EAST, WEST, SOUTH, NORTH
+        EAST, NORTH, EAST, EAST, EAST, NORTH,
+        EAST, WEST, NORTH, SOUTH
     ],
     "avg_sentence_model": [
         NORTH, EAST, NORTH, NORTH, WEST, WEST,
@@ -77,14 +77,14 @@ POS_OFFSETS = {
     ],
     "avg_sentence_compressed": [
         SOUTH, EAST, NORTH, SOUTH, NORTH,
-        WEST, NORTH, SOUTH, EAST, NORTH
+        WEST, NORTH, SOUTH, NORTH, SOUTH
     ],
     "avg_stanford_sentence_memory": [
         NORTH, EAST, EAST, NORTH, EAST, NORTH,
-        NORTH, NORTH, EAST, SOUTH, NORTH
+        NORTH, SOUTH, NORTH, SOUTH, NORTH
     ],
     "avg_stanford_sentence_code": [
-        EAST, SOUTH, NORTH, NORTH, EAST, NORTH,
+        EAST, NORTH, NORTH, EAST, EAST, NORTH,
         SOUTH, SOUTH, SOUTH, NORTH, SOUTH
     ],
     "avg_stanford_sentence_model": [
@@ -196,7 +196,7 @@ def plot_data(
     legend_text = {
         "token": "Token Accuracy", "sentence": "Sentence Accuracy",
         "memory": "Memory Footprint", "code": "Code Size",
-        "model": "Uncompresse Model Size", "compressed": "Compressed Model Size"
+        "model": "Size of Uncompressed Model Files", "compressed": "Size of Compressed Model Files"
     }
     axis.set_xlabel(f"{legend_text[size_metric]} (MB)", fontsize="medium")
     axis.set_ylabel(legend_text[acc_metric], fontsize="medium")
@@ -274,13 +274,17 @@ def plot_data(
             y_2 += y_gap
             y_3 += y_gap
 
+        bbox = dict(boxstyle="square", fc="1", linewidth=0, pad=0)
+
+        if len(model) == 5:
+            x += 6
+
         x_1, y_1 = axis.transData.inverted().transform((x, y_1))
         x_2, y_2 = axis.transData.inverted().transform((x, y_2))
         x_3, y_3 = axis.transData.inverted().transform((x, y_3))
 
         if x_3 < axis.get_xlim()[0]:
             x_3 = axis.get_xlim()[0]
-
 
         if directions[index] == ARROW_SOUTH:
             # Our text wont fit. Draw text elsewhere and draw an arrow pointing to it.
@@ -296,7 +300,6 @@ def plot_data(
             y_2 = shift_y_2
             y_3 = shift_y_3
 
-        bbox = dict(boxstyle="square", fc="1", linewidth=0, pad=0)
 
         font_size = 19
 
@@ -399,6 +402,8 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
 
     fig_w, fig_h = 12, 7
     fig.set_size_inches(fig_w, fig_h)
+
+    plt.tight_layout()
 
     if save_to_file:
         lang_desc = language
