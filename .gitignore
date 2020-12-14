@@ -9,7 +9,7 @@ models/*
 results/*
 results_backup/*
 config*
-plot_data/*
+statistics/*
 plots/*
 plots_backup/*
 

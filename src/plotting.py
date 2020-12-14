@@ -1,12 +1,12 @@
 from glob import glob
-from os import path
+import os
 import argparse
 import math
 import matplotlib.pyplot as plt
 font = {'size': 24}
 
 plt.rc('font', **font)
-from util.data_archives import LANGS_FULL, LANGS_ISO, get_default_treebank
+from util.data_archives import LANGS_FULL, LANGS_ISO
 
 SOUTH = 0
 EAST = 1
@@ -124,10 +124,10 @@ def load_results():
     model_folders = glob("results/*")
     mapped_data = {}
     for model_folder in model_folders:
-        model_name = path.split(model_folder)[1]
+        model_name = os.path.split(model_folder)[1]
         language_folders = glob(f"{model_folder}/*")
         for language_folder in language_folders:
-            language_name = path.split(language_folder)[1].split("_")[0]
+            language_name = os.path.split(language_folder)[1].split("_")[0]
             if language_name not in mapped_data:
                 mapped_data[language_name] = {}
 
@@ -455,6 +455,10 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
         avg_desc = ""
         if language == "avg":
             avg_desc = "_with_stanford" if INCLUDE_STANFORD else "_all"
+
+        if not os.path.exists("plots"):
+            os.mkdir("plots")
+
         filename = f"plots/{lang_desc}-{acc_metric}_{size_metric}{avg_desc}.png"
         plt.savefig(filename)
         print(f"Saved image of plot to {filename}.")

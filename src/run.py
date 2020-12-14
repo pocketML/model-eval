@@ -19,7 +19,6 @@ TAGGERS = { # Entries are: model_name -> (module_name, class_name)
     "stanford": ("stanford", "Stanford"),
     "tnt": ("nltk_tnt", "TnT"),
     "brill": ("nltk_brill", "Brill"),
-    "crf": ("nltk_crf", "CRF"),
     "hmm": ("nltk_hmm", "HMM"),
     "meta_tagger": ("meta_tagger", "METATAGGER"),
     "flair": ("flair_pos", "Flair"),
@@ -37,8 +36,7 @@ TAGGER_NAME_TRANSLATION = {
     "hmm"               : "hmm",
     "meta-bilstm"       : "meta_tagger",
     "flair"             : "flair",
-    "bert-bpemb"        : "bert_bpemb",
-    "crf"               : "crf",
+    "bert-bpemb"        : "bert_bpemb"
 }
 
 def import_taggers(model_names):

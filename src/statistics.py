@@ -1,5 +1,5 @@
 from glob import glob
-from os import path
+import os
 from util import data_archives
 
 def find_value(lines, key):
@@ -18,16 +18,18 @@ SORT_ORDER_LANG = [
     "am", "da", "en", "ar", "hi", "zh", "ru", "es", "tr", "vi"
 ]
 
+OUTPUT_FOLDER = "statistics"
+
 def load_results():
     model_folders = glob("results/*")
     data = []
     for model_folder in model_folders:
-        model_name = path.split(model_folder)[1]
+        model_name = os.path.split(model_folder)[1]
         language_folders = glob(f"{model_folder}/*")
         language_data = []
         language_names = []
         for language_folder in language_folders:
-            language_name = path.split(language_folder)[1].split("_")[0]
+            language_name = os.path.split(language_folder)[1].split("_")[0]
 
             filename = glob(f"{language_folder}/*")[-1]
             with open(filename, "r") as fp:
@@ -91,9 +93,9 @@ def save_acc_measurements():
     langs = reshape_data(data)
 
     for key in ("token", "sentence"):
-        accuracies = {m: [] for m in SORT_ORDER_MODEL}
-        with open(f"plot_data/formatted_accuracy_{key}.txt", "w", encoding="utf-8") as fp:
-            for lang, model_data in langs:
+        accuracies = {m: [] for m, _ in data}
+        with open(f"{OUTPUT_FOLDER}/formatted_accuracy_{key}.txt", "w", encoding="utf-8") as fp:
+            for _, model_data in langs:
                 for model, data_dict in model_data:
                     acc = data_dict[key]
                     formatted = acc
@@ -120,9 +122,9 @@ def save_size_measurements():
 
     model_sizes = []
     for key in ("memory", "code", "model", "compressed"):
-        model_size = {m: [] for m in SORT_ORDER_MODEL}
+        model_size = {m: [] for m, _ in data}
 
-        with open(f"plot_data/formatted_size_{key}.txt", "w", encoding="utf-8") as fp:
+        with open(f"{OUTPUT_FOLDER}/formatted_size_{key}.txt", "w", encoding="utf-8") as fp:
             for lang, model_data in langs:
                 for model, data_dict in model_data:
                     size = data_dict[key]
@@ -138,7 +140,7 @@ def save_size_measurements():
         model_sizes.append(model_size)
 
     reformatted = []
-    for model_name in SORT_ORDER_MODEL:
+    for model_name, _ in data:
         model_list = []
         for metric_data in model_sizes:
             for model_data in metric_data:
@@ -150,24 +152,24 @@ def save_size_measurements():
                     model_list.append(formatted)
         reformatted.append(model_list)
 
-    with open(f"plot_data/formatted_size_avg.txt", "w", encoding="utf-8") as fp:
+    with open(f"{OUTPUT_FOLDER}/formatted_size_avg.txt", "w", encoding="utf-8") as fp:
         for model_data in reformatted:
             for metric_data in model_data:
                 fp.write(f"{metric_data}\t")
             fp.write("\n")
 
 def get_sentences(lang, treebank, dataset_type):
-        data_path = data_archives.get_dataset_path(lang, treebank, dataset_type)
-        data = open(data_path, "r", encoding="utf-8").readlines()
-        sentences = []
-        curr_sentences = []
-        for line in data:
-            if line.strip() == "":
-                sentences.append(curr_sentences)
-                curr_sentences = []
-            else:
-                curr_sentences.append(line.split("\t")[0])
-        return sentences
+    data_path = data_archives.get_dataset_path(lang, treebank, dataset_type)
+    data = open(data_path, "r", encoding="utf-8").readlines()
+    sentences = []
+    curr_sentences = []
+    for line in data:
+        if line.strip() == "":
+            sentences.append(curr_sentences)
+            curr_sentences = []
+        else:
+            curr_sentences.append(line.split("\t")[0])
+    return sentences
 
 def flatten(arr):
     flattened = []
@@ -176,8 +178,13 @@ def flatten(arr):
     return flattened
 
 def save_dataset_stats():
-    with open("plot_data/formatted_dataset_stats.txt", "w", encoding="utf-8") as fp:
+    with open(f"{OUTPUT_FOLDER}/formatted_dataset_stats.txt", "w", encoding="utf-8") as fp:
         for lang in SORT_ORDER_LANG:
+            language_full = data_archives.LANGS_FULL[lang]
+            if not data_archives.archive_exists("data", language_full):
+                data_archives.download_and_unpack("data", language_full)
+                data_archives.transform_dataset(language_full)
+
             treebank = data_archives.get_default_treebank(lang)
 
             train_sentence_list = get_sentences(lang, treebank, "train")
@@ -201,8 +208,6 @@ def save_dataset_stats():
             total_sentences = train_sentences + test_sentences + dev_sentences
             total_tokens = train_tokens + test_tokens + dev_tokens
 
-            train_set = set(train_token_list)
-
             embeddings, dims = data_archives.load_embeddings(lang)
             train_not_in_emb = (len(set(train_token_list) - set(embeddings)) / unique_train_tokens) * 100
             test_not_in_emb = (len(set(test_token_list) - set(embeddings)) / unique_test_tokens) * 100
@@ -215,5 +220,9 @@ def save_dataset_stats():
             fp.write(line)
 
 if __name__ == "__main__":
+    if not os.path.exists(OUTPUT_FOLDER):
+        os.mkdir(OUTPUT_FOLDER)
+
     save_size_measurements()
     save_acc_measurements()
+    save_dataset_stats()
