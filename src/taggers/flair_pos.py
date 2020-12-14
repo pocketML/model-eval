@@ -122,14 +122,13 @@ class Flair(ImportedTagger):
             self.model.tag_dictionary = dictionary
 
     def get_embeddings(self):
-        if self.args.lang in self.embeds_unsupported_langs:
-            return PolyglotEmbeddings(self.args.lang)
-
         embeddings = [
             PolyglotEmbeddings(self.args.lang),
-            WordEmbeddings(self.args.lang),
             CharacterEmbeddings()
         ]
+        if not self.args.lang in self.embeds_unsupported_langs:
+            embeddings.append(WordEmbeddings(self.args.lang))
+
         return StackedEmbeddings(embeddings=embeddings)
 
     def train(self, train_data):
@@ -181,17 +180,6 @@ class Flair(ImportedTagger):
     def code_size(self):
         torch_lib_size = 999081514 # 1.91 GB
         return super().code_size() + torch_lib_size
-
-    def necessary_model_files(self):
-        necessary_files = [data_archives.get_embeddings_path(self.args.lang)]
-
-        if self.args.lang not in self.embeds_unsupported_langs:
-            flair_emb_path = Path.home() / '.flair' / 'embeddings'
-            glob_files = flair_emb_path.glob(f"{self.args.lang}-*")
-            for emb_file in glob_files:
-                necessary_files.append(emb_file)
-
-        return super().necessary_model_files() + necessary_files
 
     def __getstate__(self):
         return (self.args, self.model_name)
