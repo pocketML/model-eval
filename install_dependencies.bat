@@ -36,4 +36,17 @@ Rem CRF
 conda install python-crfsuite
 
 Rem Meta Tagger
+conda install cudatoolkit=10.1
+conda install cudnn=7.6.4
 conda install tensorflow
+
+Rem bert_bpemb
+conda install pytorch torchvision torchaudio cudatoolkit=10.1 -c pytorch
+pip install transformers
+pip install numpy
+pip install bpemb
+conda install joblib
+pip install conllu
+pip install boltons
+conda install pandas
+pip install git+https://github.com/bheinzerling/dougu.git
