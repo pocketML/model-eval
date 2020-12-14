@@ -26,6 +26,21 @@ TAGGERS = { # Entries are: model_name -> (module_name, class_name)
     "bert_bpemb": ("bert_bpemb", "BERT_BPEMB")
 }
 
+# make sure that the name convention from the report can be translated into the one in the code
+TAGGER_NAME_TRANSLATION = {
+    "bilstm-plank"      : "bilstm_aux",
+    "bilstm-yasunaga"   : "bilstm_crf",
+    "svmtool"           : "svmtool",
+    "stanford-tagger"   : "stanford",
+    "tnt"               : "tnt",
+    "brill"             : "brill",
+    "hmm"               : "hmm",
+    "meta-bilstm"       : "meta_tagger",
+    "flair"             : "flair",
+    "bert-bpemb"        : "bert_bpemb",
+    "crf"               : "crf",
+}
+
 def import_taggers(model_names):
     for model_name in model_names:
         print(f"Dynamically importing tagger class '{model_name}'...")
@@ -143,8 +158,15 @@ async def main(args):
     actions = "Eval" if args.eval else ("Train" if args.train else "Eval & Train")
     print(f"{actions} with models: {args.model_names} on languages: {args.langs}")
 
-    models_to_run = (TAGGERS.keys()
-                     if args.model_names == ["all"] else args.model_names)
+    if args.model_names == ["all"]:
+        models_to_run = TAGGERS.keys()
+    else:
+        models_to_run = []
+        for name in args.model_names:
+            try:
+                models_to_run.append(TAGGER_NAME_TRANSLATION[name])
+            except KeyError:
+                print(f'{name} is not a valid tagger!')
 
     import_taggers(models_to_run)
 
@@ -248,7 +270,7 @@ async def main(args):
                 print(f"Wrote results of run to '{file_name}'")
                 file_pointer.close()
 
-if __name__ == "__main__":
+def print_logo():
     logo_str = (
         "***********************************************************************************\n"
         "***********************************************************************************\n"
@@ -259,21 +281,24 @@ if __name__ == "__main__":
         "***  █|    █| █|    █| █|       █|  █|  █|         █|      █|      █| █|        ***\n"
         "***  █████|     ███|     █████| █|    █|  █████|     ███|  █|      █| ███████|  ***\n"
         "***  █|                                                                         ***\n"
-        "***  █|                                                                         ***\n"
+        "***  █|          ★·.·`¯´·._pos_tagger_evaluation_tool_.·´¯`·.·★                ***\n"
         "***                                                                             ***\n"
         "***********************************************************************************\n"
         "***********************************************************************************\n"
     )
     print(logo_str)
 
-    parser = argparse.ArgumentParser(description="Evaluation of various state of the art POS taggers, on the UD dataset")
+if __name__ == "__main__":
+    print_logo()
+
+    parser = argparse.ArgumentParser(description="Evaluation of various POS taggers on UD datasets")
 
     # required arguments (positionals)
-    choices_models = list(TAGGERS.keys()) + ["all"]
+    choices_models = list(TAGGER_NAME_TRANSLATION.keys()) + ["all"]
     parser.add_argument("model_names", type=str, choices=choices_models, nargs="+", help="name of the model to run")
 
-    choices_langs = list(data_archives.LANGS_FULL.keys()) + ["all"]
     # optional arguments
+    choices_langs = list(data_archives.LANGS_FULL.keys()) + ["all"]
     parser.add_argument("-tg", "--tag", nargs="+", default=[])
     parser.add_argument("-l", "--langs", type=str, choices=choices_langs, nargs="+", default=["en"], help="choose dataset language(s). Default is English.")
     parser.add_argument("-i", "--iter", type=int, default=10, help="number of training iterations. Default is 10.")
