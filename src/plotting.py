@@ -14,22 +14,6 @@ NORTH = 2
 WEST = 3
 ARROW_SOUTH = 4
 POS_OFFSETS = {
-    "en_token_memory": [
-        NORTH, WEST, WEST, EAST, EAST, NORTH,
-        WEST, WEST, SOUTH, EAST, SOUTH
-    ],
-    "en_token_code": [
-        EAST, NORTH, EAST, EAST, SOUTH, SOUTH,
-        NORTH, WEST, SOUTH, SOUTH, SOUTH
-    ],
-    "en_token_model": [
-        NORTH, EAST, NORTH, EAST, WEST, SOUTH,
-        WEST, NORTH, SOUTH, WEST, SOUTH
-    ],
-    "en_token_compressed": [
-        SOUTH, EAST, NORTH, EAST, WEST, NORTH,
-        WEST, NORTH, SOUTH, EAST, SOUTH
-    ],
     "avg_token_memory": [
         WEST, SOUTH, NORTH, EAST, WEST,
         NORTH, SOUTH, SOUTH, NORTH

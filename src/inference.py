@@ -3,6 +3,9 @@ import platform
 import asyncio
 
 def get_memory_snapshot(pid):
+    """
+    Grab a snapshot of how much memory the inference process is currently using.
+    """
     if platform.system() == "Windows":
         cmd = f"tasklist /fi \"pid eq {pid}\" | findstr \" K$"
     else:
@@ -62,4 +65,5 @@ async def monitor_inference(model, process):
     compressed_size = model.compressed_model_size() // 1000
 
     print("Prediction/inference completed.")
+    # Return all our different size measurements.
     return max(memory_footprints), code_size, model_size, compressed_size

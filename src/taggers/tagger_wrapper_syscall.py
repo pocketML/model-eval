@@ -2,6 +2,11 @@ from abc import abstractmethod
 from taggers.tagger_wrapper import Tagger
 
 class SysCallTagger(Tagger):
+    """
+    This is the base class for all taggers that reside in external files/programs.
+    This includes:
+    bilstm-plank, bilstm-yasanuga, svmtool, stanford-tagger, meta-bilstm, and bert-bpemb.
+    """
     IS_IMPORTED = False
 
     def __init__(self, args, model_name, load_model=False, simplified_dataset=True, simplified_eos_dataset=False):
@@ -9,8 +14,11 @@ class SysCallTagger(Tagger):
         self.epoch = 0
 
     def read_stdout(self, process_handler):
+        """
+        Read training progress by parsing stdout, from a given subprocess.
+        """
         if process_handler.poll() is not None:
-            return None
+            return None # Training process has terminated.
         data = process_handler.stdout.readline()
         text = data.decode("utf-8")
         if self.args.verbose and text.strip() != '':
@@ -21,6 +29,13 @@ class SysCallTagger(Tagger):
         return process_handler.poll() is not None
 
     def evaluate(self, ext=""):
+        """
+        Before this method is called, the given tagger being evaluated will have outputted its
+        predictions to a file. This method then runs through that file, and outputs 
+        sentence and token accuracy of the tagger's predictions.
+        Individual taggers can override this method, if the predictions they output are
+        formatted differently, than what this method expects.
+        """
         total = 0
         correct = 0
         curr_sent_correct = 0

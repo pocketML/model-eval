@@ -5,6 +5,10 @@ import shutil
 import os
 
 class Tagger(ABC):
+    """
+    This is the base class for all POS taggers. Utility functions for various things
+    such as paths to trained models and methods for compressing trained models are found here.
+    """
     def __init__(self, args, model_name, simplified_dataset=True, simplified_eos_dataset=False):
         self.args = args
         self.model_name = model_name
@@ -17,6 +21,11 @@ class Tagger(ABC):
         self.best_compression_method = "xztar"
 
     def create_model_folder(self):
+        """
+        Recursively create folders for the trained model.
+        (This was done before we knew 'os.makedirs()' was a thing.
+        This does exactly what that does...)
+        """
         cwd = os.getcwd().replace("\\", "/")
         path = f"{cwd}/{self.model_base_path()}"
         split = path.split("/")

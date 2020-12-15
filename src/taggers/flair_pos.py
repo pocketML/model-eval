@@ -1,6 +1,5 @@
 from functools import lru_cache
 import logging
-from pathlib import Path
 import re
 from flair.data import Sentence
 from flair.models import SequenceTagger
@@ -14,6 +13,10 @@ from taggers.tagger_wrapper_import import ImportedTagger
 from util import data_archives
 
 class PolyglotEmbeddings(TokenEmbeddings):
+    """
+    Custom class for Polyglot Embeddings to conform to
+    Flairs expected type of embeddings.
+    """
     def __init__(self, lang):
         self.embeddings = "polyglot"
         self.name = self.embeddings
@@ -154,7 +157,7 @@ class Flair(ImportedTagger):
             test_file = data_paths[1].split("/")[-1]
             dev_file = data_paths[2].split("/")[-1]
             return (path_only, train_file, test_file, dev_file)
-        else: # Return actual data (not paths to data) when evaluating.
+        else: # Use Flairs built-in DataLoader when loading test data.
             sentences = []
             for batch in DataLoader(self.corpus.test, 32, 8):
                 for sentence in batch:

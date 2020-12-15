@@ -7,6 +7,10 @@ from loadbar import Loadbar
 from util.code_size import get_code_size
 
 class ImportedTagger(Tagger):
+    """
+    This is the base class for all taggers that are imported into Python.
+    This includes all NLTK models and Flair.
+    """
     IS_IMPORTED = True
 
     def __init__(self, args, model_name, load_model=False):
@@ -19,6 +23,12 @@ class ImportedTagger(Tagger):
                 print(f"Error: No trained model for '{self.model_name}' exists!")
     
     def evaluate(self, test_data, pipe):
+        """
+        Run through all words/tags in sentences in 'test_data' and evaluate
+        accuracy compared to the predictions of whatever tagger virtually calls this method.
+        Since this method is run in a seperate process (to monitor memory usage),
+        results for token and sentence accuracy is sent back to the main process through the 'pipe'.
+        """
         if self.args.loadbar:
             loadbar = Loadbar(50, len(test_data), f"Evaluating '{self.model_name}'")
             loadbar.print_bar()
@@ -77,6 +87,10 @@ class ImportedTagger(Tagger):
             self.model = pickle.load(fp)
 
     def format_data(self, dataset_type):
+        """
+        Read and format a dataset of 'dataset_type' into a list
+        of sentences of tuples of (word, tag) pairs.
+        """
         data_path = data_archives.get_dataset_path(self.args.lang,
                                                    self.args.treebank,
                                                    dataset_type)

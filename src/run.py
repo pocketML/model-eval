@@ -40,6 +40,11 @@ TAGGER_NAME_TRANSLATION = {
 }
 
 def import_taggers(model_names):
+    """
+    Dynamically import all taggers in the given list.
+    This is done to avoid importing 'heavy' libraries like
+    TensorFlow and PyTorch, when they are not needed.
+    """
     for model_name in model_names:
         print(f"Dynamically importing tagger class '{model_name}'...")
         module_name, class_name = TAGGERS[model_name]
@@ -47,6 +52,12 @@ def import_taggers(model_names):
         TAGGERS[model_name] = module.__dict__[class_name]
 
 def insert_arg_values(cmd, tagger, args):
+    """
+    Inserts values from 'args' into a command line string.
+    The command string is the command line call needed to train or evaluate a given tagger.
+    This string contains placeholders such as [lang] where for example the language
+    being trained on will be inserted.
+    """
     if (reload_str := tagger.reload_string()) is None or (args.train and not args.reload):
         reload_str = ""
     replacements = [
@@ -70,12 +81,18 @@ def insert_arg_values(cmd, tagger, args):
     return replaced.strip()
 
 def system_call(cmd, cwd, script_location):
+    """
+    Perform a system call using the given command in 'cmd'.
+    This is done when doing training or inference on taggers that are not
+    directly imported into Python.
+    """
     if platform.system() == "Windows" and cmd.startswith("bash"):
+        # This is done when using the Linux Subsystem for Windows (when running SVMTool).
         split = cwd.replace(" ", "\ ").split("/")
         cwd = "/mnt/" + split[0][:-1].lower() + "/" + "/".join(split[1:])
 
     stderr_reroute = subprocess.STDOUT
-    if "[stderr_" in cmd:
+    if "[stderr_" in cmd: # Redirect stderr to a file.
         index = cmd.index("[stderr_")
         end_stderr = index + cmd[index:].index("]")
         len_file = int(cmd[index + len("[stderr_"):end_stderr])
@@ -84,7 +101,7 @@ def system_call(cmd, cwd, script_location):
         cmd = cmd[:index-1] + cmd[end_stderr + 2 + len_file:]
 
     stdout_reroute = subprocess.PIPE
-    if "[stdout_" in cmd:
+    if "[stdout_" in cmd: # Redirect stdout to a file.
         index = cmd.index("[stdout_")
         end_stdout = index + cmd[index:].index("]")
         len_file = int(cmd[index + len("[stdout_"):end_stdout])
@@ -94,23 +111,32 @@ def system_call(cmd, cwd, script_location):
 
     script_path = f"{cwd}/{script_location}"
     if platform.system() == "Windows":
-        script_path = f"\"{script_path}\"" 
+        script_path = f"\"{script_path}\"" # Add quotes around paths for safety.
+
+    # Insert the full path to the training scripts of the tagger.
     cmd_full = cmd.replace("[script_path_train]", script_path)
+    # Insert the full path to the prediction scripts of the tagger.
     cmd_full = cmd_full.replace("[script_path_test]", script_path)
 
     if platform.system() == "Windows" and not cmd.startswith("bash"):
         cmd_full = cmd_full.replace("/", "\\")
+
     print(f"Running {cmd_full}")
 
     if platform.system() != "Windows":
-        cmd_full = cmd_full.split(" ")
+        cmd_full = cmd_full.split(" ") # This is some strange stuff wtih subprocesses.
 
+    # Open a subprocess where the system call runs. This allows for monitoring of output.
     process = subprocess.Popen(cmd_full, stdout=stdout_reroute, stderr=stderr_reroute)
     return process
 
 async def run_with_sys_call(args, tagger_helper, model_name, file_pointer):
-    call_train = tagger_helper.train_string()
-    call_infer = tagger_helper.predict_string()
+    """
+    This method is used when running an external tagger
+    (as opposed to one being imported from f.x. NLTK).
+    """
+    call_train = tagger_helper.train_string() # Get training command string.
+    call_infer = tagger_helper.predict_string() # Get prediction command string.
 
     cwd = os.getcwd().replace("\\", "/")
 
@@ -126,10 +152,17 @@ async def run_with_sys_call(args, tagger_helper, model_name, file_pointer):
             call_infer = insert_arg_values(call_infer, tagger_helper, args)
             process = system_call(call_infer, cwd, tagger_helper.script_path_test())
             model_footprint = await monitor_inference(tagger_helper, process)
+
+        # Evaluate how accurate the prediction of the tagger was.
         final_acc = tagger_helper.evaluate()
+
     return final_acc, model_footprint
 
 async def run_with_imported_model(args, tagger, model_name):
+    """
+    This method is used when running an imported tagger,
+    this includes the NLTK taggers and Flair.
+    """
     final_acc = (0, 0)
     if args.train: # Train model.
         print(f"Training imported model: '{model_name}'")
@@ -157,7 +190,7 @@ async def main(args):
     print(f"{actions} with models: {args.model_names} on languages: {args.langs}")
 
     if args.model_names == ["all"]:
-        models_to_run = TAGGERS.keys()
+        models_to_run = TAGGERS.keys() # Run training/inference on all models.
     else:
         models_to_run = []
         for name in args.model_names:
@@ -166,7 +199,7 @@ async def main(args):
             except KeyError:
                 print(f'{name} is not a valid tagger!')
 
-    import_taggers(models_to_run)
+    import_taggers(models_to_run) # Dynamically import all needed taggers.
 
     for model_name in models_to_run:
         if not TAGGERS[model_name].IS_IMPORTED:
@@ -184,7 +217,8 @@ async def main(args):
             data_archives.transform_dataset(language_full)
         treebanks.append(data_archives.get_default_treebank(lang))
 
-    if not args.train and not args.eval: # Do both training and inference.
+    # If neither training or inference has been specified, we do both.
+    if not args.train and not args.eval:
         args.train = True
         args.eval = True
 
@@ -207,7 +241,7 @@ async def main(args):
             )
             file_pointer = None
             file_name = None
-            if args.save_results:
+            if args.save_results: # Save results of runs to a file.
                 if not os.path.exists("results"):
                     os.mkdir("results")
                 formatted_date = datetime.now().strftime("%Y-%m-%d_%H.%M")
@@ -224,7 +258,7 @@ async def main(args):
 
             # Load model immediately if we are only evaluating, or if we are continuing training.
             load_model = (args.eval and not args.train) or (args.reload and args.train)
-            tagger = TAGGERS[model_name](args, model_name, load_model)
+            tagger = TAGGERS[model_name](args, model_name, load_model) # Create tagger helper class.
 
             print(f"Tagger code size: {tagger.code_size() // 1000} KB")
             if load_model:
@@ -291,11 +325,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Evaluation of various POS taggers on UD datasets")
 
-    # required arguments (positionals)
+    # Required arguments (positionals)
     choices_models = list(TAGGER_NAME_TRANSLATION.keys()) + ["all"]
     parser.add_argument("model_names", type=str, choices=choices_models, nargs="+", help="name of the model to run")
 
-    # optional arguments
+    # Optional arguments
     choices_langs = list(data_archives.LANGS_FULL.keys()) + ["all"]
     parser.add_argument("-tg", "--tag", nargs="+", default=[])
     parser.add_argument("-l", "--langs", type=str, choices=choices_langs, nargs="+", default=["en"], help="choose dataset language(s). Default is English.")
@@ -313,6 +347,7 @@ if __name__ == "__main__":
 
     args_from_file = None
     if len(argv) == 3 and argv[1] in ("-c", "--config"):
+        # Load command line arguments from a config file.
         with open(argv[2]) as fp:
             args_from_file = fp.readline().split(None)
 

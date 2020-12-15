@@ -51,6 +51,12 @@ LANGS_ISO = { # Map from language ISO code or name -> Language ISO code
 }
 
 def download_and_unpack(archive_type, archive):
+    """
+    Download a zip archive, containing either a tagger or a dataset.
+    Saves the arcive to:
+    - models/[model_name] for models.
+    - data/[language_name] for datasets.
+    """
     url = f"https://magnusjacobsen.com/projects/pocketml/{archive_type}/{archive}.tgz"
     response = requests.get(url)
 
@@ -96,6 +102,14 @@ def get_dataset_folder_path(lang, treebank, simplified=True, eos=False):
     return dataset_path
 
 def get_dataset_path(lang, treebank, dataset_type=None, simplified=True, eos=False):
+    """
+    Find and return the full path to a dataset for the given language and treebank.
+    'dataset_type' can be train, test, or dev.
+    'simplfiied' indicates whether to return original UD dataset, or simplified set with
+    only (word, tag) pairs.
+    'eos' indicates whether to return simplified dataset, where sentences are guaranteed
+    to be terminated by a punctuation character.
+    """
     dataset_path = get_dataset_folder_path(lang, treebank, simplified=simplified, eos=eos)
     glob_str = f"-{dataset_type}" if dataset_type is not None else ""
     paths = glob(f"{dataset_path}/*{glob_str}.conllu")
@@ -117,6 +131,11 @@ def get_dataset_path(lang, treebank, dataset_type=None, simplified=True, eos=Fal
     return paths[0] if len(paths) == 1 else paths
 
 def tagset_mapping(lang, treebank, dataset_type, from_complex=True):
+    """
+    Return a dictionary mapping XPOS tags to UPOS tags,
+    for a dataset with the given type and language,
+    or the other way around if 'from_complex' is false.
+    """
     tag_mapping = {}
     dataset_full = get_dataset_path(lang, treebank, dataset_type, False)
     with open(dataset_full, "r", encoding="utf-8") as fp:
@@ -136,10 +155,16 @@ def tagset_mapping(lang, treebank, dataset_type, from_complex=True):
     return tag_mapping
 
 def get_embeddings_path(lang):
+    """
+    Get path of polyglot embeddings for a given language.
+    """
     language = LANGS_FULL[lang]
     return f"data/{language}/embeddings/polyglot-{lang}.pkl"
 
 def load_embeddings(lang):
+    """
+    Read polyglot embeddings and return embeddings as a dictionary.
+    """
     content = open(get_embeddings_path(lang), "rb").read()
     words, vecs = pickle.loads(content, encoding="latin1")
     emb_dict = {}
@@ -148,6 +173,10 @@ def load_embeddings(lang):
     return emb_dict, len(vecs[0])
 
 def transform_data(dataset):
+    """
+    Transform a dataset from full XPOS tagset to a simplified set
+    containing just word and tag pairs.
+    """
     tags_train_in = glob(f"{dataset}/*ud-train.conllu")[0]
     tags_test_in = glob(f"{dataset}/*ud-test.conllu")[0]
     tags_dev_in = glob(f"{dataset}/*ud-dev.conllu")[0]

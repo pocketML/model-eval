@@ -8,6 +8,9 @@ COMPRESSION_EXTS = {
 }
 
 def shannon_entropy(*filenames):
+    """
+    Calculate Shannon Entropy for a variable set of files.
+    """
     total_length = 0
     counts = [0] * 256
     entropy = 0.0
