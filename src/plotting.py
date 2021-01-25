@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 font = {'size': 24}
 
 plt.rc('font', **font)
+from adjustText import adjust_text
 from util.data_archives import LANGS_FULL, LANGS_ISO
 
 SOUTH = 0
@@ -13,73 +14,6 @@ EAST = 1
 NORTH = 2
 WEST = 3
 ARROW_SOUTH = 4
-POS_OFFSETS = {
-    "avg_token_memory": [
-        WEST, SOUTH, NORTH, EAST, WEST,
-        NORTH, SOUTH, SOUTH, NORTH
-    ],
-    "avg_token_code": [
-        EAST, NORTH, EAST, EAST, SOUTH, NORTH,
-        SOUTH, NORTH, SOUTH, EAST
-    ],
-    "avg_token_model": [
-        NORTH, EAST, EAST, SOUTH, WEST,
-        NORTH, SOUTH, NORTH, EAST
-    ],
-    "avg_token_compressed": [
-        WEST, EAST, NORTH, WEST,
-        WEST, NORTH, SOUTH, NORTH, EAST
-    ],
-    "avg_stanford_token_memory": [
-        NORTH, SOUTH, NORTH, NORTH, SOUTH,
-        NORTH, SOUTH, NORTH, NORTH, SOUTH
-    ],
-    "avg_stanford_token_code": [
-        EAST, NORTH, EAST, EAST, SOUTH, NORTH,
-        EAST, SOUTH, NORTH, SOUTH, EAST
-    ],
-    "avg_stanford_token_model": [
-        NORTH, SOUTH, SOUTH, EAST, WEST, SOUTH,
-        WEST, NORTH, SOUTH, NORTH, SOUTH
-    ],
-    "avg_stanford_token_compressed": [
-        SOUTH, SOUTH, NORTH, EAST, NORTH, SOUTH,
-        NORTH, WEST, SOUTH, NORTH, EAST
-    ],
-    "avg_sentence_memory": [
-        NORTH, SOUTH, NORTH, EAST, NORTH,
-        SOUTH, NORTH, EAST, NORTH
-    ],
-    "avg_sentence_code": [
-        EAST, NORTH, EAST, EAST, EAST, NORTH,
-        EAST, WEST, NORTH, SOUTH
-    ],
-    "avg_sentence_model": [
-        NORTH, EAST, NORTH, NORTH, WEST, WEST,
-        NORTH, SOUTH, SOUTH, NORTH
-    ],
-    "avg_sentence_compressed": [
-        WEST, EAST, NORTH, NORTH,
-        WEST, NORTH, SOUTH, NORTH, SOUTH
-    ],
-    "avg_stanford_sentence_memory": [
-        NORTH, EAST, EAST, NORTH, EAST, NORTH,
-        NORTH, SOUTH, NORTH, SOUTH, NORTH
-    ],
-    "avg_stanford_sentence_code": [
-        EAST, NORTH, NORTH, EAST, EAST, NORTH,
-        SOUTH, SOUTH, SOUTH, NORTH, SOUTH
-    ],
-    "avg_stanford_sentence_model": [
-        NORTH, EAST, NORTH, EAST, EAST, WEST,
-        WEST, NORTH, SOUTH, NORTH, SOUTH
-    ],
-    "avg_stanford_sentence_compressed": [
-        SOUTH, SOUTH, NORTH, EAST, EAST, WEST,
-        WEST, NORTH, SOUTH, WEST, NORTH
-    ]
-}
-
 ANNOTATE_VALUES = False
 SHARED_PLOT = False
 INCLUDE_STANFORD = False
@@ -118,7 +52,7 @@ def load_results():
             filename = glob(f"{language_folder}/*")[-1]
             with open(filename, "r") as fp:
                 lines = fp.readlines()
-                token_acc = find_value(lines, "Final token acc")
+                token_acc = float(find_value(lines, "Final token acc"))
                 sentence_acc = find_value(lines, "Final sentence acc")
                 memory_footprint = find_value(lines, "Memory usage")
                 code_size = find_value(lines, "Code size")
@@ -193,7 +127,7 @@ def add_margins(axis, margin, acc_metric):
     axis.set_ylim(min_y, max_y)
 
 def plot_data(
-        sorted_data, models_on_skyline, axis, plot_id,
+        sorted_data, models_on_skyline, lines, axis, plot_id,
         acc_metric="token", size_metric="memory"
 ):
     legend_text = {
@@ -228,155 +162,24 @@ def plot_data(
 
     add_margins(axis, 30, acc_metric)
 
-    directions = POS_OFFSETS[plot_id]
-
+    texts = []
+    x_values = []
+    y_values = []
     for index, (model, accuracy, footprint) in enumerate(sorted_data):
-        x, y = axis.transData.transform((footprint, accuracy))
-
+        x, y = footprint, accuracy
         text_1 = f"{PROPER_MODEL_NAMES[model]}"
-        if footprint >= 1000:
-            text_2 = f"{footprint:.0f}KB"
-        else:
-            text_2 = f"{footprint:.2f}KB"
-
-        text_3 = f"{accuracy:.4f}"
-
-        # Define offsets.
-        if ANNOTATE_VALUES:
-            text_max = max(len(text_1), len(text_2), len(text_3))
-        else:
-            text_max = len(text_1)
-
-        y -= 16
-        pixel_per_char = 4
-        x -= (int(text_max) * pixel_per_char) + 1
-        offset_x = (10 + int(text_max) * pixel_per_char)
-        y_gap = 8
-        offset_y_1 = y_gap
-        offset_y_3 = -y_gap * 3 
-        xy_text = (0, 0)
-        arrow_props = None
-
-        # Center x and y on the data points (roughly).
-        y_1 = y - offset_y_1
-        y_2 = y
-        y_3 = y - offset_y_3
-
-        if directions[index] == SOUTH: # Write text below data points.
-            y_1 -= offset_y_1
-            y_2 -= offset_y_1
-            y_3 -= offset_y_1
-        elif directions[index] == WEST: # Write text left of data points.
-            x -= offset_x
-            y_1 += y_gap
-            y_2 += y_gap
-            y_3 += y_gap
-        elif directions[index] == NORTH: # Write text above data points.
-            y_1 += offset_y_1
-            y_2 += offset_y_1
-            y_3 += offset_y_1
-        elif directions[index] == EAST: # Write text to the right of data points.
-            x += offset_x
-            y_1 += y_gap
-            y_2 += y_gap
-            y_3 += y_gap
 
         bbox = dict(boxstyle="square", fc="1", linewidth=0, pad=0)
 
-        if len(model) == 5:
-            x += 6
-
-        # Nasty plot- and model-specific exceptions to make things look neat.
-        if plot_id == "avg_token_memory" and model == "flair":
-            bbox = None
-
-        elif plot_id == "avg_token_code" and model == "bilstm_crf":
-            bbox = None
-
-        elif plot_id == "avg_token_model":
-            if model == "flair":
-                bbox = None
-            elif model == "bilstm_crf":
-                x -= 4
-
-        elif plot_id == "avg_stanford_token_model":
-            if model == "bilstm_crf":
-                bbox = None
-                x += 10
-            elif model == "crf":
-                bbox = None
-
-        elif plot_id == "avg_token_compressed":
-            if model == "flair":
-                bbox = None
-            elif model in ("bilstm_crf", "svmtool"):
-                x -= 6
-
-        elif plot_id == "avg_sentence_model":
-            if model == "bilstm_crf":
-                x += 10
-
-        elif plot_id == "avg_stanford_sentence_model":
-            if model in ("bilstm_crf", "stanford"):
-                x += 10
-
-        elif plot_id == "avg_sentence_compressed":
-            if model == "bilstm_crf":
-                x += 10
-
-        elif plot_id == "avg_stanford_sentence_compressed":
-            if model in ("bilstm_crf", "stanford"):
-                x += 12
-
-        x_1, y_1 = axis.transData.inverted().transform((x, y_1))
-        x_2, y_2 = axis.transData.inverted().transform((x, y_2))
-        x_3, y_3 = axis.transData.inverted().transform((x, y_3))
-
-        if x_3 < axis.get_xlim()[0]:
-            x_3 = axis.get_xlim()[0]
-
-        if directions[index] == ARROW_SOUTH:
-            # Our text wont fit. Draw text elsewhere and draw an arrow pointing to it.
-            arrow_props = {"facecolor": "black", "width": 2}
-            xy_text = (-50, -100)
-            tilt_x = axis.transData.inverted().transform((x + 15, 0))[0]
-            x_1 = tilt_x
-            shift_y_2 = axis.transData.inverted().transform((0, y-100+y_gap))[1]
-            shift_y_3 = axis.transData.inverted().transform((0, y-100))[1]
-            shift_x = axis.transData.inverted().transform((x - 15, 0))[0]
-            x_2 = shift_x
-            x_3 = shift_x
-            y_2 = shift_y_2
-            y_3 = shift_y_3
-
         font_size = 19
+        text = axis.text(
+            x, y, text_1, fontsize=font_size, bbox=bbox
+        )
+        x_values.append(x)
+        y_values.append(y)
+        texts.append(text)
 
-        if ANNOTATE_VALUES:
-            axis.annotate(
-                text_2, (x_2, y_2), xytext=(0, 0), xycoords="data",
-                textcoords="offset points", fontsize=font_size, bbox=bbox
-            )
-            axis.annotate(
-                text_3, (x_3, y_3), xytext=(0, 0), xycoords="data",
-                textcoords="offset points", fontsize=font_size, bbox=bbox
-            )
-            axis.annotate(
-                text_1, (x_1, y_1), xytext=xy_text, xycoords="data",
-                textcoords="offset points", fontsize=font_size, fontweight=800,
-                arrowprops=arrow_props, bbox=bbox
-            )
-        else:
-            y = y_2
-            if directions[index] == SOUTH:
-                y = y_1
-            elif directions[index] == NORTH:
-                y = y_3
-
-            axis.annotate(
-                text_1, (x_3, y), xytext=xy_text, xycoords="data",
-                textcoords="offset points", fontsize=font_size,
-                arrowprops=arrow_props, bbox=bbox
-            )
+    adjust_text(texts)#, x=x_values, y=y_values)#add_objects=lines)
 
 def plot_pareto(data, axis):
     points_x = []
@@ -397,8 +200,8 @@ def plot_pareto(data, axis):
     points_x.append(points_x[-1])
 
     axis.grid(b=True, which="major", axis="both")
-    axis.plot(points_x, points_y, linestyle=":", linewidth=3, c="red")
-    return models_on_skyline, (points_x[0], points_y[0]), (points_x[-1], points_y[-1])
+    lines = axis.plot(points_x, points_y, linestyle=":", linewidth=3, c="red")
+    return lines, models_on_skyline, (points_x[0], points_y[0]), (points_x[-1], points_y[-1])
 
 def plot_results(language, acc_metric, size_metric, save_to_file):
     results = load_results()
@@ -418,8 +221,8 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
         plot_id = f"{lang_desc}_{acc_metric}_{size_metric}"
         data_for_lang = get_data_for_language(results, language, acc_metric, size_metric)
         sorted_data = sort_data_by_size(data_for_lang, acc_metric, size_metric)
-        models_on_skyline, start, end = plot_pareto(sorted_data, ax)
-        plot_data(sorted_data, models_on_skyline, ax, plot_id, acc_metric, size_metric)
+        lines, models_on_skyline, start, end = plot_pareto(sorted_data, ax)
+        plot_data(sorted_data, models_on_skyline, lines, ax, plot_id, acc_metric, size_metric)
         ax.plot([start[0], start[0]], [start[1], ax.get_ylim()[0]], linestyle=":", linewidth=3, c="red")
         ax.plot([end[0], ax.get_xlim()[1]], [end[1], end[1]], linestyle=":", linewidth=3, c="red")
 
