@@ -29,9 +29,6 @@ Requirements for the various models:
 ** conda install pytorch torchvision torchaudio cudatoolkit=10.1 -c pytorch
 ** pip install flair
 
-* CRF
-** conda install python-crfsuite
-
 * meta_tagger
 ** conda install cudatoolkit=10.1
 ** conda install cudnn=7.6.4
