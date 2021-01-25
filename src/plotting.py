@@ -3,9 +3,9 @@ import os
 import argparse
 import math
 import matplotlib.pyplot as plt
-font = {'size': 24}
-
-plt.rc('font', **font)
+import matplotlib.ticker as ticker 
+#font = {'size': 24}
+#plt.rc('font', **font)
 from adjustText import adjust_text
 from util.data_archives import LANGS_FULL, LANGS_ISO
 
@@ -127,7 +127,7 @@ def add_margins(axis, margin, acc_metric):
     axis.set_ylim(min_y, max_y)
 
 def plot_data(
-        sorted_data, models_on_skyline, lines, axis, plot_id,
+        sorted_data, models_on_skyline, axis, plot_id,
         acc_metric="token", size_metric="memory"
 ):
     legend_text = {
@@ -152,34 +152,30 @@ def plot_data(
         "bert_bpemb": "#b593c7"
     }
 
-    for index, (model, accuracy, footprint) in enumerate(sorted_data):
-        edge_color, line_width = (("red", 2) if model in models_on_skyline
-                                  else ("black", 1))
-        axis.scatter(
-            footprint, accuracy, label=model, s=150, zorder=5,
-            edgecolors=edge_color, linewidths=line_width, color=colors[model]
-        )
+    models = [model for model, _, _ in sorted_data]
+    accuracies = [accuracy for _,accuracy,_ in sorted_data]
+    footprints = [footprint for _, _, footprint in sorted_data]
+
+    edge_colors = ['red' if model in models_on_skyline else 'black' for model in models]
+    model_colors = [colors[model] for model in models]
 
     add_margins(axis, 30, acc_metric)
 
-    texts = []
-    x_values = []
-    y_values = []
-    for index, (model, accuracy, footprint) in enumerate(sorted_data):
-        x, y = footprint, accuracy
-        text_1 = f"{PROPER_MODEL_NAMES[model]}"
+    [axis.scatter(
+        footprints[i], accuracies[i], label=PROPER_MODEL_NAMES[models[i]], zorder=5,
+        edgecolors=edge_colors[i], color=model_colors[i]
+    ) for i in range(len(models))]
+    
+    proper_names = [f"{PROPER_MODEL_NAMES[model]}" for model in models]
 
-        bbox = dict(boxstyle="square", fc="1", linewidth=0, pad=0)
+    texts = [axis.text(x, y, name, va='center', ha='center', fontsize=12)
+        for x,y,name in zip(footprints, accuracies, proper_names)]
 
-        font_size = 19
-        text = axis.text(
-            x, y, text_1, fontsize=font_size, bbox=bbox
-        )
-        x_values.append(x)
-        y_values.append(y)
-        texts.append(text)
+    adjust_text(texts, 
+        expand_align=(1.4, 1.7),
+        expand_points=(1.5, 1.8),
+        arrowprops=dict(arrowstyle="-", color='black', lw=0.5))
 
-    adjust_text(texts)#, x=x_values, y=y_values)#add_objects=lines)
 
 def plot_pareto(data, axis):
     points_x = []
@@ -199,41 +195,38 @@ def plot_pareto(data, axis):
 
     points_x.append(points_x[-1])
 
-    axis.grid(b=True, which="major", axis="both")
-    lines = axis.plot(points_x, points_y, linestyle=":", linewidth=3, c="red")
-    return lines, models_on_skyline, (points_x[0], points_y[0]), (points_x[-1], points_y[-1])
+    axis.grid(b=True, which="major", axis="both", linestyle="--")
+    axis.plot(points_x, points_y, linestyle=":", linewidth=1, c="red")
+    return models_on_skyline, (points_x[0], points_y[0]), (points_x[-1], points_y[-1])
 
 def plot_results(language, acc_metric, size_metric, save_to_file):
     results = load_results()
-    fig, axes = plt.subplots(2, 2, sharey=True) if SHARED_PLOT else plt.subplots()
-    plt.margins(0)
+    _, ax = plt.subplots(figsize=(8, 6))
+    #plt.margins(0)
+    ax.set_xscale("log")
+    ax.xaxis.set_major_locator(ticker.LogLocator(base=10))
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(0.05))
 
-    if not SHARED_PLOT:
-        axes = [axes]
-    else:
-        axes = axes.ravel()
+    lang_desc = f"{language}_stanford" if INCLUDE_STANFORD else language 
 
-    for ax in axes:
-        ax.set_xscale("log")
+    plot_id = f"{lang_desc}_{acc_metric}_{size_metric}"
+    data_for_lang = get_data_for_language(results, language, acc_metric, size_metric)
+    sorted_data = sort_data_by_size(data_for_lang, acc_metric, size_metric)
 
-        lang_desc = f"{language}_stanford" if INCLUDE_STANFORD else language 
+    models_on_skyline, start, end = plot_pareto(sorted_data, ax)
+    plot_data(sorted_data, models_on_skyline, ax, plot_id, acc_metric, size_metric)
+    
+    ax.plot([start[0], start[0]], [start[1], ax.get_ylim()[0]], linestyle=":", linewidth=1, c="red") 
+    ax.plot([end[0], ax.get_xlim()[1]], [end[1], end[1]], linestyle=":", linewidth=1, c="red")
 
-        plot_id = f"{lang_desc}_{acc_metric}_{size_metric}"
-        data_for_lang = get_data_for_language(results, language, acc_metric, size_metric)
-        sorted_data = sort_data_by_size(data_for_lang, acc_metric, size_metric)
-        lines, models_on_skyline, start, end = plot_pareto(sorted_data, ax)
-        plot_data(sorted_data, models_on_skyline, lines, ax, plot_id, acc_metric, size_metric)
-        ax.plot([start[0], start[0]], [start[1], ax.get_ylim()[0]], linestyle=":", linewidth=3, c="red")
-        ax.plot([end[0], ax.get_xlim()[1]], [end[1], end[1]], linestyle=":", linewidth=3, c="red")
+    #manager = plt.get_current_fig_manager()
+    #w, h = 1920, 1080 #manager.window.maxsize()
+    #if w > 1920:
+    #    w = 1920
+    #manager.resize(w, h)
 
-    manager = plt.get_current_fig_manager()
-    w, h = manager.window.maxsize()
-    if w > 1920:
-        w = 1920
-    manager.resize(w, h)
-
-    fig_w, fig_h = 12, 7
-    fig.set_size_inches(fig_w, fig_h)
+    #fig_w, fig_h = 12, 7
+    #fig.set_size_inches(fig_w, fig_h)
 
     plt.tight_layout()
 

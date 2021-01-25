@@ -4,6 +4,7 @@
 ** conda install nltk
 ** conda install matplotlib
 ** conda install dill
+** pip install --upgrade https://github.com/Phlya/adjustText/archive/master.zip
 ** (windows) pip install windows-curses
 ** (windows, optional) chocolatey
 
