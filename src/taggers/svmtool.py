@@ -102,38 +102,47 @@ class SVMT(SysCallTagger):
         Individual taggers can override this method, if the predictions they output are
         formatted differently, than what this method expects.
         """
-        total = 0
-        correct = 0
-        curr_sent_correct = 0
-        curr_sent_count = 0
+
+        def split_dataset(path):
+            output = []
+            with open(path, 'r', encoding='utf8') as fp:
+                lines = fp.readlines()
+                current_sentence = []
+                for line in lines:
+                    line = line.strip()
+                    if line == "":
+                        if len(current_sentence) > 0:
+                            output.append(current_sentence)
+                            current_sentence = []
+                    else:
+                        current_sentence.append(line.split())
+            return output  
+
+        test_data_path = data_archives.get_dataset_path(self.args.lang, self.args.treebank, "test", simplified=True)
+        # token, tag
+        test_data = split_dataset(test_data_path)
+        
+        # token, prediction, actual        
+        prediction_data = split_dataset(self.predict_path() + ext)
+
+        total_tokens = 0
+        correct_tokens = 0
         correct_sent = 0
-        total_sent = 0
+        total_sent = len(test_data)
 
-        test_data = data_archives.get_dataset_path(self.args.lang, self.args.treebank, "test", simplified=self.simplified_dataset, eos=self.simplified_eos_dataset)
-
-        print(test_data)
-        #exit()
-
-        with open(self.predict_path() + ext, "r", encoding="utf-8") as fp:
-            lines = fp.readlines()
-            for line in lines:
-                line = line.strip()
-                if line == "":
-                    total_sent += 1
-                    if curr_sent_count == curr_sent_correct:
-                        correct_sent += 1
-                    curr_sent_correct = 0
-                    curr_sent_count = 0
-                    continue
-                total += 1
-                curr_sent_count += 1
-                split = line.split(None)
-                predicted = split[-1]
-                actual = split[-2]
+        for i in range(len(test_data)):
+            curr_sent_correct = True
+            for j in range(len(test_data[i])):
+                total_tokens += 1
+                predicted = prediction_data[i][j][1]
+                actual = test_data[i][j][1]
                 if predicted == actual:
-                    correct += 1
-                    curr_sent_correct += 1
+                    correct_tokens += 1
+                else:
+                    curr_sent_correct = False
+            if curr_sent_correct:
+                correct_sent += 1
 
-        token_acc = correct / total if total > 0 else 0
+        token_acc = correct_tokens / total_tokens if total_tokens > 0 else 0
         sent_acc = correct_sent / total_sent if total_sent > 0 else 0
         return token_acc, sent_acc
