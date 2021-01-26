@@ -199,10 +199,11 @@ def plot_pareto(data, axis):
     axis.plot(points_x, points_y, linestyle=":", linewidth=1, c="red")
     return models_on_skyline, (points_x[0], points_y[0]), (points_x[-1], points_y[-1])
 
-def plot_results(language, acc_metric, size_metric, save_to_file):
+def plot_results(language, acc_metric, size_metric, save_to_file, title):
     results = load_results()
-    _, ax = plt.subplots(figsize=(8, 6))
-    #plt.margins(0)
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    fig.suptitle(title)
     ax.set_xscale("log")
     ax.xaxis.set_major_locator(ticker.LogLocator(base=10))
     ax.yaxis.set_major_locator(ticker.MultipleLocator(0.05))
@@ -224,9 +225,6 @@ def plot_results(language, acc_metric, size_metric, save_to_file):
     #if w > 1920:
     #    w = 1920
     #manager.resize(w, h)
-
-    #fig_w, fig_h = 12, 7
-    #fig.set_size_inches(fig_w, fig_h)
 
     plt.tight_layout()
 
@@ -272,4 +270,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     INCLUDE_STANFORD = args.include_stanford
 
-    plot_results(LANGS_ISO.get(args.language, "avg"), args.accuracy_metric, args.size_metric, args.save)
+    title = "Token Accuracy for English versus Memory Consumption"
+
+    plot_results(
+        LANGS_ISO.get(args.language, "avg"), 
+        args.accuracy_metric, 
+        args.size_metric, 
+        args.save,
+        title)
