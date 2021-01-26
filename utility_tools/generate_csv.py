@@ -88,7 +88,7 @@ def load_results():
 
 def create_csv_file(results, metric):
 
-    with open(f"../results/csv/{metric}.csv", "w", encoding="utf-8") as fp:
+    with open(f"../results_csv/{metric}.csv", "w", encoding="utf-8") as fp:
         tagger_names = list(PROPER_MODEL_NAMES[tagger] for tagger in TAGGER_ORDER)
         header = "Language," + ",".join(tagger_names) + ",Avg."
         fp.write(header + "\n")
@@ -125,7 +125,7 @@ def create_csv_file(results, metric):
 
 if __name__ == "__main__":
     results = load_results()
-    if not os.path.exists("../results/csv"):
-        os.mkdir("../results/csv")
+    if not os.path.exists("../results_csv"):
+        os.mkdir("../results_csv")
     for metric in ("token", "sentence", "memory", "code", "model", "compressed"):
         create_csv_file(results, metric)
