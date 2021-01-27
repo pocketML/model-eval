@@ -20,7 +20,6 @@ def extract_data(metric, include_stanford):
     df = df.drop(df.columns[0], axis=1) # drop the language column
 
     taggers = df.columns.values.tolist()
-
     return df, languages, taggers
 
 def get_average_data(metric, include_stanford=False):

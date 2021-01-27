@@ -23,7 +23,7 @@ def plot(labels, metrics, data, ylabel, title, yscale, yticks):
     ax.grid(which='major', axis='y', linestyle='--', zorder=0)
     ax.set_title(title)
     ax.set_xticks(x)
-    ax.set_xticklabels(taggers)
+    ax.set_xticklabels(labels)
     plt.xticks(rotation=35, ha='right')
     ax.legend()
 
