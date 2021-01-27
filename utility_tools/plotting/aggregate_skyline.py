@@ -23,10 +23,10 @@ def get_models_on_skyline(data):
     return models_on_skyline
 
 def get_skyline_count(acc_metric, size_metric):
-    _, taggers, acc =  read_data.get_data(acc_metric)
+    languages, taggers, acc =  read_data.get_data(acc_metric)
     size =  read_data.get_data(size_metric)[2]
 
-    taggers_by_language = np.repeat(np.array(taggers), len(taggers)).reshape((len(taggers), len(taggers))).T
+    taggers_by_language = np.repeat(np.array(taggers), len(languages)).reshape((len(taggers), len(languages))).T
     acc_by_language = np.array(acc).T
     size_by_language = np.array(size).T
 
