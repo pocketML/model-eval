@@ -30,10 +30,10 @@ def get_skyline_count(acc_metric, size_metric):
     acc_by_language = np.array(acc).T
     size_by_language = np.array(size).T
 
-    zipped = zip(taggers_by_language, acc_by_language, size_by_language)
+    print(taggers_by_language)
 
     skyline_count = {x: 0 for x in taggers}
-    for index, (taggers, accs, sizes) in enumerate(zipped):
+    for taggers, accs, sizes in zip(taggers_by_language, acc_by_language, size_by_language):
         zipped = list(zip(taggers, accs, sizes))
         zipped.sort(key=lambda x: x[2])
         models_on_skyline = get_models_on_skyline(zipped)
@@ -44,5 +44,5 @@ def get_skyline_count(acc_metric, size_metric):
 
 if __name__ == '__main__':
     taggers, skyline_counts = get_skyline_count("token", "memory")
-    print(taggers)
-    print(skyline_counts)
+    for tagger, count in zip(taggers, skyline_counts):
+        print('{:<19}: {}'.format(tagger, count))
