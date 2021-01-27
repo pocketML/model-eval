@@ -116,7 +116,7 @@ def plot(dimensions, entries, results, title, ticks, yscale="linear"):
     plt.show()
 
 if __name__ == '__main__':
-    languages, taggers, results = read_data.get_accuracy_data(True)
+    languages, taggers, results = read_data.get_data("token")
     ticks = np.arange(0.0, 100.0, step=5.0)
     title = 'Token accuracy for 9 taggers across all 10 languages'
     plot(languages, taggers, results, title, ticks)

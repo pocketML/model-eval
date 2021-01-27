@@ -12,7 +12,7 @@ def plot(labels, metrics, data, ylabel, title, yscale, yticks):
     all_rects = []
     offsets = [-width - width/2, -width/2, width/2, width + width/2]
     for i in range(n):
-        rects = ax.bar(x + offsets[i], data[i], width, label=metrics[i], zorder=3)
+        rects = ax.bar(x + offsets[i], data[i], width, label=metrics[i].capitalize(), zorder=3)
         all_rects.append(rects)
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
@@ -45,8 +45,15 @@ def plot(labels, metrics, data, ylabel, title, yscale, yticks):
     plt.show()
 
 if __name__ == '__main__':
-    metrics, taggers, results = read_data.get_size_data()
-    results = np.array(results).T.tolist()
+    metrics = ["memory", "code", "model", "compressed"]
+    metric_labels = ["Memory", "Code (estimate)", "Model", "Model Compressed"]
+    all_results = []
+    taggers = None
+    for metric in metrics:
+        languages, taggers, results = read_data.get_average_data(metric, include_stanford=True)
+        all_results.append(results)
+
+    results = np.array(all_results).tolist()
     title = 'Average size measurements for all taggers'
     ticks = [10**i for i in range(9)]
-    plot(taggers, metrics, results, 'Kilobytes', title, 'log', ticks)
+    plot(taggers, metric_labels, results, 'Kilobytes', title, 'log', ticks)
