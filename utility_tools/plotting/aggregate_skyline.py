@@ -1,7 +1,5 @@
-import math
 import numpy as np
 import read_data
-import matplotlib
 import matplotlib.pyplot as plt
 import read_data
 
@@ -86,21 +84,22 @@ def aggregate_plotting(acc_metric="token", separate=False):
     metric_labels = ["Memory", "Code (estimate)", "Model", "Model Compressed"]
     
     results = []
-    taggers = None
+    sort_order = []
 
     for metric in metrics:
         taggers, skyline_counts = get_skyline_count(acc_metric, metric)
-        #print(metric)
-        #print(skyline_counts)
-        results.append(skyline_counts)
+        if sort_order == []:
+            sorted_data = sorted(zip(taggers, skyline_counts), key=lambda x: x[1])
+            sort_order = [x[0] for x in sorted_data]
+        sorted_data = sorted(zip(taggers, skyline_counts), key=lambda x: sort_order.index(x[0]))
+        results.append([x[1] for x in sorted_data])
 
     title = f'On efficiency skyline - {acc_metric} accuracy vs size metric'
     ticks = [i for i in range(11)]
     if separate:
-        separate_plots(taggers, metric_labels, results, 'Efficiency count', title, 'linear', ticks, acc_metric)
+        separate_plots(sort_order, metric_labels, results, 'Efficiency count', title, 'linear', ticks, acc_metric)
     else:
-        plot(taggers, metric_labels, results, 'Efficiency count', title, 'linear', ticks, acc_metric)
-
+        plot(sort_order, metric_labels, results, 'Efficiency count', title, 'linear', ticks, acc_metric)
 
 if __name__ == '__main__':
     aggregate_plotting(acc_metric="token", separate=True)

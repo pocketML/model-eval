@@ -1,7 +1,6 @@
 import pandas as pd
 import os
 from pathlib import Path
-from glob import glob
 
 CSV_PATH = os.path.join(Path(__file__).resolve().parent.parent.parent, 'results_csv')
 

@@ -2,20 +2,31 @@ from glob import glob
 import os
 import argparse
 import math
+from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker 
 #font = {'size': 24}
 #plt.rc('font', **font)
 from adjustText import adjust_text
-from util.data_archives import LANGS_FULL, LANGS_ISO
 
-SOUTH = 0
-EAST = 1
-NORTH = 2
-WEST = 3
-ARROW_SOUTH = 4
-ANNOTATE_VALUES = False
-SHARED_PLOT = False
+root_dir = Path(__file__).resolve().parent.parent.parent
+
+LANGS_FULL = {
+    iso: lang for iso, lang in
+    map(
+        lambda line: tuple(line.strip().split(",")),
+        open(os.path.join(root_dir, "data/langs_names.csv")).readlines()
+    )
+}
+
+LANGS_ISO = {
+    lang: iso for lang, iso in
+    map(
+        lambda line: tuple(line.strip().split(",")),
+        open(os.path.join(root_dir, "data/langs_iso.csv")).readlines()
+    )
+}
+
 INCLUDE_STANFORD = False
 
 PROPER_MODEL_NAMES = {
@@ -39,7 +50,7 @@ def find_value(lines, key):
     return None
 
 def load_results():
-    model_folders = glob("results/*")
+    model_folders = glob(os.path.join(root_dir, "results/*"))
     mapped_data = {}
     for model_folder in model_folders:
         model_name = os.path.split(model_folder)[1]
@@ -234,10 +245,12 @@ def plot_results(language, acc_metric, size_metric, save_to_file, title):
         if language == "avg":
             avg_desc = "_with_stanford" if INCLUDE_STANFORD else "_all"
 
-        if not os.path.exists("plots"):
-            os.mkdir("plots")
+        save_path = os.path.join(root_dir, "plots")
 
-        filename = f"plots/{lang_desc}-{acc_metric}_{size_metric}{avg_desc}.png"
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+
+        filename = os.path.join(save_path,  f"{lang_desc}-{acc_metric}_{size_metric}{avg_desc}.png")
         plt.savefig(filename)
         print(f"Saved image of plot to {filename}.")
     else:

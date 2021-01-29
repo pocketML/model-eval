@@ -5,49 +5,19 @@ from shutil import unpack_archive
 import requests
 
 LANGS_FULL = { # Map from language ISO code or name -> Language name
-    "am": "amharic",
-    "amharic": "amharic",
-    "da": "danish",
-    "danish": "danish",
-    "en": "english",
-    "english": "english",
-    "ar": "arabic",
-    "arabic": "arabic",
-    "hi": "hindi",
-    "hindi": "hindi",
-    "zh": "chinese",
-    "chinese": "chinese",
-    "ru": "russian",
-    "russian": "russian",
-    "es": "spanish",
-    "spanish": "spanish",
-    "tr": "turkish",
-    "turkish": "turkish",
-    "vi": "vietnamese",
-    "vietnamese": "vietnamese"
+    iso: lang for iso, lang in
+    map(
+        lambda line: tuple(line.strip().split(",")),
+        open("data/langs_names.csv").readlines()
+    )
 }
 
 LANGS_ISO = { # Map from language ISO code or name -> Language ISO code
-    "am": "am",
-    "amharic": "am",
-    "da": "da",
-    "danish": "da",
-    "en": "en",
-    "english": "en",
-    "ar": "ar",
-    "arabic": "ar",
-    "hi": "hi",
-    "hindi": "hi",
-    "zh": "zh",
-    "chinese": "zh",
-    "ru": "ru",
-    "russian": "ru",
-    "es": "es",
-    "spanish": "es",
-    "tr": "tr",
-    "turkish": "tr",
-    "vi": "vi",
-    "vietnamese": "vi"
+    lang: iso for lang, iso in
+    map(
+        lambda line: tuple(line.strip().split(",")),
+        open("data/langs_iso.csv").readlines()
+    )
 }
 
 def download_and_unpack(archive_type, archive):
