@@ -32,7 +32,7 @@ def get_skyline_count(acc_metric, size_metric, include_stanford=True):
 
     return taggers, list(skyline_count.values())
 
-def plot(xlabels, bar_labels, data, ylabel, title, yscale, yticks):
+def plot(xlabels, bar_labels, data, ylabel, title, yscale, yticks, acc_metric):
     x = np.arange(len(xlabels))  # the label locations
     width = 0.2  # the width of the bars
 
@@ -56,10 +56,32 @@ def plot(xlabels, bar_labels, data, ylabel, title, yscale, yticks):
     ax.legend()
 
     fig.tight_layout()
-
     plt.show()
 
-def aggregate_plotting(acc_metric="token"):
+def separate_plots(xlabels, bar_labels, data, ylabel, title, yscale, yticks, acc_metric):
+    x = np.arange(len(xlabels))  # the label locations
+    width = 0.4  # the width of the bars
+    fig, axs = plt.subplots(2,2, figsize=(12, 9))
+    colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red']
+
+    for i, ax in enumerate(axs.flat):
+        ax.bar(x, data[i], width, zorder=3, color=colors[i])
+
+        ax.set_title(f'{acc_metric.capitalize()} accuracy vs. {bar_labels[i].capitalize()}')
+
+        ax.set_ylabel(ylabel)
+        ax.set_yscale(yscale)
+        ax.set_yticks(yticks)
+        ax.grid(which='major', axis='y', linestyle='--', zorder=0)
+        ax.set_xticks(x)
+        ax.set_xticklabels(xlabels)
+        #ax.set_xticks(rotation=35, ha='right')
+        plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+
+    fig.tight_layout()
+    plt.show()
+
+def aggregate_plotting(acc_metric="token", separate=False):
     metrics = ["memory", "code", "model", "compressed"]
     metric_labels = ["Memory", "Code (estimate)", "Model", "Model Compressed"]
     
@@ -68,14 +90,17 @@ def aggregate_plotting(acc_metric="token"):
 
     for metric in metrics:
         taggers, skyline_counts = get_skyline_count(acc_metric, metric)
-        print(metric)
-        print(skyline_counts)
+        #print(metric)
+        #print(skyline_counts)
         results.append(skyline_counts)
 
     title = f'On efficiency skyline - {acc_metric} accuracy vs size metric'
     ticks = [i for i in range(11)]
-    plot(taggers, metric_labels, results, 'Efficiency count', title, 'linear', ticks)
+    if separate:
+        separate_plots(taggers, metric_labels, results, 'Efficiency count', title, 'linear', ticks, acc_metric)
+    else:
+        plot(taggers, metric_labels, results, 'Efficiency count', title, 'linear', ticks, acc_metric)
 
 
 if __name__ == '__main__':
-    aggregate_plotting(acc_metric="sentence")
+    aggregate_plotting(acc_metric="token", separate=True)
