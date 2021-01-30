@@ -92,10 +92,14 @@ def radar_factory(num_vars, frame='circle'):
 
 def plot(dimensions, entries, results, title, ticks, yscale="linear"):
     N = len(dimensions)
-    theta = radar_factory(N, frame='circle')#'polygon')
+    theta = radar_factory(N, frame='polygon')#'polygon')
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='radar')
+
+    width = 3.487
+    height = width / 1.618
+    fig.set_size_inches(width, height, forward=True)
 
     plt.yscale(yscale)
     ax.set_rgrids(ticks)
@@ -106,9 +110,11 @@ def plot(dimensions, entries, results, title, ticks, yscale="linear"):
     ax.set_varlabels(dimensions)
     plt.yticks()
 
-    ax.legend(entries, bbox_to_anchor=(1.05, 1), loc='upper left', labelspacing=0.1, fontsize='small')
+    ax.legend(entries, bbox_to_anchor=(0.5, -0.1), loc='upper center', ncol=3, fancybox=True, fontsize='small')
 
-    ax.set_title(title)
+    #ax.legend(entries, bbox_to_anchor=(1.15, 1), loc='upper left', fancybox=True, labelspacing=0.1, fontsize='small')
+
+    #ax.set_title(title)
     #fig.text(0.5, 0.965, title,
     #         horizontalalignment='center', color='black', weight='bold',
     #         size='large')
