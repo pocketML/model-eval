@@ -2,6 +2,8 @@
 data/*
 !data/README.md
 !data/get_data.py
+!data/langs_iso.csv
+!data/langs_names.csv
 models/*
 !models/README.md
 !models/get_model.py
