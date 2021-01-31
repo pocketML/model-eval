@@ -81,8 +81,8 @@ def separate_plots(xlabels, bar_labels, data, ylabel, title, yscale, yticks, acc
 
 def aggregate_plotting(acc_metric="token", separate=False):
     metrics = ["memory", "code", "model", "compressed"]
-    metric_labels = ["Memory", "Code (estimate)", "Model", "Model Compressed"]
-    
+    metric_labels = ["Memory", "Code Size", "Model Size", "Model Compressed"]
+
     results = []
     sort_order = []
 
@@ -102,4 +102,4 @@ def aggregate_plotting(acc_metric="token", separate=False):
         plot(sort_order, metric_labels, results, 'Efficiency count', title, 'linear', ticks, acc_metric)
 
 if __name__ == '__main__':
-    aggregate_plotting(acc_metric="token", separate=True)
+    aggregate_plotting(acc_metric="sentence", separate=True)

@@ -23,10 +23,10 @@ def extract_data(metric, include_stanford):
 
 def get_average_data(metric, include_stanford=False):
     df, languages, taggers = extract_data(metric, include_stanford)
-    index = 10 if include_stanford else 11
-    results =  df.loc[index].tolist()
+    avg_four =  df.loc[10]
+    avg_all =  df.loc[11]
 
-    return [languages, taggers, results]
+    return [languages, taggers, [avg_four, avg_all]]
 
 def get_data(metric, include_stanford=False, average=False):
     df, languages, taggers = extract_data(metric, include_stanford)

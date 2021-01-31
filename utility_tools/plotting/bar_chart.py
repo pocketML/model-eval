@@ -50,7 +50,7 @@ if __name__ == '__main__':
     taggers = None
     for metric in metrics:
         languages, taggers, results = read_data.get_average_data(metric, include_stanford=True)
-        all_results.append(results)
+        all_results.append(results[0])
 
     results = np.array(all_results).tolist()
     title = 'Average size measurements for all taggers'

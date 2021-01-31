@@ -87,7 +87,6 @@ def load_results():
     return mapped_data
 
 def create_csv_file(results, metric):
-
     with open(f"../results_csv/{metric}.csv", "w", encoding="utf-8") as fp:
         tagger_names = list(PROPER_MODEL_NAMES[tagger] for tagger in TAGGER_ORDER)
         header = "Language," + ",".join(tagger_names) + ",Avg."
