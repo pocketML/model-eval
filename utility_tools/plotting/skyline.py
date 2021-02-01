@@ -74,7 +74,6 @@ def load_results():
                     "memory": memory_footprint, "code": code_size,
                     "model": model_size, "compressed": compressed_size
                 }
-
     return mapped_data
 
 def get_data_for_language(data, lang, acc_metric, size_metric):
@@ -110,7 +109,7 @@ def sort_data_by_size(data, acc_metric, size_metric):
     sorted_data = []
     for model in data:
         model_data = data[model]
-        accuracy = float(f"{model_data[acc_metric]:.2f}")
+        accuracy = float(model_data[acc_metric])
         footprint = int(model_data[size_metric])
         sorted_data.append((model, accuracy, footprint))
 
@@ -142,11 +141,14 @@ def plot_data(
         acc_metric="token", size_metric="memory"
 ):
     legend_text = {
-        "token": "Token Accuracy", "sentence": "Sentence Accuracy",
-        "memory": "Memory Footprint", "code": "Code Size",
-        "model": "Size of Uncompressed Model Files", "compressed": "Size of Compressed Model Files"
+        "token": "Token Accuracy", 
+        "sentence": "Sentence Accuracy",
+        "memory": "Memory Footprint", 
+        "code": "Code Size",
+        "model": "Size of Uncompressed Model Files", 
+        "compressed": "Size of Compressed Model Files"
     }
-    axis.set_xlabel(f"{legend_text[size_metric]} (KB)", fontsize="medium")
+    axis.set_xlabel(f"{legend_text[size_metric]} (kB)", fontsize="medium")
     axis.set_ylabel(legend_text[acc_metric], fontsize="medium")
 
     colors = {
@@ -170,7 +172,11 @@ def plot_data(
     edge_colors = ['red' if model in models_on_skyline else 'black' for model in models]
     model_colors = [colors[model] for model in models]
 
-    add_margins(axis, 30, acc_metric)
+    #add_margins(axis, 30, acc_metric)
+    ymin = int((min(accuracies) - 0.01) * 20) / 20.0
+    ymax = 1.00 #(int(max(accuracies) * 20) + 1) / 20.0
+    axis.set_ylim([ymin, ymax])
+    axis.set_xlim([10**4, 10**8])
 
     [axis.scatter(
         footprints[i], accuracies[i], label=PROPER_MODEL_NAMES[models[i]], zorder=5,
@@ -183,6 +189,7 @@ def plot_data(
         for x,y,name in zip(footprints, accuracies, proper_names)]
 
     adjust_text(texts, 
+        ax=axis,
         expand_align=(1.4, 1.7),
         expand_points=(1.5, 1.8),
         arrowprops=dict(arrowstyle="-", color='black', lw=0.5))
@@ -210,11 +217,8 @@ def plot_pareto(data, axis):
     axis.plot(points_x, points_y, linestyle=":", linewidth=1, c="red")
     return models_on_skyline, (points_x[0], points_y[0]), (points_x[-1], points_y[-1])
 
-def plot_results(language, acc_metric, size_metric, save_to_file, title):
-    results = load_results()
-    fig, ax = plt.subplots(figsize=(8, 6))
-
-    fig.suptitle(title)
+def add_to_plot(ax, language, acc_metric, size_metric, results):
+    ax.set_title(LANGS_FULL[language].capitalize())
     ax.set_xscale("log")
     ax.xaxis.set_major_locator(ticker.LogLocator(base=10))
     ax.yaxis.set_major_locator(ticker.MultipleLocator(0.05))
@@ -231,11 +235,42 @@ def plot_results(language, acc_metric, size_metric, save_to_file, title):
     ax.plot([start[0], start[0]], [start[1], ax.get_ylim()[0]], linestyle=":", linewidth=1, c="red") 
     ax.plot([end[0], ax.get_xlim()[1]], [end[1], end[1]], linestyle=":", linewidth=1, c="red")
 
-    #manager = plt.get_current_fig_manager()
-    #w, h = 1920, 1080 #manager.window.maxsize()
-    #if w > 1920:
-    #    w = 1920
-    #manager.resize(w, h)
+def plot_all(acc_metric, size_metric, save_to_file):
+    results = load_results()
+    fig, axis = plt.subplots(5, 2) #(figsize=(8, 6))
+
+    scale = 1.4
+    height = 11.7 * scale
+    width = 8.3 * scale
+    fig.set_size_inches(width, height, forward=True)
+    axis_flat = axis.flat
+
+    languages = ['ar', 'zh', 'en', 'es', 'am', 'da', 'hi', 'ru', 'tr', 'vi']
+
+    for i, language in enumerate(languages):
+        add_to_plot(axis_flat[i], language, acc_metric, size_metric, results)
+
+    plt.tight_layout()
+
+    if save_to_file:
+        save_path = os.path.join(root_dir, "plots")
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+        filename = os.path.join(save_path,  f"all_{acc_metric}_{size_metric}.pdf")
+        plt.savefig(filename, dpi=300)
+    else:
+        plt.show()
+
+
+def plot_results(language, acc_metric, size_metric, save_to_file):
+    results = load_results()
+    fig, ax = plt.subplots()
+
+    width = 6 #3.487
+    height = (width / 1.618)
+    fig.set_size_inches(width, height, forward=True)
+
+    add_to_plot(ax, language, acc_metric, size_metric, results)
 
     plt.tight_layout()
 
@@ -281,13 +316,14 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    INCLUDE_STANFORD = args.include_stanford
+    INCLUDE_STANFORD = args.include_stanford 
 
-    title = "Token Accuracy for English versus Memory Consumption"
+    plot_all(args.accuracy_metric, args.size_metric, args.save)
 
+    '''
     plot_results(
         LANGS_ISO.get(args.language, "avg"), 
         args.accuracy_metric, 
         args.size_metric, 
-        args.save,
-        title)
+        args.save)'''
+    
