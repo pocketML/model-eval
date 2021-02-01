@@ -21,7 +21,7 @@ def create_avg_size_file():
             results_for_tagger[tagger].append(format_size(size))
 
     with open(f"../results_csv/avg_size.csv", "w", encoding="utf-8") as fp:
-        fp.write(",".join(metrics) + "\n")
+        fp.write(f"Language,{','.join(metrics)}\n")
         for tagger in results_for_tagger:
             fp.write(f"{tagger},{','.join(results_for_tagger[tagger])}\n")
 

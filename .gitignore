@@ -9,6 +9,7 @@ models/*
 !models/get_model.py
 .vscode/
 results/*
+results_csv/*
 results_backup/*
 config*
 statistics/*
