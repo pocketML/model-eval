@@ -2,6 +2,8 @@ import numpy as np
 import read_data
 import matplotlib.pyplot as plt
 import read_data
+import os
+from pathlib import Path
 
 def get_models_on_skyline(data):
     highest_acc = 0
@@ -58,16 +60,17 @@ def plot(xlabels, bar_labels, data, ylabel, title, yscale, yticks, acc_metric):
 
 def separate_plots(xlabels, bar_labels, data, ylabel, title, yscale, yticks, acc_metric):
     x = np.arange(len(xlabels))  # the label locations
-    width = 0.4  # the width of the bars
-    fig, axs = plt.subplots(2,2, figsize=(12, 9))
+    width = 0.8  # the width of the bars
+
+    fig, axs = plt.subplots(1,4, figsize=(12, 5 * 0.85), sharey=True)
+    axs.flat[0].set_ylabel(ylabel)
+    fig.suptitle(f'{acc_metric.capitalize()} accuracy')
     colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red']
 
     for i, ax in enumerate(axs.flat):
         ax.bar(x, data[i], width, zorder=3, color=colors[i])
 
-        ax.set_title(f'{acc_metric.capitalize()} accuracy vs. {bar_labels[i].capitalize()}')
-
-        ax.set_ylabel(ylabel)
+        ax.set_title(f'vs. {bar_labels[i].capitalize()}')
         ax.set_yscale(yscale)
         ax.set_yticks(yticks)
         ax.grid(which='major', axis='y', linestyle='--', zorder=0)
@@ -77,11 +80,20 @@ def separate_plots(xlabels, bar_labels, data, ylabel, title, yscale, yticks, acc
         plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
 
     fig.tight_layout()
+
+    # saving the plot as a pdf
+    root_dir = Path(__file__).resolve().parent.parent.parent
+    save_path = os.path.join(root_dir, "plots")
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
+    filename = os.path.join(save_path,  f"aggregate_{acc_metric}.pdf")        
+    plt.savefig(filename, dpi=300)
+
     plt.show()
 
 def aggregate_plotting(acc_metric="token", separate=False):
     metrics = ["memory", "code", "model", "compressed"]
-    metric_labels = ["Memory", "Code Size", "Model Size", "Model Compressed"]
+    metric_labels = ["Memory", "Code Size", "Model Size", "Compressed Model Size"]
 
     results = []
     sort_order = []
@@ -102,4 +114,4 @@ def aggregate_plotting(acc_metric="token", separate=False):
         plot(sort_order, metric_labels, results, 'Efficiency count', title, 'linear', ticks, acc_metric)
 
 if __name__ == '__main__':
-    aggregate_plotting(acc_metric="sentence", separate=True)
+    aggregate_plotting(acc_metric="token", separate=True)
