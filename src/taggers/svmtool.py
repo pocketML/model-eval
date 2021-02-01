@@ -103,7 +103,7 @@ class SVMT(SysCallTagger):
         formatted differently, than what this method expects.
         """
 
-        def split_dataset(path):
+        def split_dataset(path, split_tab=False):
             output = []
             with open(path, 'r', encoding='utf8') as fp:
                 lines = fp.readlines()
@@ -115,12 +115,15 @@ class SVMT(SysCallTagger):
                             output.append(current_sentence)
                             current_sentence = []
                     else:
-                        current_sentence.append(line.split())
-            return output  
+                        if split_tab:
+                            current_sentence.append(line.split("\t"))
+                        else:
+                            current_sentence.append(line.split())
+            return output
 
         test_data_path = data_archives.get_dataset_path(self.args.lang, self.args.treebank, "test", simplified=True)
         # token, tag
-        test_data = split_dataset(test_data_path)
+        test_data = split_dataset(test_data_path, split_tab=True)
         
         # token, prediction, actual        
         prediction_data = split_dataset(self.predict_path() + ext)
