@@ -6,7 +6,7 @@ def format_size(size):
     mantissa = split[0]
     exponent = split[1]
     mantissa_fmt = f"{float(mantissa):.2f}"
-    return f"{mantissa_fmt}e{exponent}"
+    return f"{mantissa_fmt}e{exponent[1]}"
 
 def create_avg_size_file():
     metrics = ["memory", "code", "model", "compressed"]
@@ -21,7 +21,7 @@ def create_avg_size_file():
             results_for_tagger[tagger].append(format_size(size))
 
     with open(f"../results_csv/avg_size.csv", "w", encoding="utf-8") as fp:
-        fp.write(f"Language,{','.join(metrics)}\n")
+        fp.write(f"tagger,{','.join(metrics)}\n")
         for tagger in results_for_tagger:
             fp.write(f"{tagger},{','.join(results_for_tagger[tagger])}\n")
 
