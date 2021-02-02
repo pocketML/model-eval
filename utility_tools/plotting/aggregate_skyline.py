@@ -64,13 +64,13 @@ def separate_plots(xlabels, bar_labels, data, ylabel, title, yscale, yticks, acc
 
     fig, axs = plt.subplots(1,4, figsize=(12, 5 * 0.85), sharey=True)
     axs.flat[0].set_ylabel(ylabel)
-    fig.suptitle(f'{acc_metric.capitalize()} accuracy')
+    fig.suptitle(f'{acc_metric.capitalize()} accuracy', fontsize="xx-large")
     colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red']
 
     for i, ax in enumerate(axs.flat):
         ax.bar(x, data[i], width, zorder=3, color=colors[i])
 
-        ax.set_title(f'vs. {bar_labels[i].capitalize()}')
+        ax.set_title(f'vs. {bar_labels[i].capitalize()}', fontsize="x-large")
         ax.set_yscale(yscale)
         ax.set_yticks(yticks)
         ax.grid(which='major', axis='y', linestyle='--', zorder=0)
@@ -91,19 +91,30 @@ def separate_plots(xlabels, bar_labels, data, ylabel, title, yscale, yticks, acc
 
     plt.show()
 
+def sort_func(entry, ties_order):
+    tie_order = 0 if entry[0] not in ties_order else ties_order.index(entry[0])
+    return (entry[1], tie_order)
+
 def aggregate_plotting(acc_metric="token", separate=False):
     metrics = ["memory", "code", "model", "compressed"]
     metric_labels = ["Memory", "Code Size", "Model Size", "Compressed Model Size"]
 
     results = []
     sort_order = []
+    ties_order = ["Meta-BiLSTM", "BERT-BPEmb", "BiLSTM (Yasunaga)"]
 
     for metric in metrics:
         taggers, skyline_counts = get_skyline_count(acc_metric, metric)
         if sort_order == []:
-            sorted_data = sorted(zip(taggers, skyline_counts), key=lambda x: x[1])
+            sorted_data = sorted(
+                zip(taggers, skyline_counts), 
+                key=lambda x: sort_func(x, ties_order)
+            )
             sort_order = [x[0] for x in sorted_data]
-        sorted_data = sorted(zip(taggers, skyline_counts), key=lambda x: sort_order.index(x[0]))
+        sorted_data = sorted(
+            zip(taggers, skyline_counts),
+            key=lambda x: sort_order.index(x[0])
+        )
         results.append([x[1] for x in sorted_data])
 
     title = f'On efficiency skyline - {acc_metric} accuracy vs size metric'
