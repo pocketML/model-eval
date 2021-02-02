@@ -1,7 +1,8 @@
+import os
 import numpy as np
-
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, RegularPolygon
+from pathlib import Path as PathlibPath
 from matplotlib.path import Path
 from matplotlib.projections.polar import PolarAxes
 from matplotlib.projections import register_projection
@@ -97,8 +98,8 @@ def plot(dimensions, entries, results, title, ticks, yscale="linear"):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='radar')
 
-    width = 3.487
-    height = width / 1.618
+    width = 4.5
+    height = 4.5
     fig.set_size_inches(width, height, forward=True)
 
     plt.yscale(yscale)
@@ -110,14 +111,16 @@ def plot(dimensions, entries, results, title, ticks, yscale="linear"):
     ax.set_varlabels(dimensions)
     plt.yticks()
 
-    ax.legend(entries, bbox_to_anchor=(0.5, -0.1), loc='upper center', ncol=3, fancybox=True, fontsize='small')
+    ax.legend(entries, bbox_to_anchor=(0.5, -0.1), loc='upper center', ncol=3, fancybox=True, fontsize='medium', columnspacing=0.5)
 
-    #ax.legend(entries, bbox_to_anchor=(1.15, 1), loc='upper left', fancybox=True, labelspacing=0.1, fontsize='small')
+    plt.tight_layout()
 
-    #ax.set_title(title)
-    #fig.text(0.5, 0.965, title,
-    #         horizontalalignment='center', color='black', weight='bold',
-    #         size='large')
+    root_dir = PathlibPath(__file__).resolve().parent.parent.parent
+    save_path = os.path.join(root_dir, "plots")
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
+    filename = os.path.join(save_path,  f"radar_token.pdf")        
+    plt.savefig(filename, dpi=300)
 
     plt.show()
 
